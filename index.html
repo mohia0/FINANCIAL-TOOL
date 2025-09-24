@@ -1,0 +1,1001 @@
+<!doctype html>
+<html lang="en" class="h-full" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Finance — USD · EGP</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{ --bg:#0a0a0b; --fg:#e4e4e7; --muted:#a1a1aa; --card:rgba(24,24,27,.75); --stroke:#27272a; --glass:#1f1f23; }
+    [data-theme="light"]{ --bg:#f8fafc; --fg:#0f172a; --muted:#475569; --card:#ffffff; --stroke:#e2e8f0; --glass:#f8fafc; }
+    html,body{ font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial; background:var(--bg); color:var(--fg); }
+    *{ scrollbar-width:thin; scrollbar-color:#52525b transparent; }
+    ::-webkit-scrollbar{ height:8px; width:8px; }
+    ::-webkit-scrollbar-thumb{ background:#52525b; border-radius:999px; }
+
+    .card{ border-radius:1rem; background:var(--card); border:1px solid var(--stroke); box-shadow:0 10px 30px rgba(0,0,0,.20); backdrop-filter:blur(6px); }
+    .btn{ display:inline-flex; align-items:center; justify-content:center; gap:.5rem; border-radius:.75rem; padding:.5rem .75rem; font-size:.875rem; font-weight:500; border:1px solid var(--stroke); }
+    .btn-primary{ background:#e4e4e7; color:#09090b; }
+    .btn-ghost{ background:transparent; color:var(--fg); }
+    .btn:hover{ border-color:#a1a1aa; }
+    .icon-btn{ display:inline-grid; place-items:center; }
+
+    .kpi{ 
+      border-radius:1rem; 
+      padding:1rem; 
+      border:1px solid var(--stroke); 
+      background:linear-gradient(to bottom, rgba(39,39,42,.06), var(--card)); 
+      display:flex; 
+      flex-direction:column; 
+      gap:.4rem; 
+      transition:all .2s ease;
+    }
+    .kpi:hover{ 
+      transform:translateY(-2px); 
+      box-shadow:0 8px 25px rgba(0,0,0,.15);
+    }
+    .kpi h3{ 
+      font-size:.7rem; 
+      font-weight:700; 
+      color:var(--muted); 
+      letter-spacing:.08em; 
+      text-transform:uppercase; 
+      margin-bottom:.2rem;
+    }
+    .kpi .value{ 
+      font-size:1.4rem; 
+      font-weight:800; 
+      letter-spacing:-.02em; 
+      line-height:1.1;
+    }
+    .kpi .sub{ 
+      font-size:.75rem; 
+      color:var(--muted); 
+      font-weight:500;
+    }
+    .kpi-em{ background:linear-gradient(180deg, rgba(99,102,241,.10), rgba(99,102,241,.04) 35%, var(--card)); border:1px solid rgba(99,102,241,.25); }
+    .bar{ height:8px; border-radius:999px; background:rgba(255,255,255,.06); overflow:hidden; }
+    [data-theme="light"] .bar{ background:#eceff3; }
+    .bar>span{ display:block; height:100%; background:linear-gradient(90deg, rgba(99,102,241,.9), rgba(56,189,248,.9)); }
+
+    .input,.select{ 
+      width:100%; 
+      border-radius:8px; 
+      padding:.5rem .7rem; 
+      font-size:.8rem; 
+      line-height:1.25rem; 
+      border:1px solid var(--stroke); 
+      background:var(--card); 
+      color:var(--fg); 
+      appearance:none; 
+      color-scheme:dark; 
+      transition:all .2s ease; 
+      backdrop-filter:blur(10px);
+    }
+    /* number input: remove spinners, friendlier mobile keypad */
+    input[type=number]::-webkit-outer-spin-button,
+    input[type=number]::-webkit-inner-spin-button{ -webkit-appearance:none; appearance:none; margin:0; }
+    input[type=number]{ -moz-appearance:textfield; appearance:textfield; }
+    /* date input indicator & color matching */
+    input[type=date]::-webkit-calendar-picker-indicator{ filter:opacity(.65); cursor:pointer; }
+    input[type=date]:hover::-webkit-calendar-picker-indicator{ filter:opacity(.9); }
+    input[type=date]{ color-scheme:dark; }
+    [data-theme="light"] .input,[data-theme="light"] .select{ color-scheme:light; }
+    .input:focus,.select:focus{ 
+      background:var(--glass); 
+      outline:none; 
+      transform:scale(1.01);
+      border-color:var(--muted);
+    }
+    .input:hover,.select:hover{ 
+      background:var(--glass);
+      transform:translateY(-1px);
+    }
+    .input::placeholder{ color:var(--muted); }
+    .select-wrap{ position:relative; }
+    .select-wrap::after{ 
+      content:""; 
+      position:absolute; 
+      right:.8rem; 
+      top:50%; 
+      transform:translateY(-50%); 
+      width:0; 
+      height:0; 
+      border-left:4px solid transparent; 
+      border-right:4px solid transparent; 
+      border-top:5px solid var(--muted); 
+      pointer-events:none; 
+      transition:transform .2s ease;
+    }
+    .select-wrap:hover::after{ transform:translateY(-50%) scale(1.1); }
+    .select{ background:var(--card); }
+    input[type=date]::-webkit-calendar-picker-indicator{ filter:invert(.7); }
+    [data-theme="light"] input[type=date]::-webkit-calendar-picker-indicator{ filter:invert(.3); }
+
+    /* super minimal modern table design */
+    .row{ 
+      display:grid; 
+      grid-template-columns:32px 1.5fr .8fr .8fr .8fr 1fr 1fr 1fr 1fr 32px; 
+      gap:.4rem; 
+      align-items:center; 
+      padding:.7rem .6rem; 
+      border-bottom:1px solid var(--stroke);
+      transition:background-color .2s ease;
+    }
+    .row:hover{ background:var(--glass); }
+    .row:last-child{ border-bottom:none; }
+    .row-biz{ 
+      display:grid; 
+      grid-template-columns:32px 1.4fr .8fr .8fr .8fr .8fr .9fr .9fr .9fr .9fr 32px; 
+      gap:.4rem; 
+      align-items:center; 
+      padding:.7rem .6rem; 
+      border-bottom:1px solid var(--stroke);
+      transition:background-color .2s ease;
+    }
+    .row-biz:hover{ background:var(--glass); }
+    .row-biz:last-child{ border-bottom:none; }
+    .row-head{ 
+      font-size:.65rem; 
+      letter-spacing:.1em; 
+      text-transform:uppercase; 
+      font-weight:600; 
+      color:var(--muted); 
+      background:var(--glass); 
+      position:sticky; 
+      top:0; 
+      backdrop-filter:blur(12px); 
+      z-index:10; 
+      padding:.8rem .6rem; 
+      border-bottom:1px solid var(--stroke);
+      transition:all .2s ease;
+      margin:0;
+    }
+    .row-head:hover{ background:var(--card); }
+    .row-sum{ 
+      font-weight:600; 
+      background:var(--glass); 
+      font-size:.75rem; 
+      border-top:1px solid var(--stroke); 
+      color:var(--fg);
+      border-bottom:none;
+    }
+    
+    /* Minimal drag and drop styles */
+    .draggable-header{ 
+      cursor:grab; 
+      user-select:none; 
+      transition:all .2s ease; 
+      border-radius:4px;
+    }
+    .draggable-header:hover{ 
+      background:var(--glass); 
+      transform:translateY(-1px);
+    }
+    .draggable-header:active{ cursor:grabbing; }
+    .draggable-header.dragging{ opacity:0.4; transform:rotate(1deg); }
+    .drop-zone{ position:relative; }
+    .drop-zone.drag-over::before{ 
+      content:''; 
+      position:absolute; 
+      top:0; 
+      left:-2px; 
+      right:-2px; 
+      bottom:0; 
+      background:rgba(59, 130, 246, 0.2); 
+      border-radius:4px; 
+      z-index:1; 
+    }
+    .financial-column{ position:relative; }
+
+    .table-scroll{ overflow-x:auto; }
+    .table{ 
+      min-width:auto; 
+      width:100%; 
+      background:var(--card); 
+      border-radius:12px; 
+      overflow:hidden;
+      backdrop-filter:blur(10px);
+      border:1px solid var(--stroke);
+    }
+    
+    /* Hide horizontal scroll on desktop */
+    @media (min-width: 1024px) {
+      .table-scroll{ overflow-x:visible; }
+    }
+    
+    /* Responsive table adjustments */
+    @media (max-width: 768px) {
+      .row{ gap:.2rem; padding:.3rem; }
+      .row-biz{ gap:.2rem; padding:.3rem; }
+    }
+
+    .icon-cell button{ width:32px; height:32px; border:none; border-radius:.5rem; background:transparent; color:var(--fg); }
+    .icon-cell button:hover{ background:var(--glass); }
+    .icon-cell i{ color:inherit; font-size:.9rem; }
+    .delete-confirm{ background:#ef4444; color:white; font-size:.6rem; padding:.2rem .4rem; border-radius:.3rem; border:none; }
+    .delete-confirm:hover{ background:#dc2626; }
+    
+    /* Sticky compact KPIs */
+    .sticky-kpis{ 
+      position:fixed; 
+      top:20px; 
+      right:20px; 
+      z-index:1000; 
+      display:flex; 
+      gap:.5rem; 
+      opacity:0; 
+      transform:translateY(-10px); 
+      transition:all .3s ease; 
+      pointer-events:none;
+    }
+    .sticky-kpis.show{ 
+      opacity:1; 
+      transform:translateY(0); 
+      pointer-events:auto;
+    }
+    .mini-kpi{ 
+      background:var(--card); 
+      border:1px solid var(--stroke); 
+      border-radius:.75rem; 
+      padding:.5rem .75rem; 
+      backdrop-filter:blur(12px); 
+      box-shadow:0 4px 20px rgba(0,0,0,.15);
+    }
+    .mini-kpi .label{ 
+      font-size:.6rem; 
+      font-weight:600; 
+      color:var(--muted); 
+      text-transform:uppercase; 
+      letter-spacing:.05em;
+    }
+    .mini-kpi .value{ 
+      font-size:.9rem; 
+      font-weight:700; 
+      color:var(--fg);
+    }
+
+    /* Icon picker redesigned UI */
+    .icon-tile{ 
+      display:flex; 
+      align-items:center; 
+      justify-content:center; 
+      width:44px; 
+      height:44px; 
+      border:none; 
+      border-radius:.75rem; 
+      background:var(--card); 
+      transition:all .2s ease; 
+      cursor:pointer;
+      color:var(--fg);
+    }
+    .icon-tile:hover{ 
+      transform:translateY(-2px); 
+      box-shadow:0 8px 25px rgba(99,102,241,.15);
+      background:var(--glass);
+    }
+    .icon-tile i{ 
+      color:inherit; 
+    }
+    .icon-tile.selected{ 
+      border-color:#6366f1; 
+      background:rgba(99,102,241,.1);
+      box-shadow:0 4px 15px rgba(99,102,241,.2);
+    }
+    .tab-btn{ 
+      padding:.6rem 1.2rem; 
+      border:none; 
+      background:transparent; 
+      color:var(--muted); 
+      font-size:.85rem; 
+      font-weight:600; 
+      border-bottom:2px solid transparent; 
+      transition:all .2s ease; 
+      border-radius:.5rem .5rem 0 0;
+    }
+    .tab-btn:hover{ 
+      color:var(--fg); 
+      background:var(--glass);
+    }
+    .tab-btn.active{ 
+      color:var(--fg); 
+      border-bottom-color:#6366f1; 
+      background:var(--glass);
+    }
+    #glyphInput{
+      font-family:monospace;
+      text-transform:lowercase;
+    }
+
+    @media (max-width:640px){
+      #kpis{ grid-template-columns:1fr !important; gap:12px; }
+      .kpi .value{ font-size:1.35rem; }
+      .btn{ padding:.45rem .7rem; }
+    }
+  </style>
+</head>
+<body class="h-full">
+  <div class="max-w-7xl mx-auto p-4 md:p-6 lg:p-10 space-y-6">
+    <!-- Header -->
+    <header class="flex flex-wrap items-center gap-3 justify-between">
+      <div class="flex items-center gap-3">
+        <div class="size-10 rounded-2xl bg-gradient-to-br from-indigo-500/25 to-cyan-400/20 border border-indigo-500/30 grid place-items-center">
+          <!-- Calculator icon -->
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="size-5 text-indigo-300">
+            <rect x="5" y="3" width="14" height="18" rx="2"/>
+            <rect x="7.5" y="5.5" width="9" height="3" rx=".6"/>
+            <path d="M9 13h2M13 13h2M9 16h2M13 16h2M9 19h2M13 19h2"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-2xl font-semibold tracking-tight">Finance Dashboard</h1>
+          <p class="text-xs" style="color:var(--muted)">Track Personal & Biz — USD with mirrored EGP</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="btnTheme" class="icon-btn size-10 rounded-xl border hover:bg-white/5 transition" title="Toggle theme" style="border-color:var(--stroke)">
+          <svg id="iconTheme" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-5 h-5">
+            <path d="M12 3v1m0 16v1m9-9h1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+          </svg>
+        </button>
+        <button id="btnSettings" class="icon-btn size-10 rounded-xl border hover:bg-white/5 transition" title="Settings" style="border-color:var(--stroke)">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-5 h-5">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- KPIs -->
+    <section id="kpis" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-4">
+      <div class="kpi kpi-em sm:col-span-1">
+        <h3>All</h3>
+        <div class="grid grid-cols-2 gap-6 items-end">
+          <div>
+            <div class="text-[11px]" style="color:var(--muted)">Monthly</div>
+            <div class="value" id="kpiAllMonthlyUSD">$0.00</div>
+            <div class="sub" id="kpiAllMonthlyEGP">EGP 0</div>
+          </div>
+          <div class="text-right">
+            <div class="text-[11px]" style="color:var(--muted)">Yearly</div>
+            <div class="value" id="kpiAllYearlyUSD">$0.00</div>
+            <div class="sub" id="kpiAllYearlyEGP">EGP 0</div>
+          </div>
+        </div>
+        <div class="mt-2 flex items-center justify-between text-xs">
+          <span style="color:var(--muted)">FX (USD→EGP)</span>
+          <span class="font-semibold" id="kpiFxSmall">—</span>
+        </div>
+        <div class="mt-2 grid grid-cols-2 gap-4 text-xs">
+          <div><div class="flex items-center justify-between"><span style="color:var(--muted)">Personal share</span><span id="sharePersonalVal">0%</span></div><div class="bar mt-1 h-2"><span id="sharePersonalBar" style="width:0%"></span></div></div>
+          <div><div class="flex items-center justify-between"><span style="color:var(--muted)">Biz share</span><span id="shareBizVal">0%</span></div><div class="bar mt-1 h-2"><span id="shareBizBar" style="width:0%"></span></div></div>
+        </div>
+      </div>
+      <div class="kpi">
+        <h3>Personal</h3>
+        <div class="grid grid-cols-2 gap-4">
+          <div><div class="text-[11px]" style="color:var(--muted)">Monthly</div><div class="value" id="kpiPersonalMonthly">$0.00</div><div class="sub" id="kpiPersonalMonthlyEGP">EGP 0</div></div>
+          <div><div class="text-[11px]" style="color:var(--muted)">Yearly</div><div class="value" id="kpiPersonalYearly">$0.00</div><div class="sub" id="kpiPersonalYearlyEGP">EGP 0</div></div>
+        </div>
+      </div>
+      <div class="kpi">
+        <h3>Biz</h3>
+        <div class="grid grid-cols-2 gap-4">
+          <div><div class="text-[11px]" style="color:var(--muted)">Monthly</div><div class="value" id="kpiBizMonthly">$0.00</div><div class="sub" id="kpiBizMonthlyEGP">EGP 0</div></div>
+          <div><div class="text-[11px]" style="color:var(--muted)">Yearly</div><div class="value" id="kpiBizYearly">$0.00</div><div class="sub" id="kpiBizYearlyEGP">EGP 0</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sticky Compact KPIs -->
+    <div id="stickyKpis" class="sticky-kpis">
+      <div class="mini-kpi">
+        <div class="label">Total Monthly</div>
+        <div class="value" id="stickyAllMonthly">$0</div>
+      </div>
+      <div class="mini-kpi">
+        <div class="label">Personal</div>
+        <div class="value" id="stickyPersonal">$0</div>
+      </div>
+      <div class="mini-kpi">
+        <div class="label">Biz</div>
+        <div class="value" id="stickyBiz">$0</div>
+      </div>
+    </div>
+
+    <!-- Personal table -->
+    <section class="p-0 space-y-2">
+      <h2 class="text-sm font-medium mb-4 px-1" style="color:var(--fg)">Personal Expenses</h2>
+      <div class="table-scroll">
+        <div class="table">
+          <div class="row row-head">
+            <div></div><div>Name</div><div>Cost</div><div>Status</div><div>Billing</div><div class="draggable-header financial-column" data-column="monthly" draggable="true">Monthly</div><div class="draggable-header financial-column" data-column="yearly" draggable="true">Yearly</div><div class="draggable-header financial-column" data-column="monthly-egp" draggable="true">Monthly EGP</div><div class="draggable-header financial-column" data-column="yearly-egp" draggable="true">Yearly EGP</div><div></div>
+          </div>
+          <div id="list-personal"></div>
+          <button class="btn w-full justify-start text-xs py-3 mx-0 my-3" data-add-row="personal" style="font-size:.65rem; border:1px dashed var(--stroke); background:var(--glass); color:var(--muted); transition:all .2s ease; border-radius:8px; margin-top:8px;">＋ Add a row</button>
+          <div id="sum-personal" class="row row-sum"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Biz table -->
+    <section class="p-0 space-y-2 mt-8">
+      <h2 class="text-sm font-medium mb-4 px-1" style="color:var(--fg)">Biz Expenses</h2>
+      <div class="table-scroll">
+        <div class="table">
+          <div class="row row-head row-biz">
+            <div></div><div>Name</div><div>Cost</div><div>Status</div><div>Billing</div><div>Next</div><div class="draggable-header financial-column" data-column="monthly" draggable="true">Monthly</div><div class="draggable-header financial-column" data-column="yearly" draggable="true">Yearly</div><div class="draggable-header financial-column" data-column="monthly-egp" draggable="true">Monthly EGP</div><div class="draggable-header financial-column" data-column="yearly-egp" draggable="true">Yearly EGP</div><div></div>
+          </div>
+          <div id="list-biz"></div>
+          <button class="btn w-full justify-start text-xs py-3 mx-0 my-3" data-add-row="biz" style="font-size:.65rem; border:1px dashed var(--stroke); background:var(--glass); color:var(--muted); transition:all .2s ease; border-radius:8px; margin-top:8px;">＋ Add a row</button>
+          <div id="sum-biz" class="row row-sum row-biz"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Settings Modal -->
+  <dialog id="settings" class="backdrop:bg-black/60 rounded-2xl w-full max-w-xl p-0">
+    <form method="dialog" class="card p-5 space-y-4">
+      <header class="flex items-start justify-between">
+        <div>
+          <h3 class="text-lg font-semibold">Settings</h3>
+          <p class="text-xs" style="color:var(--muted)">FX override. Saved locally.</p>
+        </div>
+        <button class="btn btn-ghost" value="cancel">Close</button>
+      </header>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div><label class="text-xs" style="color:var(--muted)">USD → EGP Rate</label><input id="inputFx" type="number" step="0.0001" class="input" /></div>
+        <div><label class="text-xs" style="color:var(--muted)">Autosave</label><select id="inputAutosave" class="select"><option value="on">On</option><option value="off">Off</option></select></div>
+      </div>
+        <div class="flex gap-2 justify-end"><button id="btnSaveSettings" class="btn btn-primary">Save</button></div>
+    </form>
+  </dialog>
+
+  <!-- Icon Picker Modal -->
+  <dialog id="iconPicker" class="backdrop:bg-black/60 rounded-2xl w-full max-w-3xl p-0">
+    <form method="dialog" class="card p-6 space-y-4">
+      <header class="flex items-center justify-between">
+        <h3 class="text-xl font-semibold">Choose Icon</h3>
+        <button class="btn btn-ghost" value="cancel">×</button>
+      </header>
+      
+      <div class="flex gap-3">
+        <input id="iconSearch" class="input flex-1" type="text" placeholder="Search Font Awesome icons..." />
+        <div class="flex gap-2 items-center">
+          <input id="glyphInput" class="input" type="text" placeholder="Unicode (e.g. f09a)" style="width:120px;" />
+          <div id="glyphPreview" class="size-8 rounded grid place-items-center" style="background:var(--card); color:var(--fg);"></div>
+          <button type="button" class="btn btn-primary" id="applyGlyph" style="padding:.4rem .6rem; font-size:.75rem;">Apply</button>
+        </div>
+      </div>
+      
+      <div id="iconTabs" class="flex gap-2 border-b pb-2" style="border-color:var(--stroke)">
+        <button type="button" class="tab-btn active" data-tab="personal">Personal</button>
+        <button type="button" class="tab-btn" data-tab="business">Business</button>
+        <button type="button" class="tab-btn" data-tab="brands">Brands</button>
+        <button type="button" class="tab-btn" data-tab="all">All</button>
+      </div>
+      
+      <div id="iconPickerGrid" class="grid grid-cols-12 gap-3 max-h-[450px] overflow-auto p-2" style="background:var(--glass); border-radius:.75rem;"></div>
+      
+      <div class="text-xs text-center" style="color:var(--muted)">
+        <span id="iconCount">Loading icons...</span>
+      </div>
+    </form>
+  </dialog>
+
+
+  <script>
+  document.addEventListener('DOMContentLoaded', function(){
+    const $ = (s, el)=> (el||document).querySelector(s);
+    const LS_KEY = 'finance-notion-v6';
+
+
+
+  const defaultState = {
+      fx: 48.1843,
+      autosave: 'on',
+      theme: 'dark',
+    personal: [
+      { name: 'Food & Groceries', cost: 150, status: 'Active', billing: 'Monthly' },
+      { name: 'Rent', cost: 165, status: 'Active', billing: 'Monthly' },
+      { name: 'Internet & Telecom', cost: 22, status: 'Active', billing: 'Monthly' }
+    ],
+    biz: [
+         { name: 'Adobe', cost: 9.41, status: 'Active', billing: 'Monthly', next:'2025-10-10' },
+         { name: 'ChatGPT', cost: 13.86, status: 'Active', billing: 'Monthly', next:'2025-10-12' },
+         { name: 'Webflow', cost: 276, status: 'Cancelled', billing: 'Annually', next:'2025-12-01' }
+       ]
+    };
+
+    function load(){ try{ return JSON.parse(localStorage.getItem(LS_KEY)) || structuredClone(defaultState);}catch(e){ return structuredClone(defaultState);} }
+  function save(){ if(state.autosave==='on') localStorage.setItem(LS_KEY, JSON.stringify(state)); }
+
+    let state = load();
+
+    // Theme
+    function applyTheme(){ 
+      document.documentElement.setAttribute('data-theme', state.theme==='light' ? 'light':'dark'); 
+      const themeIcon = $('#iconTheme');
+      if (state.theme === 'light') {
+        // Show moon icon for light mode
+        themeIcon.innerHTML = '<path d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>';
+      } else {
+        // Show sun icon for dark mode
+        themeIcon.innerHTML = '<path d="M12 3v1m0 16v1m9-9h1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>';
+      }
+    }
+    applyTheme();
+    $('#btnTheme').addEventListener('click', ()=>{ state.theme = state.theme==='light'?'dark':'light'; save(); applyTheme(); });
+
+    // Numbers
+    const nfUSD = new Intl.NumberFormat('en-US',{style:'currency', currency:'USD', maximumFractionDigits:2});
+    const nfINT = new Intl.NumberFormat('en-US');
+    const usdToEgp = (usd)=> usd * Number(state.fx || 0);
+    const rowMonthlyUSD = (r)=> r.status==='Active' ? (r.billing==='Monthly' ? Number(r.cost||0) : Number(r.cost||0)/12) : 0;
+    const rowYearlyUSD  = (r)=> r.status==='Active' ? (r.billing==='Monthly' ? Number(r.cost||0)*12 : Number(r.cost||0)) : 0;
+    function totals(arr){ const mUSD=arr.reduce((s,r)=>s+rowMonthlyUSD(r),0); const yUSD=arr.reduce((s,r)=>s+rowYearlyUSD(r),0); return { mUSD, yUSD, mEGP: usdToEgp(mUSD), yEGP: usdToEgp(yUSD) }; }
+
+    function setText(id,val){ const el=document.getElementById(id); if(el) el.textContent=val; }
+
+  function renderKPIs(){
+    const p = totals(state.personal); const b = totals(state.biz);
+      const all = { mUSD:p.mUSD + b.mUSD, yUSD:p.yUSD + b.yUSD };
+    all.mEGP = usdToEgp(all.mUSD); all.yEGP = usdToEgp(all.yUSD);
+      setText('kpiAllMonthlyUSD', nfUSD.format(all.mUSD));
+      setText('kpiAllMonthlyEGP', 'EGP ' + nfINT.format(Math.round(all.mEGP)));
+      setText('kpiAllYearlyUSD', nfUSD.format(all.yUSD));
+      setText('kpiAllYearlyEGP', 'EGP ' + nfINT.format(Math.round(all.yEGP)));
+      setText('kpiFxSmall', Number(state.fx||0).toFixed(4));
+      setText('kpiPersonalMonthly', nfUSD.format(p.mUSD));
+      setText('kpiPersonalMonthlyEGP', 'EGP ' + nfINT.format(Math.round(p.mEGP)));
+      setText('kpiPersonalYearly', nfUSD.format(p.yUSD));
+      setText('kpiPersonalYearlyEGP', 'EGP ' + nfINT.format(Math.round(p.yEGP)));
+      setText('kpiBizMonthly', nfUSD.format(b.mUSD));
+      setText('kpiBizMonthlyEGP', 'EGP ' + nfINT.format(Math.round(b.mEGP)));
+      setText('kpiBizYearly', nfUSD.format(b.yUSD));
+      setText('kpiBizYearlyEGP', 'EGP ' + nfINT.format(Math.round(b.yEGP)));
+    const total = all.mUSD || 1; const sp = Math.round((p.mUSD/total)*100); const sb = 100 - sp;
+      setText('sharePersonalVal', sp + '%'); setText('shareBizVal', sb + '%');
+      const ps=$('#sharePersonalBar'); if(ps) ps.style.width=sp+'%'; const bs=$('#shareBizBar'); if(bs) bs.style.width=sb+'%';
+    
+    // Update sticky KPIs
+    setText('stickyAllMonthly', nfUSD.format(all.mUSD));
+    setText('stickyPersonal', nfUSD.format(p.mUSD));
+    setText('stickyBiz', nfUSD.format(b.mUSD));
+    }
+
+
+    // Icon Picker
+    const iconPickerEl = document.getElementById('iconPicker');
+    const iconSearchEl = document.getElementById('iconSearch');
+    const iconGridEl = document.getElementById('iconPickerGrid');
+    let iconPickCtx = null; // { arr, idx }
+
+    let FONTAWESOME_ICONS = [];
+    let faLoaded = false;
+    const ICON_CACHE_KEY = 'finance-icon-cache-fontawesome-v2';
+    let currentStyle = 'solid'; // 'solid' or 'regular'
+
+    async function ensureFontAwesomeLoaded(){
+      if(faLoaded && FONTAWESOME_ICONS.length) return;
+      try{
+        // try cache first
+        const cached = localStorage.getItem(ICON_CACHE_KEY);
+        if(cached){
+          FONTAWESOME_ICONS = JSON.parse(cached);
+          faLoaded = true;
+          return;
+        }
+        
+        // Get only VERIFIED WORKING icons (tested and confirmed)
+        const curatedIcons = [
+          // Personal icons (VERIFIED SOLID)
+          'home','user','heart','star','gift','coffee','book','music','camera','car','plane','bus','shopping-cart','wallet','credit-card','calendar','clock','phone','envelope','utensils','bed','laptop','headphones','gamepad','tree','sun','moon','cloud','fire','bolt','shield','lock','key','search','download','upload','share','edit','trash','plus','minus','check','times','arrow-right','arrow-left','arrow-up','arrow-down','eye','bookmark','flag','thumbs-up','smile','comment','bell','cog','wrench','image','video','play','pause','stop','save','folder','file',
+          
+          // Business icons (VERIFIED SOLID)
+          'briefcase','building','chart-line','chart-bar','chart-pie','calculator','coins','university','store','truck','box','clipboard','list','calendar-check','server','database','sync','users','handshake','target','trophy','award','graduation-cap','archive','inbox','paper-plane','print','expand','compress','check-circle','exclamation-circle','question-circle','info-circle','ban','unlock','sort','th-list','th','table','square','circle','equals','divide','percentage','compass','triangle',
+          
+          // Brand icons (VERIFIED BRANDS)
+          'amazon','apple','google','microsoft','facebook','twitter','instagram','linkedin','youtube','github','reddit','discord','slack','telegram','whatsapp','dropbox','stripe','paypal','visa','mastercard','bitcoin','dribbble','behance','figma','trello','wordpress','medium','chrome','firefox','android','spotify','netflix','adobe','shopify','wix','zoom','skype','docker','aws','gitlab','bitbucket','stackoverflow','codepen','npm','node-js','react','vue','angular','html5','css3','js','python','java','git'
+        ];
+        
+        FONTAWESOME_ICONS = curatedIcons.map(name => `fa:${name}`);
+        localStorage.setItem(ICON_CACHE_KEY, JSON.stringify(FONTAWESOME_ICONS));
+        faLoaded = true;
+      }catch(err){
+        // Fallback minimal set
+        FONTAWESOME_ICONS = ['fa:home','fa:user','fa:heart','fa:star','fa:briefcase','fa:building','fa:chart-line','fa:calculator','fa:wallet','fa:shopping-cart','fa:car','fa:plane','fa:laptop','fa:phone','fa:envelope','fa:calendar','fa:clock','fa:search','fa:settings','fa:trash','fa:edit','fa:plus','fa:minus','fa:check','fa:times'];
+        faLoaded = true;
+      }
+    }
+
+    function renderIconPicker(filter, category = 'all'){
+      const q = (filter||'').trim().toLowerCase();
+      iconGridEl.innerHTML = '';
+      
+      let items = FONTAWESOME_ICONS;
+      
+      // Filter by category
+      if(category === 'personal'){
+        items = items.filter(n => ['home','user','heart','star','gift','coffee','book','music','camera','tv','car','plane','train','bus','shopping','wallet','calendar','phone','envelope','utensils','bed','laptop','mobile','headphones','gamepad','football','tree','leaf','sun','moon','cloud','umbrella','fire','bolt','shield','lock','key','search','filter','download','upload','share','copy','edit','trash','plus','minus','check','times','arrow','eye','bookmark','flag','thumbs','smile','comment','bell','cog','tools','paint','image','video','film','microphone','volume','play','pause','stop','forward','backward','random','repeat','refresh','sync','undo','redo','save','folder','file'].some(keyword => n.includes(keyword)));
+      } else if(category === 'business'){
+        items = items.filter(n => ['briefcase','building','chart','calculator','file','receipt','money','coins','credit','university','store','warehouse','factory','truck','shipping','box','package','clipboard','list','check','calendar','clock','network','server','database','cloud','sync','cogs','wrench','hammer','tools','project','users','handshake','bullhorn','target','flag','trophy','medal','award','certificate','diploma','graduation','folder','archive','inbox','mail','phone','print','save','undo','redo','expand','compress','window','times','exclamation','question','info','ban','unlock','eye','sort','table','border','square','circle','ellipsis','equal','divide','percentage','trending','line','bar','pie','area','scatter','bubble','radar','polar','doughnut','gauge','speedometer','thermometer','compass','ruler','protractor','triangle','pentagon','hexagon','octagon','diamond','rhombus','trapezoid','parallelogram','kite'].some(keyword => n.includes(keyword)));
+      } else if(category === 'brands'){
+        items = items.filter(n => ['amazon','apple','google','microsoft','facebook','twitter','instagram','linkedin','youtube','github','reddit','discord','slack','telegram','whatsapp','dropbox','stripe','paypal','visa','mastercard','bitcoin','dribbble','behance','figma','trello','wordpress','medium','chrome','firefox','android','spotify','netflix','adobe','shopify','wix','zoom','skype','docker','aws','gitlab','bitbucket','stackoverflow','codepen','npm','node-js','react','vue','angular','html5','css3','js','python','java','git'].some(keyword => n.includes(keyword)));
+      }
+      
+      // Apply search filter
+      if(q){
+        items = items.filter(n => n.includes(q));
+      }
+      
+      items = items.slice(0, 500);
+      
+      if(!items.length){ 
+        iconGridEl.innerHTML = '<div class="text-sm" style="color:var(--muted)">No icons found</div>'; 
+        return; 
+      }
+      
+      const frag = document.createDocumentFragment();
+      items.forEach(name=>{
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'icon-tile';
+        btn.setAttribute('data-icon', name);
+        
+        // Use appropriate style - brands use fa-brands, others use fa-solid
+        const iconName = name.replace('fa:', '');
+        const isBrand = ['amazon','apple','google','microsoft','facebook','twitter','instagram','linkedin','youtube','github','reddit','discord','slack','telegram','whatsapp','dropbox','stripe','paypal','visa','mastercard','bitcoin','dribbble','behance','figma','trello','wordpress','medium','chrome','firefox','android','spotify','netflix','adobe','shopify','wix','zoom','skype','docker','aws','gitlab','bitbucket','stackoverflow','codepen','npm','node-js','react','vue','angular','html5','css3','js','python','java','git'].includes(iconName);
+        const iconClass = isBrand ? 'fa-brands' : 'fa-solid';
+        btn.innerHTML = `<i class="${iconClass} fa-${iconName}" style="color:inherit;"></i>`;
+        
+        btn.addEventListener('click', ()=>{
+          if(!iconPickCtx) return;
+          const { arr, idx } = iconPickCtx;
+          arr[idx].icon = name;
+          save();
+          iconPickerEl.close();
+          iconPickCtx = null;
+          renderAll();
+        });
+        frag.appendChild(btn);
+      });
+      iconGridEl.appendChild(frag);
+      
+      // Update count
+      document.getElementById('iconCount').textContent = `Showing ${items.length} icons`;
+    }
+
+    iconSearchEl.addEventListener('input', ()=>renderIconPicker(iconSearchEl.value, currentTab));
+
+    let currentTab = 'all';
+    document.getElementById('iconTabs').addEventListener('click', (e)=>{
+      if(e.target.classList.contains('tab-btn')){
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        e.target.classList.add('active');
+        currentTab = e.target.dataset.tab;
+        renderIconPicker(iconSearchEl.value, currentTab);
+      }
+    });
+
+    // Apply glyph button
+    document.getElementById('applyGlyph').addEventListener('click', ()=>{
+      const unicode = document.getElementById('glyphInput').value.trim();
+      if(unicode.length >= 4){
+        if(!iconPickCtx) return;
+        const { arr, idx } = iconPickCtx;
+        arr[idx].icon = `fa-glyph:${unicode}`;
+        save();
+        iconPickerEl.close();
+        iconPickCtx = null;
+        renderAll();
+      }
+    });
+
+    // Glyph input handler with preview
+    const glyphPreview = document.getElementById('glyphPreview');
+    document.getElementById('glyphInput').addEventListener('input', (e)=>{
+      const unicode = e.target.value.trim();
+      if(unicode.length >= 4){
+        // Show preview
+        glyphPreview.innerHTML = `<i class="fa-solid" style="font-family:'Font Awesome 6 Free';">&#x${unicode};</i>`;
+      } else {
+        glyphPreview.innerHTML = '';
+      }
+    });
+
+    document.getElementById('glyphInput').addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter'){
+        const unicode = e.target.value.trim();
+        if(unicode.length >= 4){
+          if(!iconPickCtx) return;
+          const { arr, idx } = iconPickCtx;
+          arr[idx].icon = `fa-glyph:${unicode}`;
+          save();
+          iconPickerEl.close();
+          iconPickCtx = null;
+          renderAll();
+        }
+      }
+    });
+
+    function openIconPicker(arr, idx){
+      iconPickCtx = { arr, idx };
+      iconSearchEl.value = '';
+      currentTab = 'all';
+      currentStyle = 'solid';
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelector('[data-tab="all"]').classList.add('active');
+      document.getElementById('glyphInput').value = '';
+      document.getElementById('glyphPreview').innerHTML = '';
+      ensureFontAwesomeLoaded().then(()=>{ renderIconPicker('', 'all'); iconPickerEl.showModal(); });
+    }
+
+    function renderList(containerId, arr, isBiz){
+      const wrap=document.getElementById(containerId); wrap.innerHTML='';
+      arr.forEach((row,idx)=>{
+        const mUSD=rowMonthlyUSD(row), yUSD=rowYearlyUSD(row), mEGP=usdToEgp(mUSD), yEGP=usdToEgp(yUSD);
+        const div=document.createElement('div'); div.className=isBiz?'row row-biz':'row';
+        // icon cell
+        const iconName = row.icon || (isBiz ? 'fa:briefcase' : 'fa:shopping-cart');
+        let iconHTML = '';
+        if(iconName.startsWith('fa-glyph:')){
+          const unicode = iconName.replace('fa-glyph:', '');
+          iconHTML = `<i class="fa-solid" style="font-family:'Font Awesome 6 Free'; color:inherit;">&#x${unicode};</i>`;
+        } else {
+          const cleanIconName = iconName.replace(/^(fa-solid|fa-regular|fa:)/, '');
+          const isBrand = ['amazon','apple','google','microsoft','facebook','twitter','instagram','linkedin','youtube','github','reddit','discord','slack','telegram','whatsapp','dropbox','stripe','paypal','visa','mastercard','bitcoin','dribbble','behance','figma','trello','wordpress','medium','chrome','firefox','android','spotify','netflix','adobe','shopify','wix','zoom','skype','docker','aws','gitlab','bitbucket','stackoverflow','codepen','npm','node-js','react','vue','angular','html5','css3','js','python','java','git'].includes(cleanIconName);
+          const iconClass = isBrand ? 'fa-brands' : 'fa-solid';
+          iconHTML = `<i class="${iconClass} fa-${cleanIconName}" style="color:inherit;"></i>`;
+        }
+        const iconDiv=document.createElement('div'); iconDiv.className='icon-cell';
+        iconDiv.innerHTML=`<button type="button" title="Change icon" data-choose-icon>\
+          ${iconHTML}\
+        </button>`;
+        // name & inputs
+        const nameDiv=document.createElement('div'); nameDiv.innerHTML='<input class="input" type="text" value="'+(row.name||'')+'" placeholder="Item name" />';
+        const costDiv=document.createElement('div'); costDiv.innerHTML='<input class="input" type="number" step="0.01" value="'+(row.cost||0)+'" />';
+        const statusDiv=document.createElement('div'); statusDiv.innerHTML='<div class="select-wrap"><select class="select"><option '+(row.status==='Active'?'selected':'')+'>Active</option><option '+(row.status==='Cancelled'?'selected':'')+'>Cancelled</option></select></div>';
+        const billingDiv=document.createElement('div'); billingDiv.innerHTML='<div class="select-wrap"><select class="select"><option '+(row.billing==='Monthly'?'selected':'')+'>Monthly</option><option '+(row.billing==='Annually'?'selected':'')+'>Annually</option></select></div>';
+        div.append(iconDiv,nameDiv,costDiv,statusDiv,billingDiv);
+        if(isBiz){ const dateDiv=document.createElement('div'); dateDiv.innerHTML='<input class="input" type="date" value="'+(row.next||'')+'" />'; div.appendChild(dateDiv); }
+        // computed columns
+        const mUSDd=document.createElement('div'); mUSDd.className='text-sm'; mUSDd.textContent=nfUSD.format(mUSD);
+        const yUSDd=document.createElement('div'); yUSDd.className='text-sm'; yUSDd.textContent=nfUSD.format(yUSD);
+        const mEGPd=document.createElement('div'); mEGPd.className='text-sm'; mEGPd.textContent='EGP '+nfINT.format(Math.round(mEGP));
+        const yEGPd=document.createElement('div'); yEGPd.className='text-sm'; yEGPd.textContent='EGP '+nfINT.format(Math.round(yEGP));
+        div.append(mUSDd,yUSDd,mEGPd,yEGPd);
+        // delete
+        const del=document.createElement('div'); 
+        del.innerHTML='<button class="btn btn-ghost" data-del aria-label="Delete" style="border:none;">\
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4"><path d="M7 9h10M9 9v8m6-8v8M5 6h14l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6Zm3-3h8l1 3H7l1-3Z"/></svg></button>';
+        div.appendChild(del);
+
+        // wire inputs
+        const nameInp=nameDiv.querySelector('input'); nameInp.addEventListener('input', ()=>{ row.name=nameInp.value; save(); });
+        const costInp=costDiv.querySelector('input');
+        costInp.addEventListener('input', ()=>{ 
+          row.cost=Number(costInp.value||0); 
+          save(); 
+          renderKPIs(); // Only update KPIs, don't re-render entire list
+        });
+        const statusSel=statusDiv.querySelector('select'); statusSel.addEventListener('change', ()=>{ row.status=statusSel.value; save(); renderAll(); });
+        const billingSel=billingDiv.querySelector('select'); billingSel.addEventListener('change', ()=>{ row.billing=billingSel.value; save(); renderAll(); });
+        if(isBiz){ const dateInp=div.querySelector('input[type="date"]'); if(dateInp){ dateInp.addEventListener('change', ()=>{ row.next=dateInp.value; save(); }); } }
+        const iconBtn=iconDiv.querySelector('[data-choose-icon]');
+        iconBtn.addEventListener('click', ()=> openIconPicker(arr, idx));
+        const delBtn=del.querySelector('[data-del]'); 
+        delBtn.addEventListener('click', ()=>{ 
+          if(delBtn.classList.contains('delete-confirm')){
+            arr.splice(idx,1); 
+            save(); 
+            renderAll();
+          } else {
+            delBtn.classList.add('delete-confirm');
+            delBtn.innerHTML = 'Sure?';
+            setTimeout(()=>{
+              delBtn.classList.remove('delete-confirm');
+              delBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4"><path d="M7 9h10M9 9v8m6-8v8M5 6h14l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6Zm3-3h8l1 3H7l1-3Z"/></svg>';
+            }, 3000);
+          }
+        });
+        costInp.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && idx===arr.length-1){ addRow(isBiz?'biz':'personal'); } });
+
+      wrap.appendChild(div);
+    });
+
+      // sums
+      const sumEl=document.getElementById(containerId==='list-personal'?'sum-personal':'sum-biz');
+      const t=totals(arr);
+      let sumHTML='';
+      // icon column (present for both personal and biz)
+      sumHTML += '<div></div>';
+      // label
+      sumHTML += '<div class="font-medium" style="color:var(--muted)">Totals</div>';
+      // spacer columns before computed values
+      if(isBiz){ sumHTML += '<div></div><div></div><div></div><div></div>'; }
+      else { sumHTML += '<div></div><div></div><div></div>'; }
+      // computed sum cells
+      sumHTML += '<div class="font-semibold">'+nfUSD.format(t.mUSD)+'</div>';
+      sumHTML += '<div class="font-semibold">'+nfUSD.format(t.yUSD)+'</div>';
+      sumHTML += '<div class="font-semibold">EGP '+nfINT.format(Math.round(t.mEGP))+'</div>';
+      sumHTML += '<div class="font-semibold">EGP '+nfINT.format(Math.round(t.yEGP))+'</div>';
+      // delete column spacer
+      sumHTML += '<div></div>';
+      sumEl.innerHTML=sumHTML;
+    }
+
+    function addRow(group){
+      if(group==='biz') state.biz.push({name:'', cost:0, status:'Active', billing:'Monthly', next:''});
+      else state.personal.push({name:'', cost:0, status:'Active', billing:'Monthly'});
+      save(); renderAll();
+    }
+
+  function renderAll(){
+      renderList('list-personal', state.personal, false);
+      renderList('list-biz', state.biz, true);
+    renderKPIs();
+    updateGridTemplate();
+  }
+
+    // Settings modal
+    $('#btnSettings').addEventListener('click', ()=>{ $('#inputFx').value = state.fx; $('#inputAutosave').value = state.autosave||'on'; $('#settings').showModal(); });
+    $('#btnSaveSettings').addEventListener('click', (e)=>{ e.preventDefault(); state.fx = Number($('#inputFx').value||state.fx); state.autosave = $('#inputAutosave').value; save(); renderAll(); $('#settings').close(); });
+
+
+  // Add-row delegation
+    document.addEventListener('click', (e)=>{ const t=e.target.closest('[data-add-row]'); if(t) addRow(t.getAttribute('data-add-row')); });
+
+  renderAll();
+
+  // Sticky KPIs scroll handler
+  let isSticky = false;
+  window.addEventListener('scroll', ()=>{
+    const kpiSection = document.getElementById('kpis');
+    const stickyKpis = document.getElementById('stickyKpis');
+    if(!kpiSection || !stickyKpis) return;
+    
+    const kpiBottom = kpiSection.offsetTop + kpiSection.offsetHeight;
+    const shouldShow = window.scrollY > kpiBottom;
+    
+    if(shouldShow && !isSticky){
+      stickyKpis.classList.add('show');
+      isSticky = true;
+    } else if(!shouldShow && isSticky){
+      stickyKpis.classList.remove('show');
+      isSticky = false;
+    }
+  });
+
+    // Drag and Drop functionality for financial columns
+    let draggedElement = null;
+    let draggedColumn = null;
+    
+    // Initialize column order from localStorage or default
+    const defaultColumnOrder = ['monthly', 'yearly', 'monthly-egp', 'yearly-egp'];
+    let columnOrder = JSON.parse(localStorage.getItem('columnOrder')) || defaultColumnOrder;
+    
+    function updateColumnOrder() {
+      localStorage.setItem('columnOrder', JSON.stringify(columnOrder));
+      applyColumnOrder();
+    }
+    
+    function applyColumnOrder() {
+      // Apply to both Personal and Biz tables
+      ['', '-biz'].forEach(suffix => {
+        const headerRow = document.querySelector(`.row-head${suffix}`);
+        if (!headerRow) return;
+        
+        const financialColumns = headerRow.querySelectorAll('.financial-column');
+        const newOrder = [...financialColumns].sort((a, b) => {
+          const aIndex = columnOrder.indexOf(a.dataset.column);
+          const bIndex = columnOrder.indexOf(b.dataset.column);
+          return aIndex - bIndex;
+        });
+        
+        // Reorder the columns in the header
+        financialColumns.forEach(col => {
+          const newCol = newOrder.find(c => c.dataset.column === col.dataset.column);
+          if (newCol && newCol !== col) {
+            col.parentNode.insertBefore(newCol, col.nextSibling);
+          }
+        });
+      });
+      
+      // Update CSS grid template columns based on new order
+      updateGridTemplate();
+    }
+    
+    function updateGridTemplate() {
+      // For Personal table (no Next column)
+      const personalTemplate = `32px 1.5fr .8fr .8fr .8fr ${columnOrder.map(() => '1fr').join(' ')} 32px`;
+      document.querySelectorAll('.row:not(.row-biz)').forEach(row => {
+        row.style.gridTemplateColumns = personalTemplate;
+      });
+      
+      // For Biz table (with Next column)
+      const bizTemplate = `32px 1.4fr .8fr .8fr .8fr .8fr ${columnOrder.map(() => '.9fr').join(' ')} 32px`;
+      document.querySelectorAll('.row-biz').forEach(row => {
+        row.style.gridTemplateColumns = bizTemplate;
+      });
+    }
+    
+    // Add drag event listeners
+    document.addEventListener('dragstart', (e) => {
+      if (e.target.classList.contains('draggable-header')) {
+        draggedElement = e.target;
+        draggedColumn = e.target.dataset.column;
+        e.target.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/html', e.target.outerHTML);
+      }
+    });
+    
+    document.addEventListener('dragend', (e) => {
+      if (e.target.classList.contains('draggable-header')) {
+        e.target.classList.remove('dragging');
+        draggedElement = null;
+        draggedColumn = null;
+        // Remove all drag-over classes
+        document.querySelectorAll('.drop-zone').forEach(el => el.classList.remove('drag-over'));
+      }
+    });
+    
+    document.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      if (e.target.classList.contains('financial-column') && e.target !== draggedElement) {
+        e.target.classList.add('drag-over');
+      }
+    });
+    
+    document.addEventListener('dragleave', (e) => {
+      if (e.target.classList.contains('financial-column')) {
+        e.target.classList.remove('drag-over');
+      }
+    });
+    
+    document.addEventListener('drop', (e) => {
+      e.preventDefault();
+      if (e.target.classList.contains('financial-column') && e.target !== draggedElement) {
+        e.target.classList.remove('drag-over');
+        
+        const targetColumn = e.target.dataset.column;
+        const draggedIndex = columnOrder.indexOf(draggedColumn);
+        const targetIndex = columnOrder.indexOf(targetColumn);
+        
+        if (draggedIndex !== -1 && targetIndex !== -1) {
+          // Remove dragged column from its current position
+          columnOrder.splice(draggedIndex, 1);
+          // Insert it at the new position
+          const newIndex = draggedIndex < targetIndex ? targetIndex - 1 : targetIndex;
+          columnOrder.splice(newIndex, 0, draggedColumn);
+          
+          updateColumnOrder();
+        }
+      }
+    });
+    
+    // Initialize column order on page load (after renderAll)
+    applyColumnOrder();
+
+    // tiny tests
+    (function(){
+      function eq(a,b,msg){ if(Math.abs(a-b)>1e-6) console.error('TEST FAIL',msg,a,b); else console.log('TEST OK',msg); }
+      const sample=[{cost:120,billing:'Monthly',status:'Active'},{cost:1200,billing:'Annually',status:'Active'}];
+      eq(rowMonthlyUSD(sample[0]),120,'mUSD monthly');
+      eq(rowMonthlyUSD(sample[1]),100,'mUSD annual');
+      eq(rowYearlyUSD(sample[0]),1440,'yUSD monthly');
+      eq(rowYearlyUSD(sample[1]),1200,'yUSD annual');
+    })();
+  });
+  </script>
+</body>
+</html>
+
