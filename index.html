@@ -1405,19 +1405,19 @@
     const p = totals(state.personal); const b = totals(state.biz);
       const all = { mUSD:p.mUSD + b.mUSD, yUSD:p.yUSD + b.yUSD };
     all.mEGP = usdToEgp(all.mUSD); all.yEGP = usdToEgp(all.yUSD);
-      setText('kpiAllMonthlyUSD', '$' + Math.round(all.mUSD).toLocaleString());
-      setText('kpiAllMonthlyEGP', 'EGP ' + Math.round(all.mEGP).toLocaleString());
-      setText('kpiAllYearlyUSD', '$' + Math.round(all.yUSD).toLocaleString());
-      setText('kpiAllYearlyEGP', 'EGP ' + Math.round(all.yEGP).toLocaleString());
-      setText('kpiFxSmall', Math.round(Number(state.fx||0) * 10000) / 10000);
-      setText('kpiPersonalMonthly', '$' + Math.round(p.mUSD).toLocaleString());
-      setText('kpiPersonalMonthlyEGP', 'EGP ' + Math.round(p.mEGP).toLocaleString());
-      setText('kpiPersonalYearly', '$' + Math.round(p.yUSD).toLocaleString());
-      setText('kpiPersonalYearlyEGP', 'EGP ' + Math.round(p.yEGP).toLocaleString());
-      setText('kpiBizMonthly', '$' + Math.round(b.mUSD).toLocaleString());
-      setText('kpiBizMonthlyEGP', 'EGP ' + Math.round(b.mEGP).toLocaleString());
-      setText('kpiBizYearly', '$' + Math.round(b.yUSD).toLocaleString());
-      setText('kpiBizYearlyEGP', 'EGP ' + Math.round(b.yEGP).toLocaleString());
+      setText('kpiAllMonthlyUSD', nfUSD.format(all.mUSD));
+      setText('kpiAllMonthlyEGP', 'EGP ' + nfINT.format(Math.round(all.mEGP)));
+      setText('kpiAllYearlyUSD', nfUSD.format(all.yUSD));
+      setText('kpiAllYearlyEGP', 'EGP ' + nfINT.format(Math.round(all.yEGP)));
+      setText('kpiFxSmall', Number(state.fx||0).toFixed(4));
+      setText('kpiPersonalMonthly', nfUSD.format(p.mUSD));
+      setText('kpiPersonalMonthlyEGP', 'EGP ' + nfINT.format(Math.round(p.mEGP)));
+      setText('kpiPersonalYearly', nfUSD.format(p.yUSD));
+      setText('kpiPersonalYearlyEGP', 'EGP ' + nfINT.format(Math.round(p.yEGP)));
+      setText('kpiBizMonthly', nfUSD.format(b.mUSD));
+      setText('kpiBizMonthlyEGP', 'EGP ' + nfINT.format(Math.round(b.mEGP)));
+      setText('kpiBizYearly', nfUSD.format(b.yUSD));
+      setText('kpiBizYearlyEGP', 'EGP ' + nfINT.format(Math.round(b.yEGP)));
     const total = all.mUSD || 1; const sp = Math.round((p.mUSD/total)*100); const sb = 100 - sp;
       setText('sharePersonalVal', sp + '%'); setText('shareBizVal', sb + '%');
       const ps=$('#sharePersonalBar'); if(ps) ps.style.width=sp+'%'; const bs=$('#shareBizBar'); if(bs) bs.style.width=sb+'%';
@@ -1509,11 +1509,11 @@
             <div class="section-title">Monthly</div>
             <div class="metric-grid">
               <div class="metric-item">
-                <div class="metric-value">$${Math.round(all.mUSD).toLocaleString()}</div>
+                <div class="metric-value">${nfUSD.format(all.mUSD)}</div>
                 <div class="metric-label">USD</div>
               </div>
               <div class="metric-item">
-                <div class="metric-value">${Math.round(all.mEGP).toLocaleString()}</div>
+                <div class="metric-value">${nfINT.format(Math.round(all.mEGP))}</div>
                 <div class="metric-label">EGP</div>
               </div>
             </div>
@@ -1523,11 +1523,11 @@
             <div class="section-title">Annual</div>
             <div class="metric-grid">
               <div class="metric-item">
-                <div class="metric-value">$${Math.round(all.yUSD).toLocaleString()}</div>
+                <div class="metric-value">${nfUSD.format(all.yUSD)}</div>
                 <div class="metric-label">USD</div>
               </div>
               <div class="metric-item">
-                <div class="metric-value">${Math.round(all.yEGP).toLocaleString()}</div>
+                <div class="metric-value">${nfINT.format(Math.round(all.yEGP))}</div>
                 <div class="metric-label">EGP</div>
               </div>
             </div>
@@ -1537,11 +1537,11 @@
             <div class="section-title">Daily</div>
             <div class="metric-grid">
               <div class="metric-item">
-                <div class="metric-value">$${Math.round(dailySpending).toLocaleString()}</div>
+                <div class="metric-value">${nfUSD.format(dailySpending)}</div>
                 <div class="metric-label">USD</div>
               </div>
               <div class="metric-item">
-                <div class="metric-value">$${Math.round(weeklySpending).toLocaleString()}</div>
+                <div class="metric-value">${nfUSD.format(weeklySpending)}</div>
                 <div class="metric-label">Weekly</div>
               </div>
             </div>
@@ -1555,14 +1555,14 @@
               <li class="breakdown-item">
                 <span class="breakdown-name">Personal (${personalActive.length})</span>
                 <div>
-                  <span class="breakdown-amount">$${Math.round(personal.mUSD).toLocaleString()}</span>
+                  <span class="breakdown-amount">${nfUSD.format(personal.mUSD)}</span>
                   <span class="breakdown-percentage">${all.mUSD > 0 ? Math.round((personal.mUSD / all.mUSD) * 100) : 0}%</span>
                 </div>
               </li>
               <li class="breakdown-item">
                 <span class="breakdown-name">Business (${bizActive.length})</span>
                 <div>
-                  <span class="breakdown-amount">$${Math.round(biz.mUSD).toLocaleString()}</span>
+                  <span class="breakdown-amount">${nfUSD.format(biz.mUSD)}</span>
                   <span class="breakdown-percentage">${all.mUSD > 0 ? Math.round((biz.mUSD / all.mUSD) * 100) : 0}%</span>
                 </div>
               </li>
@@ -1575,7 +1575,7 @@
               <li class="breakdown-item">
                 <span class="breakdown-name">Monthly (${totalMonthlyBills})</span>
                 <div>
-                  <span class="breakdown-amount">$${Math.round(personalActive.filter(r => r.billing === 'Monthly').reduce((sum, r) => sum + Number(r.cost || 0), 0) + bizActive.filter(r => r.billing === 'Monthly').reduce((sum, r) => sum + Number(r.cost || 0), 0)).toLocaleString()}</span>
+                  <span class="breakdown-amount">${nfUSD.format(personalActive.filter(r => r.billing === 'Monthly').reduce((sum, r) => sum + Number(r.cost || 0), 0) + bizActive.filter(r => r.billing === 'Monthly').reduce((sum, r) => sum + Number(r.cost || 0), 0))}</span>
                   <span class="breakdown-percentage">${totalActive > 0 ? Math.round((totalMonthlyBills / totalActive) * 100) : 0}%</span>
                 </div>
               </li>
@@ -2363,11 +2363,12 @@
          const costInput = document.createElement('input');
          costInput.className = 'input cost-input';
          costInput.type = 'number';
-         costInput.step = '1';
-         costInput.value = Math.round(row.cost) || 0;
+         costInput.step = '0.01';
+         costInput.value = (row.cost || 0).toFixed(2);
          costInput.addEventListener('input', function() {
-           const newCost = Math.round(parseFloat(this.value)) || 0;
+           const newCost = parseFloat(this.value) || 0;
            row.cost = newCost;
+           this.value = newCost.toFixed(2); // Keep 2 decimal places in display
            save();
            // Update only the calculated values in this row, not the entire table
            updateRowCalculations(div, row, isBiz);
@@ -2670,9 +2671,31 @@
       input.style.boxSizing = 'border-box';
       input.style.margin = '0';
       
-      // Replace content with input
-      element.innerHTML = '';
-      element.appendChild(input);
+      // For EGP values, we need to show the prefix
+      if (type === 'egp') {
+        const wrapper = document.createElement('span');
+        wrapper.style.display = 'flex';
+        wrapper.style.alignItems = 'center';
+        wrapper.style.gap = '4px';
+        
+        const prefix = document.createElement('span');
+        prefix.textContent = 'EGP ';
+        prefix.style.fontSize = 'inherit';
+        prefix.style.fontWeight = 'inherit';
+        prefix.style.color = 'inherit';
+        
+        wrapper.appendChild(prefix);
+        wrapper.appendChild(input);
+        
+        // Replace content with wrapper
+        element.innerHTML = '';
+        element.appendChild(wrapper);
+      } else {
+        // For USD values, just use the input
+        element.innerHTML = '';
+        element.appendChild(input);
+      }
+      
       element.classList.add('editing');
       
       // Focus and select
@@ -2856,7 +2879,7 @@
       // Re-render this row's calculations
       updateRowCalculations(rowElement, row, isBiz);
     }
-
+    
     // Update autosave status indicator
     function updateAutosaveStatus() {
       const status = document.getElementById('autosaveStatus');
