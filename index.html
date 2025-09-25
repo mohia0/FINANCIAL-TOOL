@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Finance — USD · EGP</title>
+  <title>MY FINANCIALS — USD · EGP</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -19,7 +19,7 @@
     ::-webkit-scrollbar-thumb{ background:#52525b; border-radius:999px; }
 
     .card{ border-radius:1rem; background:var(--card); border:none; box-shadow:0 10px 30px rgba(0,0,0,.20); backdrop-filter:blur(6px); }
-    .btn{ display:inline-flex; align-items:center; justify-content:center; gap:.5rem; border-radius:.75rem; padding:.5rem .75rem; font-size:.875rem; font-weight:500; border:1px solid var(--stroke); }
+    .btn{ display:inline-flex; align-items:center; justify-content:center; gap:.5rem; border-radius:.75rem; padding:.5rem .75rem; font-size:.875rem; font-weight:500; border:1px solid var(--stroke); cursor:pointer; }
     .btn-primary{ background:#e4e4e7; color:#09090b; }
     .btn-ghost{ background:transparent; color:var(--fg); }
     .btn:hover{ border-color:#a1a1aa; }
@@ -69,13 +69,14 @@
       padding:.35rem .5rem; 
       font-size:.75rem; 
       line-height:1.2rem; 
-      border:1px solid var(--stroke); 
+      border:none; 
       background:var(--card); 
       color:var(--fg); 
       appearance:none; 
       color-scheme:dark; 
       transition:all .2s ease; 
       backdrop-filter:blur(10px);
+      cursor:text;
     }
     /* number input: remove spinners, friendlier mobile keypad */
     input[type=number]::-webkit-outer-spin-button,
@@ -103,13 +104,13 @@
       color:#10b981; 
       font-weight:500; 
       background:rgba(16, 185, 129, 0.08);
-      border-color:rgba(16, 185, 129, 0.3);
+      border:none;
     }
     .select.status-cancelled{ 
       color:#f87171; 
       font-weight:500; 
       background:rgba(248, 113, 113, 0.08);
-      border-color:rgba(248, 113, 113, 0.3);
+      border:none;
     }
     .select.status-active option[value="Active"]{ 
       color:#10b981; 
@@ -131,11 +132,11 @@
     /* Hover effects for status selects */
     .select.status-active:hover{ 
       background:rgba(16, 185, 129, 0.12);
-      border-color:rgba(16, 185, 129, 0.4);
+      border:none;
     }
     .select.status-cancelled:hover{ 
       background:rgba(248, 113, 113, 0.12);
-      border-color:rgba(248, 113, 113, 0.4);
+      border:none;
     }
     
     /* Cost input with dollar sign */
@@ -153,7 +154,7 @@
     .select-wrap::after{ 
       content:""; 
       position:absolute; 
-      right:.8rem; 
+      right:1rem; 
       top:50%; 
       transform:translateY(-50%); 
       width:0; 
@@ -165,14 +166,26 @@
       transition:transform .2s ease;
     }
     .select-wrap:hover::after{ transform:translateY(-50%) scale(1.1); }
-    .select{ background:var(--card); }
-    input[type=date]::-webkit-calendar-picker-indicator{ filter:invert(.7); }
-    [data-theme="light"] input[type=date]::-webkit-calendar-picker-indicator{ filter:invert(.3); }
+    .select{ 
+      background:var(--card); 
+      padding-right:2rem;
+    }
+    input[type=date]::-webkit-calendar-picker-indicator{ 
+      filter:invert(.7); 
+      margin-right:0.5rem;
+    }
+    [data-theme="light"] input[type=date]::-webkit-calendar-picker-indicator{ 
+      filter:invert(.3); 
+      margin-right:0.5rem;
+    }
+    input[type=date]{
+      padding-right:2rem;
+    }
 
     /* super minimal modern table design */
     .row{
       display:grid;
-      grid-template-columns:32px 1.5fr .8fr .8fr .8fr 1fr 1fr 1fr 1fr 32px;
+      grid-template-columns:24px 32px 1.5fr .8fr .8fr .8fr 1fr 1fr 1fr 1fr 32px;
       gap:.7rem;
       align-items:center;
       padding:.5rem .4rem;
@@ -183,7 +196,7 @@
     .row:last-child{ border-bottom:none; }
     .row-biz{ 
       display:grid; 
-      grid-template-columns:32px 1.4fr .8fr .8fr .8fr .8fr .9fr .9fr .9fr .9fr 32px; 
+      grid-template-columns:24px 32px 1.4fr .8fr .8fr .8fr .8fr .9fr .9fr .9fr .9fr 32px; 
       gap:.7rem; 
       align-items:center; 
       padding:.5rem .4rem; 
@@ -263,17 +276,39 @@
       text-transform:uppercase; 
       font-weight:600; 
       color:var(--muted); 
-      background:var(--glass); 
+      background:rgba(24,24,27,0.95); 
       position:sticky; 
       top:0; 
-      backdrop-filter:blur(12px); 
-      z-index:10; 
-      padding:.5rem .4rem; 
+      backdrop-filter:blur(20px); 
+      z-index:100; 
+      padding:.75rem .4rem; 
       border-bottom:1px solid var(--stroke);
       transition:all .2s ease;
       margin:0;
+      box-shadow:0 2px 8px rgba(0,0,0,0.1);
     }
-    .row-head:hover{ background:var(--card); }
+    [data-theme="light"] .row-head {
+      background:rgba(248,250,252,0.95);
+    }
+    .row-head:hover{ 
+      background:rgba(24,24,27,0.98); 
+      box-shadow:0 4px 12px rgba(0,0,0,0.15);
+    }
+    [data-theme="light"] .row-head:hover {
+      background:rgba(248,250,252,0.98);
+    }
+    
+    /* Sticky section headers */
+    .sticky-header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: var(--bg);
+      padding: 1rem 0 0.5rem 0;
+      margin-bottom: 1rem;
+      border-bottom: 1px solid var(--stroke);
+      backdrop-filter: blur(10px);
+    }
     .row-sum{ 
       font-weight:600; 
       background:var(--glass); 
@@ -310,6 +345,85 @@
     }
     .financial-column{ position:relative; }
 
+    /* Row drag and drop styles */
+    .row-draggable{ 
+      user-select:none; 
+      transition:all .2s ease; 
+      position:relative;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+    }
+    .row-draggable:hover{ 
+      background:var(--glass); 
+      transform:translateY(-1px);
+    }
+    .row-draggable.dragging{ 
+      opacity:0.4; 
+      transform:rotate(1deg) scale(1.02);
+      z-index:1000;
+      box-shadow:0 8px 25px rgba(0,0,0,.3);
+    }
+    .row-drop-zone{ 
+      position:relative; 
+      transition:all .2s ease;
+    }
+    .row-drop-zone.drag-over::before{ 
+      content:''; 
+      position:absolute; 
+      top:-2px; 
+      left:0; 
+      right:0; 
+      height:4px; 
+      background:linear-gradient(90deg, #3b82f6, #8b5cf6); 
+      border-radius:2px; 
+      z-index:10;
+      animation:pulse 1s infinite;
+    }
+    .row-drop-zone.drag-over::after{ 
+      content:''; 
+      position:absolute; 
+      top:-2px; 
+      left:0; 
+      right:0; 
+      height:4px; 
+      background:rgba(59, 130, 246, 0.3); 
+      border-radius:2px; 
+      z-index:9;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+    .drag-handle{ 
+      display:flex; 
+      align-items:center; 
+      justify-content:center; 
+      width:20px; 
+      height:20px; 
+      color:var(--muted); 
+      cursor:grab;
+      transition:all .2s ease;
+      border-radius:4px;
+    }
+    .drag-handle:hover{ 
+      color:var(--fg); 
+      background:var(--glass);
+      transform:scale(1.1);
+    }
+    .drag-handle:active{ 
+      cursor:grabbing; 
+      transform:scale(0.95);
+    }
+    
+    /* Prevent text selection during drag */
+    .row-draggable.dragging * {
+      user-select: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+    }
+
     .table-scroll{ overflow-x:auto; }
     .table{ 
       min-width:auto; 
@@ -332,50 +446,47 @@
       .row-biz{ gap:.2rem; padding:.3rem; }
     }
 
-    .icon-cell button{ width:32px; height:32px; border:none; border-radius:.5rem; background:transparent; color:var(--fg); }
+    .icon-cell button{ width:32px; height:32px; border:none; border-radius:.5rem; background:transparent; color:var(--fg); cursor:pointer; display:flex; align-items:center; justify-content:center; }
     .icon-cell button:hover{ background:var(--glass); }
     .icon-cell i{ color:inherit; font-size:.9rem; }
+    .icon-cell img{ 
+      width:16px; 
+      height:16px; 
+      object-fit:contain; 
+      filter: invert(1);
+      transition: filter 0.2s ease;
+    }
+    [data-theme="light"] .icon-cell img{ 
+      filter: invert(0);
+    }
     .delete-confirm{ background:#ef4444; color:white; font-size:.6rem; padding:.2rem .4rem; border-radius:.3rem; border:none; margin-right:.5rem; }
     .delete-confirm:hover{ background:#dc2626; }
     
-    /* Sticky compact KPIs */
-    .sticky-kpis{ 
-      position:fixed; 
-      top:20px; 
-      right:20px; 
-      z-index:1000; 
-      display:flex; 
-      gap:.5rem; 
-      opacity:0; 
-      transform:translateY(-10px); 
-      transition:all .3s ease; 
-      pointer-events:none;
-    }
-    .sticky-kpis.show{ 
-      opacity:1; 
-      transform:translateY(0); 
-      pointer-events:auto;
-    }
-    .mini-kpi{ 
-      background:var(--card); 
-      border:1px solid var(--stroke); 
-      border-radius:.75rem; 
-      padding:.5rem .75rem; 
-      backdrop-filter:blur(12px); 
-      box-shadow:0 4px 20px rgba(0,0,0,.15);
-    }
-    .mini-kpi .label{ 
-      font-size:.6rem; 
-      font-weight:600; 
+    /* Modern minimal delete button */
+    .delete-btn{ 
+      width:32px; 
+      height:32px; 
+      border:none; 
+      border-radius:.5rem; 
+      background:transparent; 
       color:var(--muted); 
-      text-transform:uppercase; 
-      letter-spacing:.05em;
+      cursor:pointer; 
+      display:flex; 
+      align-items:center; 
+      justify-content:center;
+      transition:all .2s ease;
+      margin-left:auto;
+      margin-right:8px;
     }
-    .mini-kpi .value{ 
-      font-size:.9rem; 
-      font-weight:700; 
-      color:var(--fg);
+    .delete-btn:hover{ 
+      background:rgba(239, 68, 68, 0.1); 
+      color:#ef4444;
+      transform:scale(1.05);
     }
+    .delete-btn:active{ 
+      transform:scale(0.95);
+    }
+    
 
     /* Icon picker redesigned UI */
     .icon-tile{ 
@@ -384,7 +495,7 @@
       justify-content:center; 
       width:44px; 
       height:44px; 
-      border:none; 
+      border:1px solid var(--stroke); 
       border-radius:.75rem; 
       background:var(--card); 
       transition:all .2s ease; 
@@ -395,9 +506,20 @@
       transform:translateY(-2px); 
       box-shadow:0 8px 25px rgba(99,102,241,.15);
       background:var(--glass);
+      border-color:var(--muted);
     }
     .icon-tile i{ 
       color:inherit; 
+      font-size:16px;
+    }
+    .icon-tile img{
+      width:20px;
+      height:20px;
+      object-fit:contain;
+      filter: invert(1);
+    }
+    [data-theme="light"] .icon-tile img{
+      filter: invert(0);
     }
     .icon-tile.selected{ 
       border-color:#6366f1; 
@@ -414,6 +536,7 @@
       border-bottom:2px solid transparent; 
       transition:all .2s ease; 
       border-radius:.5rem .5rem 0 0;
+      position:relative;
     }
     .tab-btn:hover{ 
       color:var(--fg); 
@@ -423,6 +546,17 @@
       color:var(--fg); 
       border-bottom-color:#6366f1; 
       background:var(--glass);
+    }
+    .tab-btn.active::after{
+      content:'';
+      position:absolute;
+      bottom:-2px;
+      left:50%;
+      transform:translateX(-50%);
+      width:20px;
+      height:2px;
+      background:#6366f1;
+      border-radius:1px;
     }
     #glyphInput{
       font-family:monospace;
@@ -448,7 +582,7 @@
       .notification-content {
         padding: 0.3rem 0.5rem;
         background: var(--card);
-        border: 1px solid var(--stroke);
+        border: none;
         border-radius: 6px;
         min-width: auto;
         max-width: 160px;
@@ -526,6 +660,293 @@
     .autosave-status.disabled {
       color: #f59e0b;
     }
+
+    /* Expandable KPI Cards */
+    .kpi {
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .kpi-expanded {
+      max-height: 0;
+      overflow: hidden;
+      background: var(--card);
+      border-radius: 0 0 1rem 1rem;
+      padding: 0 1rem;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid var(--stroke);
+      border-top: none;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    
+    .kpi.expanded {
+      grid-column: 1 / -1;
+      transform: translateY(0);
+    }
+    
+    .kpi.expanded .kpi-expanded {
+      max-height: 400px;
+      padding: 0.75rem;
+    }
+    
+    .kpi.expanded .analytics-content {
+      max-height: 350px;
+    }
+    
+    .analytics-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--stroke);
+    }
+    
+    .analytics-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--fg);
+    }
+    
+    .analytics-close {
+      width: 24px;
+      height: 24px;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+    
+    .analytics-close:hover {
+      background: var(--glass);
+      color: var(--fg);
+    }
+    
+    .analytics-content {
+      max-height: 350px;
+      overflow: hidden;
+    }
+    
+    .analytics-section {
+      margin-bottom: 0.75rem;
+    }
+    
+    .analytics-section:last-child {
+      margin-bottom: 0;
+    }
+    
+    .analytics-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 0.75rem;
+    }
+    
+    .analytics-grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 0.75rem;
+    }
+    
+    .analytics-grid-4 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 0.75rem;
+    }
+    
+    .analytics-grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 0.75rem;
+    }
+    
+    /* Editable Values */
+    .editable-value {
+      cursor: pointer;
+      padding: 2px 4px;
+      border-radius: 4px;
+      transition: all 0.2s ease;
+      border: 1px solid transparent;
+    }
+    
+    .editable-value:hover {
+      background: var(--glass);
+      border-color: var(--stroke);
+    }
+    
+    .editable-value.editing {
+      background: var(--card);
+      border-color: var(--muted);
+      cursor: text;
+    }
+    
+    .editable-input {
+      background: var(--card);
+      border: 1px solid var(--stroke);
+      border-radius: 8px;
+      outline: none;
+      color: var(--fg);
+      font-size: 0.875rem;
+      font-weight: 500;
+      width: 100%;
+      text-align: center;
+      padding: 8px 12px;
+      transition: all 0.2s ease;
+      min-height: 40px;
+      box-sizing: border-box;
+    }
+    
+    .editable-input:focus {
+      border-color: var(--muted);
+      box-shadow: 0 0 0 2px rgba(var(--muted-rgb), 0.1);
+      background: var(--card);
+    }
+    
+    .editable-value.editing {
+      background: transparent;
+      border: none;
+      padding: 0;
+    }
+    
+    .editable-value.editing .editable-input {
+      background: transparent;
+      border: none;
+      padding: 0;
+      margin: 0;
+      box-shadow: none;
+      outline: none;
+    }
+    
+    .section-title {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+    }
+    
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.5rem;
+    }
+    
+    .metric-item {
+      background: var(--glass);
+      border-radius: 0.5rem;
+      padding: 0.5rem;
+      text-align: center;
+      border: 1px solid var(--stroke);
+    }
+    
+    .metric-value {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--fg);
+      margin-bottom: 0.2rem;
+    }
+    
+    .metric-label {
+      font-size: 0.6rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    
+    .trend-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.7rem;
+      font-weight: 500;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.375rem;
+      margin-top: 0.25rem;
+    }
+    
+    .trend-up {
+      color: #10b981;
+      background: rgba(16, 185, 129, 0.1);
+    }
+    
+    .trend-down {
+      color: #ef4444;
+      background: rgba(239, 68, 68, 0.1);
+    }
+    
+    .trend-neutral {
+      color: var(--muted);
+      background: var(--glass);
+    }
+    
+    .breakdown-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    
+    .breakdown-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.3rem 0;
+      border-bottom: 1px solid var(--stroke);
+    }
+    
+    .breakdown-item:last-child {
+      border-bottom: none;
+    }
+    
+    .breakdown-name {
+      font-size: 0.7rem;
+      color: var(--fg);
+      font-weight: 500;
+    }
+    
+    .breakdown-amount {
+      font-size: 0.7rem;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    
+    .breakdown-percentage {
+      font-size: 0.6rem;
+      color: var(--muted);
+      margin-left: 0.5rem;
+    }
+    
+    .insight-card {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(56, 189, 248, 0.05));
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      border-radius: 0.5rem;
+      padding: 0.5rem;
+      margin-top: 0.3rem;
+    }
+    
+    .insight-text {
+      font-size: 0.65rem;
+      color: var(--fg);
+      line-height: 1.3;
+    }
+    
+    .insight-icon {
+      width: 12px;
+      height: 12px;
+      margin-right: 0.3rem;
+      color: #6366f1;
+    }
     
 
     @media (max-width:640px){
@@ -552,7 +973,7 @@
           </svg>
         </div>
         <div>
-          <h1 class="text-2xl font-semibold tracking-tight">Finance Dashboard</h1>
+           <h1 class="text-2xl font-semibold tracking-tight">MY FINANCIALS</h1>
           <p class="text-xs" style="color:var(--muted)">Track Personal & Biz — USD with mirrored EGP</p>
           <div id="autosaveStatus" class="autosave-status enabled">● Auto-save enabled</div>
         </div>
@@ -589,7 +1010,7 @@
 
     <!-- KPIs -->
     <section id="kpis" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-4">
-      <div class="kpi kpi-em sm:col-span-1">
+      <div class="kpi kpi-em sm:col-span-1" data-analytics="all">
         <h3>All</h3>
         <div class="grid grid-cols-2 gap-6 items-end">
           <div>
@@ -611,46 +1032,60 @@
           <div><div class="flex items-center justify-between"><span style="color:var(--muted)">Personal share</span><span id="sharePersonalVal">0%</span></div><div class="bar mt-1 h-2"><span id="sharePersonalBar" style="width:0%"></span></div></div>
           <div><div class="flex items-center justify-between"><span style="color:var(--muted)">Biz share</span><span id="shareBizVal">0%</span></div><div class="bar mt-1 h-2"><span id="shareBizBar" style="width:0%"></span></div></div>
         </div>
+        
+        <!-- Analytics Panel -->
+        <div class="kpi-expanded">
+          <div class="analytics-header">
+            <h4 class="analytics-title">Complete Financial Overview</h4>
+            <button class="analytics-close" data-close-analytics>×</button>
       </div>
-      <div class="kpi">
+          <div class="analytics-content" id="analyticsAll"></div>
+        </div>
+      </div>
+      
+      <div class="kpi" data-analytics="personal">
         <h3>Personal</h3>
         <div class="grid grid-cols-2 gap-4">
           <div><div class="text-[11px]" style="color:var(--muted)">Monthly</div><div class="value" id="kpiPersonalMonthly">$0.00</div><div class="sub" id="kpiPersonalMonthlyEGP">EGP 0</div></div>
           <div><div class="text-[11px]" style="color:var(--muted)">Yearly</div><div class="value" id="kpiPersonalYearly">$0.00</div><div class="sub" id="kpiPersonalYearlyEGP">EGP 0</div></div>
         </div>
+        
+        <!-- Analytics Panel -->
+        <div class="kpi-expanded">
+          <div class="analytics-header">
+            <h4 class="analytics-title">Personal Expenses Analytics</h4>
+            <button class="analytics-close" data-close-analytics>×</button>
       </div>
-      <div class="kpi">
+          <div class="analytics-content" id="analyticsPersonal"></div>
+        </div>
+      </div>
+      
+      <div class="kpi" data-analytics="biz">
         <h3>Biz</h3>
         <div class="grid grid-cols-2 gap-4">
           <div><div class="text-[11px]" style="color:var(--muted)">Monthly</div><div class="value" id="kpiBizMonthly">$0.00</div><div class="sub" id="kpiBizMonthlyEGP">EGP 0</div></div>
           <div><div class="text-[11px]" style="color:var(--muted)">Yearly</div><div class="value" id="kpiBizYearly">$0.00</div><div class="sub" id="kpiBizYearlyEGP">EGP 0</div></div>
         </div>
+        
+        <!-- Analytics Panel -->
+        <div class="kpi-expanded">
+          <div class="analytics-header">
+            <h4 class="analytics-title">Business Expenses Analytics</h4>
+            <button class="analytics-close" data-close-analytics>×</button>
+      </div>
+          <div class="analytics-content" id="analyticsBiz"></div>
+      </div>
       </div>
     </section>
 
-    <!-- Sticky Compact KPIs -->
-    <div id="stickyKpis" class="sticky-kpis">
-      <div class="mini-kpi">
-        <div class="label">Total Monthly</div>
-        <div class="value" id="stickyAllMonthly">$0</div>
-      </div>
-      <div class="mini-kpi">
-        <div class="label">Personal</div>
-        <div class="value" id="stickyPersonal">$0</div>
-      </div>
-      <div class="mini-kpi">
-        <div class="label">Biz</div>
-        <div class="value" id="stickyBiz">$0</div>
-      </div>
-    </div>
 
     <!-- Personal table -->
     <section class="p-0 space-y-2">
-      <h2 class="text-sm font-medium mb-4 px-1" style="color:var(--fg)">Personal Expenses</h2>
+      <h2 class="text-sm font-medium mb-4 px-1 sticky-header" style="color:var(--fg)">Personal Expenses</h2>
       <div class="table-container">
         <div class="table">
           <div class="row row-head">
-            <div></div><div>Name</div><div>Cost USD</div><div>Status</div><div>Billing</div><div class="draggable-header financial-column" data-column="monthly" draggable="true">Monthly USD</div><div class="draggable-header financial-column" data-column="yearly" draggable="true">Yearly USD</div><div class="draggable-header financial-column" data-column="monthly-egp" draggable="true">Monthly EGP</div><div class="draggable-header financial-column" data-column="yearly-egp" draggable="true">Yearly EGP</div><div></div>
+            <div></div><div></div><div>Name</div><div>Cost USD</div><div>Status</div><div>Billing</div><div class="draggable-header financial-column" data-column="monthly" draggable="true">Monthly USD</div><div class="draggable-header financial-column" data-column="yearly" draggable="true">Yearly USD</div><div class="draggable-header financial-column" data-column="monthly-egp" draggable="true">Monthly EGP</div><div class="draggable-header financial-column" data-column="yearly-egp" draggable="true">Yearly EGP</div><div></div>
           </div>
           <div id="list-personal"></div>
           <button class="btn w-full justify-start text-xs py-3 mx-0 my-3" data-add-row="personal" style="font-size:.65rem; border:1px dashed var(--stroke); background:var(--glass); color:var(--muted); transition:all .2s ease; border-radius:8px; margin-top:8px;">＋ Add a row</button>
@@ -661,11 +1096,11 @@
 
     <!-- Biz table -->
     <section class="p-0 space-y-2 mt-8">
-      <h2 class="text-sm font-medium mb-4 px-1" style="color:var(--fg)">Biz Expenses</h2>
+      <h2 class="text-sm font-medium mb-4 px-1 sticky-header" style="color:var(--fg)">Biz Expenses</h2>
       <div class="table-container">
         <div class="table">
           <div class="row row-head row-biz">
-            <div></div><div>Name</div><div>Cost USD</div><div>Status</div><div>Billing</div><div>Next</div><div class="draggable-header financial-column" data-column="monthly" draggable="true">Monthly USD</div><div class="draggable-header financial-column" data-column="yearly" draggable="true">Yearly USD</div><div class="draggable-header financial-column" data-column="monthly-egp" draggable="true">Monthly EGP</div><div class="draggable-header financial-column" data-column="yearly-egp" draggable="true">Yearly EGP</div><div></div>
+            <div></div><div></div><div>Name</div><div>Cost USD</div><div>Status</div><div>Billing</div><div>Next</div><div class="draggable-header financial-column" data-column="monthly" draggable="true">Monthly USD</div><div class="draggable-header financial-column" data-column="yearly" draggable="true">Yearly USD</div><div class="draggable-header financial-column" data-column="monthly-egp" draggable="true">Monthly EGP</div><div class="draggable-header financial-column" data-column="yearly-egp" draggable="true">Yearly EGP</div><div></div>
           </div>
           <div id="list-biz"></div>
           <button class="btn w-full justify-start text-xs py-3 mx-0 my-3" data-add-row="biz" style="font-size:.65rem; border:1px dashed var(--stroke); background:var(--glass); color:var(--muted); transition:all .2s ease; border-radius:8px; margin-top:8px;">＋ Add a row</button>
@@ -702,6 +1137,19 @@
           </div>
         </div>
         <div><label class="text-xs" style="color:var(--muted)">Autosave</label><select id="inputAutosave" class="select"><option value="on">On</option><option value="off">Off</option></select></div>
+        <div><label class="text-xs" style="color:var(--muted)">Include Annual in Monthly</label><select id="inputIncludeAnnual" class="select"><option value="true">Yes</option><option value="false">No</option></select></div>
+      </div>
+      
+      <!-- Data Management Section -->
+      <div class="border-t pt-4" style="border-color:var(--stroke)">
+        <h4 class="text-sm font-medium mb-3" style="color:var(--fg)">Data Management</h4>
+        <div class="space-y-3">
+          <div class="flex gap-2">
+            <button id="btnExportData" class="btn btn-ghost" style="padding:.35rem .5rem; font-size:.7rem;">Export Data</button>
+            <button id="btnImportData" class="btn btn-ghost" style="padding:.35rem .5rem; font-size:.7rem;">Import Data</button>
+          </div>
+          <input id="fileInput" type="file" accept=".json" style="display:none;" />
+        </div>
       </div>
       
       <!-- Delete All Data Section -->
@@ -728,18 +1176,30 @@
 
   <!-- Icon Picker Modal -->
   <dialog id="iconPicker" class="backdrop:bg-black/60 rounded-2xl w-full max-w-3xl p-0">
-    <form method="dialog" class="card p-6 space-y-4">
+    <form method="dialog" class="card p-6 space-y-4" style="background:var(--card); border:1px solid var(--stroke);">
       <header class="flex items-center justify-between">
         <h3 class="text-xl font-semibold">Choose Icon</h3>
         <button class="btn btn-ghost" value="cancel">×</button>
       </header>
       
-      <div class="flex gap-3">
-        <input id="iconSearch" class="input flex-1" type="text" placeholder="Search Font Awesome icons..." />
+      <div class="space-y-3">
+        <input id="iconSearch" class="input w-full" type="text" placeholder="Search Font Awesome icons..." />
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <!-- Glyph Input -->
         <div class="flex gap-2 items-center">
-          <input id="glyphInput" class="input" type="text" placeholder="Unicode (e.g. f09a)" style="width:120px;" />
-          <div id="glyphPreview" class="size-8 rounded grid place-items-center" style="background:var(--card); color:var(--fg);"></div>
+            <input id="glyphInput" class="input flex-1" type="text" placeholder="Unicode (e.g. e65c)" />
+            <div id="glyphPreview" class="size-8 rounded grid place-items-center border" style="background:var(--card); color:var(--fg); border-color:var(--stroke);"></div>
           <button type="button" class="btn btn-primary" id="applyGlyph" style="padding:.4rem .6rem; font-size:.75rem;">Apply</button>
+          </div>
+          
+          <!-- Custom Image Upload -->
+          <div class="flex gap-2 items-center">
+            <input id="customImageInput" type="file" accept=".svg,.png,.jpg,.jpeg" style="display:none;" />
+            <button type="button" class="btn btn-ghost" id="uploadCustomImage" style="padding:.4rem .6rem; font-size:.75rem;">Upload Image</button>
+            <div id="imagePreview" class="size-8 rounded grid place-items-center border" style="background:var(--card); color:var(--fg); border-color:var(--stroke);"></div>
+            <button type="button" class="btn btn-primary" id="applyCustomImage" style="padding:.4rem .6rem; font-size:.75rem;" disabled>Apply</button>
+          </div>
         </div>
       </div>
       
@@ -747,10 +1207,11 @@
         <button type="button" class="tab-btn active" data-tab="personal">Personal</button>
         <button type="button" class="tab-btn" data-tab="business">Business</button>
         <button type="button" class="tab-btn" data-tab="brands">Brands</button>
+        <button type="button" class="tab-btn" data-tab="custom">Custom</button>
         <button type="button" class="tab-btn" data-tab="all">All</button>
       </div>
       
-      <div id="iconPickerGrid" class="grid grid-cols-12 gap-3 max-h-[450px] overflow-auto p-2" style="background:var(--glass); border-radius:.75rem; scrollbar-width: thin; scrollbar-color: var(--muted) var(--glass);"></div>
+      <div id="iconPickerGrid" class="grid grid-cols-12 gap-3 max-h-[300px] overflow-auto p-4" style="background:var(--glass); border-radius:.75rem; border:1px solid var(--stroke); scrollbar-width: thin; scrollbar-color: var(--muted) var(--glass);"></div>
       
       <div class="text-xs text-center" style="color:var(--muted)">
         <span id="iconCount">Loading icons...</span>
@@ -770,36 +1231,9 @@
       fx: 48.1843,
       autosave: 'on',
       theme: 'dark',
-    personal: [
-      { name: 'Food & Groceries', cost: 150, status: 'Active', billing: 'Monthly' },
-      { name: 'Noor', cost: 55, status: 'Active', billing: 'Monthly' },
-      { name: 'Rent', cost: 165, status: 'Active', billing: 'Monthly' },
-      { name: 'Home Services', cost: 10, status: 'Active', billing: 'Monthly' },
-      { name: 'Medicals', cost: 20, status: 'Active', billing: 'Monthly' },
-      { name: 'Electricity', cost: 28, status: 'Cancelled', billing: 'Monthly' },
-      { name: 'Water', cost: 6, status: 'Active', billing: 'Monthly' },
-      { name: 'Car Fuel Up', cost: 30, status: 'Active', billing: 'Monthly' },
-      { name: 'Car Wash', cost: 5, status: 'Active', billing: 'Monthly' },
-      { name: 'Internet & Telecom', cost: 22, status: 'Active', billing: 'Monthly' },
-      { name: 'Cafe', cost: 20, status: 'Active', billing: 'Monthly' },
-      { name: 'Dry Cleaning', cost: 5, status: 'Cancelled', billing: 'Monthly' },
-      { name: 'Hair Cut', cost: 1.60, status: 'Active', billing: 'Monthly' },
-      { name: 'Vape Staff', cost: 30, status: 'Active', billing: 'Monthly' },
-      { name: 'Netflix', cost: 2.50, status: 'Cancelled', billing: 'Monthly' },
-      { name: 'Hanging out', cost: 30, status: 'Active', billing: 'Monthly' }
-    ],
-    biz: [
-         { name: 'Youtube', cost: 1.36, status: 'Active', billing: 'Monthly', next:'2023-11-01' },
-         { name: 'Adobe', cost: 9.41, status: 'Active', billing: 'Monthly', next:'2023-12-17' },
-         { name: 'Chat GPT', cost: 13.86, status: 'Active', billing: 'Monthly', next:'2024-05-22' },
-         { name: 'Muzheel Plutio', cost: 24, status: 'Cancelled', billing: 'Monthly', next:'2024-12-18' },
-         { name: 'Plutio', cost: 180, status: 'Cancelled', billing: 'Annually', next:'2024-05-22' },
-         { name: 'Whitelabel', cost: 8, status: 'Cancelled', billing: 'Monthly', next:'2024-05-22' },
-         { name: 'Zoho Email', cost: 4.80, status: 'Cancelled', billing: 'Annually', next:'2023-11-29' },
-         { name: 'Domain', cost: 16, status: 'Cancelled', billing: 'Annually', next:'2023-11-28' },
-         { name: 'Webflow', cost: 276, status: 'Cancelled', billing: 'Annually', next:'2024-01-15' },
-         { name: 'Salary', cost: 200, status: 'Cancelled', billing: 'Monthly', next:'2024-02-20' }
-       ]
+      includeAnnualInMonthly: true,
+      personal: [],
+      biz: []
     };
 
     function load(){ 
@@ -867,20 +1301,13 @@
 
     let state = load();
     
+    // Initialize column order from localStorage or default
+    const defaultColumnOrder = ['monthly', 'yearly', 'monthly-egp', 'yearly-egp'];
+    let columnOrder = JSON.parse(localStorage.getItem('columnOrder')) || defaultColumnOrder;
+    
     // Initialize autosave status
     updateAutosaveStatus();
     
-    // Show notification if we loaded default data
-    if (state.personal && state.personal.length > 0 && state.biz && state.biz.length > 0) {
-      // Check if this is the default data by comparing with defaultState
-      const isDefaultData = JSON.stringify(state.personal) === JSON.stringify(defaultState.personal) && 
-                           JSON.stringify(state.biz) === JSON.stringify(defaultState.biz);
-      if (isDefaultData) {
-        setTimeout(() => {
-          showNotification('Sample data loaded automatically', 'success', 3000);
-        }, 500);
-      }
-    }
     
     
     // Simplified system - no trial/license restrictions
@@ -961,7 +1388,14 @@
     const nfUSD = new Intl.NumberFormat('en-US',{style:'currency', currency:'USD', maximumFractionDigits:2});
     const nfINT = new Intl.NumberFormat('en-US');
     const usdToEgp = (usd)=> usd * Number(state.fx || 0);
-    const rowMonthlyUSD = (r)=> r.status==='Active' ? (r.billing==='Monthly' ? Number(r.cost||0) : Number(r.cost||0)/12) : 0;
+    const rowMonthlyUSD = (r)=> {
+      if (r.status !== 'Active') return 0;
+      if (r.billing === 'Monthly') return Number(r.cost||0);
+      if (r.billing === 'Annually') {
+        return state.includeAnnualInMonthly ? Number(r.cost||0)/12 : 0;
+      }
+      return 0;
+    };
     const rowYearlyUSD  = (r)=> r.status==='Active' ? (r.billing==='Monthly' ? Number(r.cost||0)*12 : Number(r.cost||0)) : 0;
     function totals(arr){ const mUSD=arr.reduce((s,r)=>s+rowMonthlyUSD(r),0); const yUSD=arr.reduce((s,r)=>s+rowYearlyUSD(r),0); return { mUSD, yUSD, mEGP: usdToEgp(mUSD), yEGP: usdToEgp(yUSD) }; }
 
@@ -971,29 +1405,625 @@
     const p = totals(state.personal); const b = totals(state.biz);
       const all = { mUSD:p.mUSD + b.mUSD, yUSD:p.yUSD + b.yUSD };
     all.mEGP = usdToEgp(all.mUSD); all.yEGP = usdToEgp(all.yUSD);
-      setText('kpiAllMonthlyUSD', nfUSD.format(all.mUSD));
-      setText('kpiAllMonthlyEGP', 'EGP ' + nfINT.format(Math.round(all.mEGP)));
-      setText('kpiAllYearlyUSD', nfUSD.format(all.yUSD));
-      setText('kpiAllYearlyEGP', 'EGP ' + nfINT.format(Math.round(all.yEGP)));
-      setText('kpiFxSmall', Number(state.fx||0).toFixed(4));
-      setText('kpiPersonalMonthly', nfUSD.format(p.mUSD));
-      setText('kpiPersonalMonthlyEGP', 'EGP ' + nfINT.format(Math.round(p.mEGP)));
-      setText('kpiPersonalYearly', nfUSD.format(p.yUSD));
-      setText('kpiPersonalYearlyEGP', 'EGP ' + nfINT.format(Math.round(p.yEGP)));
-      setText('kpiBizMonthly', nfUSD.format(b.mUSD));
-      setText('kpiBizMonthlyEGP', 'EGP ' + nfINT.format(Math.round(b.mEGP)));
-      setText('kpiBizYearly', nfUSD.format(b.yUSD));
-      setText('kpiBizYearlyEGP', 'EGP ' + nfINT.format(Math.round(b.yEGP)));
+      setText('kpiAllMonthlyUSD', '$' + Math.round(all.mUSD).toLocaleString());
+      setText('kpiAllMonthlyEGP', 'EGP ' + Math.round(all.mEGP).toLocaleString());
+      setText('kpiAllYearlyUSD', '$' + Math.round(all.yUSD).toLocaleString());
+      setText('kpiAllYearlyEGP', 'EGP ' + Math.round(all.yEGP).toLocaleString());
+      setText('kpiFxSmall', Math.round(Number(state.fx||0) * 10000) / 10000);
+      setText('kpiPersonalMonthly', '$' + Math.round(p.mUSD).toLocaleString());
+      setText('kpiPersonalMonthlyEGP', 'EGP ' + Math.round(p.mEGP).toLocaleString());
+      setText('kpiPersonalYearly', '$' + Math.round(p.yUSD).toLocaleString());
+      setText('kpiPersonalYearlyEGP', 'EGP ' + Math.round(p.yEGP).toLocaleString());
+      setText('kpiBizMonthly', '$' + Math.round(b.mUSD).toLocaleString());
+      setText('kpiBizMonthlyEGP', 'EGP ' + Math.round(b.mEGP).toLocaleString());
+      setText('kpiBizYearly', '$' + Math.round(b.yUSD).toLocaleString());
+      setText('kpiBizYearlyEGP', 'EGP ' + Math.round(b.yEGP).toLocaleString());
     const total = all.mUSD || 1; const sp = Math.round((p.mUSD/total)*100); const sb = 100 - sp;
       setText('sharePersonalVal', sp + '%'); setText('shareBizVal', sb + '%');
       const ps=$('#sharePersonalBar'); if(ps) ps.style.width=sp+'%'; const bs=$('#shareBizBar'); if(bs) bs.style.width=sb+'%';
     
-    // Update sticky KPIs
-    setText('stickyAllMonthly', nfUSD.format(all.mUSD));
-    setText('stickyPersonal', nfUSD.format(p.mUSD));
-    setText('stickyBiz', nfUSD.format(b.mUSD));
+    // Update analytics content
+    updateAnalytics();
     }
 
+    // Analytics functionality
+    function updateAnalytics() {
+      const p = totals(state.personal);
+      const b = totals(state.biz);
+      const all = { mUSD: p.mUSD + b.mUSD, yUSD: p.yUSD + b.yUSD };
+      all.mEGP = usdToEgp(all.mUSD);
+      all.yEGP = usdToEgp(all.yUSD);
+
+      // Update All analytics
+      updateAllAnalytics(all, p, b);
+      
+      // Update Personal analytics
+      updatePersonalAnalytics(p);
+      
+      // Update Biz analytics
+      updateBizAnalytics(b);
+    }
+
+    function updateAllAnalytics(all, personal, biz) {
+      const container = document.getElementById('analyticsAll');
+      if (!container) return;
+
+      const personalActive = state.personal.filter(r => r.status === 'Active');
+      const bizActive = state.biz.filter(r => r.status === 'Active');
+      const totalActive = personalActive.length + bizActive.length;
+      const totalCancelled = state.personal.filter(r => r.status === 'Cancelled').length + state.biz.filter(r => r.status === 'Cancelled').length;
+      
+      // Calculate averages
+      const avgPersonal = personalActive.length > 0 ? personal.mUSD / personalActive.length : 0;
+      const avgBiz = bizActive.length > 0 ? biz.mUSD / bizActive.length : 0;
+      const avgAll = totalActive > 0 ? all.mUSD / totalActive : 0;
+      
+      // Calculate monthly vs annual distribution
+      const personalMonthly = personalActive.filter(r => r.billing === 'Monthly').length;
+      const personalAnnual = personalActive.filter(r => r.billing === 'Annually').length;
+      const bizMonthly = bizActive.filter(r => r.billing === 'Monthly').length;
+      const bizAnnual = bizActive.filter(r => r.billing === 'Annually').length;
+      
+      // Calculate savings potential
+      const personalAnnualSavings = personalActive
+        .filter(r => r.billing === 'Annually')
+        .reduce((sum, r) => sum + (Number(r.cost || 0) * 0.1), 0);
+      const bizAnnualSavings = bizActive
+        .filter(r => r.billing === 'Annually')
+        .reduce((sum, r) => sum + (Number(r.cost || 0) * 0.1), 0);
+      
+      // Calculate spending breakdowns
+      const dailySpending = all.mUSD / 30;
+      const weeklySpending = all.mUSD / 4.33;
+      const hourlySpending = all.mUSD / 720; // 30 days * 24 hours
+      
+      // Find highest expenses across all categories
+      const allActiveItems = [...personalActive, ...bizActive];
+      const sortedByCost = allActiveItems.sort((a, b) => {
+        const aCost = a.billing === 'Monthly' ? Number(a.cost || 0) : Number(a.cost || 0) / 12;
+        const bCost = b.billing === 'Monthly' ? Number(b.cost || 0) : Number(b.cost || 0) / 12;
+        return bCost - aCost;
+      });
+      
+      const highestExpense = sortedByCost[0];
+      const totalMonthlyBills = personalMonthly + bizMonthly;
+      const totalAnnualBills = personalAnnual + bizAnnual;
+
+      container.innerHTML = `
+        <div class="analytics-grid-4">
+          <div class="analytics-section">
+            <div class="section-title">Overview</div>
+            <div class="metric-grid">
+              <div class="metric-item">
+                <div class="metric-value">${totalActive}</div>
+                <div class="metric-label">Active</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${totalCancelled}</div>
+                <div class="metric-label">Cancelled</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="analytics-section">
+            <div class="section-title">Monthly</div>
+            <div class="metric-grid">
+              <div class="metric-item">
+                <div class="metric-value">$${Math.round(all.mUSD).toLocaleString()}</div>
+                <div class="metric-label">USD</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${Math.round(all.mEGP).toLocaleString()}</div>
+                <div class="metric-label">EGP</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="analytics-section">
+            <div class="section-title">Annual</div>
+            <div class="metric-grid">
+              <div class="metric-item">
+                <div class="metric-value">$${Math.round(all.yUSD).toLocaleString()}</div>
+                <div class="metric-label">USD</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${Math.round(all.yEGP).toLocaleString()}</div>
+                <div class="metric-label">EGP</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="analytics-section">
+            <div class="section-title">Daily</div>
+            <div class="metric-grid">
+              <div class="metric-item">
+                <div class="metric-value">$${Math.round(dailySpending).toLocaleString()}</div>
+                <div class="metric-label">USD</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">$${Math.round(weeklySpending).toLocaleString()}</div>
+                <div class="metric-label">Weekly</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="analytics-grid-3">
+          <div class="analytics-section">
+            <div class="section-title">Category Distribution</div>
+            <ul class="breakdown-list">
+              <li class="breakdown-item">
+                <span class="breakdown-name">Personal (${personalActive.length})</span>
+                <div>
+                  <span class="breakdown-amount">$${Math.round(personal.mUSD).toLocaleString()}</span>
+                  <span class="breakdown-percentage">${all.mUSD > 0 ? Math.round((personal.mUSD / all.mUSD) * 100) : 0}%</span>
+                </div>
+              </li>
+              <li class="breakdown-item">
+                <span class="breakdown-name">Business (${bizActive.length})</span>
+                <div>
+                  <span class="breakdown-amount">$${Math.round(biz.mUSD).toLocaleString()}</span>
+                  <span class="breakdown-percentage">${all.mUSD > 0 ? Math.round((biz.mUSD / all.mUSD) * 100) : 0}%</span>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <div class="analytics-section">
+            <div class="section-title">Billing Distribution</div>
+            <ul class="breakdown-list">
+              <li class="breakdown-item">
+                <span class="breakdown-name">Monthly (${totalMonthlyBills})</span>
+                <div>
+                  <span class="breakdown-amount">$${Math.round(personalActive.filter(r => r.billing === 'Monthly').reduce((sum, r) => sum + Number(r.cost || 0), 0) + bizActive.filter(r => r.billing === 'Monthly').reduce((sum, r) => sum + Number(r.cost || 0), 0)).toLocaleString()}</span>
+                  <span class="breakdown-percentage">${totalActive > 0 ? Math.round((totalMonthlyBills / totalActive) * 100) : 0}%</span>
+                </div>
+              </li>
+              <li class="breakdown-item">
+                <span class="breakdown-name">Annual (${totalAnnualBills})</span>
+                <div>
+                  <span class="breakdown-amount">${nfUSD.format(personalActive.filter(r => r.billing === 'Annually').reduce((sum, r) => sum + Number(r.cost || 0) / 12, 0) + bizActive.filter(r => r.billing === 'Annually').reduce((sum, r) => sum + Number(r.cost || 0) / 12, 0))}</span>
+                  <span class="breakdown-percentage">${totalActive > 0 ? Math.round((totalAnnualBills / totalActive) * 100) : 0}%</span>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <div class="analytics-section">
+            <div class="section-title">Top Expenses</div>
+            <ul class="breakdown-list">
+              ${sortedByCost.slice(0, 3).map(item => {
+                const monthlyCost = item.billing === 'Monthly' ? Number(item.cost || 0) : Number(item.cost || 0) / 12;
+                const category = state.personal.includes(item) ? 'Personal' : 'Business';
+                return `
+                  <li class="breakdown-item">
+                    <span class="breakdown-name">${item.name || 'Unnamed'} (${category})</span>
+                    <div>
+                      <span class="breakdown-amount">${nfUSD.format(monthlyCost)}</span>
+                      <span class="breakdown-percentage">${item.billing}</span>
+                    </div>
+                  </li>
+                `;
+              }).join('')}
+            </ul>
+          </div>
+        </div>
+
+        <div class="analytics-section">
+          <div class="section-title">Insights</div>
+          <div class="insight-card">
+            <div class="insight-text">
+              <i class="fas fa-chart-line insight-icon"></i>
+              Avg: <strong>${nfUSD.format(avgAll)}</strong> | Personal: <strong>${nfUSD.format(avgPersonal)}</strong> | Business: <strong>${nfUSD.format(avgBiz)}</strong>
+              ${highestExpense ? ` | Highest: <strong>${highestExpense.name || 'Unnamed'}</strong>` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function updatePersonalAnalytics(personal) {
+      const container = document.getElementById('analyticsPersonal');
+      if (!container) return;
+
+      const activeItems = state.personal.filter(r => r.status === 'Active');
+      const monthlyItems = activeItems.filter(r => r.billing === 'Monthly');
+      const annualItems = activeItems.filter(r => r.billing === 'Annually');
+      const cancelledItems = state.personal.filter(r => r.status === 'Cancelled');
+      
+      // Calculate detailed metrics
+      const avgMonthly = monthlyItems.length > 0 ? monthlyItems.reduce((sum, r) => sum + Number(r.cost || 0), 0) / monthlyItems.length : 0;
+      const avgAnnual = annualItems.length > 0 ? annualItems.reduce((sum, r) => sum + Number(r.cost || 0), 0) / annualItems.length : 0;
+      const avgAll = activeItems.length > 0 ? personal.mUSD / activeItems.length : 0;
+      
+      // Calculate spending breakdowns
+      const dailyPersonal = personal.mUSD / 30;
+      const weeklyPersonal = personal.mUSD / 4.33;
+      const hourlyPersonal = personal.mUSD / 720;
+      
+      // Calculate potential savings
+      const annualSavings = annualItems.reduce((sum, r) => sum + (Number(r.cost || 0) * 0.1), 0);
+      
+      // Find expense patterns
+      const sortedByCost = activeItems.sort((a, b) => {
+        const aCost = a.billing === 'Monthly' ? Number(a.cost || 0) : Number(a.cost || 0) / 12;
+        const bCost = b.billing === 'Monthly' ? Number(b.cost || 0) : Number(b.cost || 0) / 12;
+        return bCost - aCost;
+      });
+      
+      const highestExpense = sortedByCost[0];
+      const lowestExpense = sortedByCost[sortedByCost.length - 1];
+      
+      // Calculate cost distribution
+      const highCostItems = activeItems.filter(item => {
+        const monthlyCost = item.billing === 'Monthly' ? Number(item.cost || 0) : Number(item.cost || 0) / 12;
+        return monthlyCost > avgAll;
+      }).length;
+      
+      const lowCostItems = activeItems.filter(item => {
+        const monthlyCost = item.billing === 'Monthly' ? Number(item.cost || 0) : Number(item.cost || 0) / 12;
+        return monthlyCost <= avgAll;
+      }).length;
+
+      // Calculate monthly vs annual spending amounts
+      const monthlySpending = monthlyItems.reduce((sum, r) => sum + Number(r.cost || 0), 0);
+      const annualSpending = annualItems.reduce((sum, r) => sum + Number(r.cost || 0) / 12, 0);
+
+      container.innerHTML = `
+        <div class="analytics-grid-4">
+          <div class="analytics-section">
+            <div class="section-title">Overview</div>
+            <div class="metric-grid">
+              <div class="metric-item">
+                <div class="metric-value">${activeItems.length}</div>
+                <div class="metric-label">Active</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${cancelledItems.length}</div>
+                <div class="metric-label">Cancelled</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="analytics-section">
+            <div class="section-title">Monthly</div>
+            <div class="metric-grid">
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(personal.mUSD)}</div>
+                <div class="metric-label">USD</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${nfINT.format(Math.round(personal.mEGP))}</div>
+                <div class="metric-label">EGP</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="analytics-section">
+            <div class="section-title">Annual</div>
+            <div class="metric-grid">
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(personal.yUSD)}</div>
+                <div class="metric-label">USD</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${nfINT.format(Math.round(personal.yEGP))}</div>
+                <div class="metric-label">EGP</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="analytics-section">
+            <div class="section-title">Daily</div>
+            <div class="metric-grid">
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(dailyPersonal)}</div>
+                <div class="metric-label">USD</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(weeklyPersonal)}</div>
+                <div class="metric-label">Weekly</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="analytics-grid-3">
+          <div class="analytics-section">
+            <div class="section-title">Billing Distribution</div>
+            <ul class="breakdown-list">
+              <li class="breakdown-item">
+                <span class="breakdown-name">Monthly (${monthlyItems.length})</span>
+                <div>
+                  <span class="breakdown-amount">${nfUSD.format(monthlySpending)}</span>
+                  <span class="breakdown-percentage">${personal.mUSD > 0 ? Math.round((monthlySpending / personal.mUSD) * 100) : 0}%</span>
+                </div>
+              </li>
+              <li class="breakdown-item">
+                <span class="breakdown-name">Annual (${annualItems.length})</span>
+                <div>
+                  <span class="breakdown-amount">${nfUSD.format(annualSpending)}</span>
+                  <span class="breakdown-percentage">${personal.mUSD > 0 ? Math.round((annualSpending / personal.mUSD) * 100) : 0}%</span>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <div class="analytics-section">
+            <div class="section-title">Expense Analysis</div>
+            <ul class="breakdown-list">
+              <li class="breakdown-item">
+                <span class="breakdown-name">High-Cost (>${nfUSD.format(avgAll)})</span>
+                <div>
+                  <span class="breakdown-amount">${highCostItems}</span>
+                  <span class="breakdown-percentage">items</span>
+                </div>
+              </li>
+              <li class="breakdown-item">
+                <span class="breakdown-name">Low-Cost (≤${nfUSD.format(avgAll)})</span>
+                <div>
+                  <span class="breakdown-amount">${lowCostItems}</span>
+                  <span class="breakdown-percentage">items</span>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <div class="analytics-section">
+            <div class="section-title">Top Expenses</div>
+            <ul class="breakdown-list">
+              ${sortedByCost.slice(0, 3).map(item => {
+                const monthlyCost = item.billing === 'Monthly' ? Number(item.cost || 0) : Number(item.cost || 0) / 12;
+                return `
+                  <li class="breakdown-item">
+                    <span class="breakdown-name">${item.name || 'Unnamed'}</span>
+                    <div>
+                      <span class="breakdown-amount">${nfUSD.format(monthlyCost)}</span>
+                      <span class="breakdown-percentage">${item.billing}</span>
+                    </div>
+                  </li>
+                `;
+              }).join('')}
+            </ul>
+          </div>
+        </div>
+
+        <div class="analytics-section">
+          <div class="section-title">Insights</div>
+          <div class="insight-card">
+            <div class="insight-text">
+              <i class="fas fa-home insight-icon"></i>
+              Avg: <strong>${nfUSD.format(avgAll)}</strong> | Monthly: <strong>${nfUSD.format(avgMonthly)}</strong> | Annual: <strong>${nfUSD.format(avgAnnual)}</strong>
+              ${highestExpense ? ` | Highest: <strong>${highestExpense.name || 'Unnamed'}</strong>` : ''}
+              ${annualSavings > 0 ? ` | Savings: <strong>${nfUSD.format(annualSavings)}</strong>` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function updateBizAnalytics(biz) {
+      const container = document.getElementById('analyticsBiz');
+      if (!container) return;
+
+      const activeItems = state.biz.filter(r => r.status === 'Active');
+      const monthlyItems = activeItems.filter(r => r.billing === 'Monthly');
+      const annualItems = activeItems.filter(r => r.billing === 'Annually');
+      const cancelledItems = state.biz.filter(r => r.status === 'Cancelled');
+      
+      // Calculate detailed metrics
+      const avgMonthly = monthlyItems.length > 0 ? monthlyItems.reduce((sum, r) => sum + Number(r.cost || 0), 0) / monthlyItems.length : 0;
+      const avgAnnual = annualItems.length > 0 ? annualItems.reduce((sum, r) => sum + Number(r.cost || 0), 0) / annualItems.length : 0;
+      const avgAll = activeItems.length > 0 ? biz.mUSD / activeItems.length : 0;
+      
+      // Calculate daily and weekly business spending
+      const dailyBiz = biz.mUSD / 30;
+      const weeklyBiz = biz.mUSD / 4.33;
+      
+      // Calculate potential savings from annual discounts
+      const annualSavings = annualItems.reduce((sum, r) => sum + (Number(r.cost || 0) * 0.1), 0);
+      
+      // Find upcoming renewals (within 30 days)
+      const upcomingRenewals = activeItems.filter(item => {
+        if (!item.next) return false;
+        const nextDate = new Date(item.next);
+        const today = new Date();
+        const diffTime = nextDate - today;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays >= 0 && diffDays <= 30;
+      });
+      
+      // Find renewals due in next 7 days (urgent)
+      const urgentRenewals = activeItems.filter(item => {
+        if (!item.next) return false;
+        const nextDate = new Date(item.next);
+        const today = new Date();
+        const diffTime = nextDate - today;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays >= 0 && diffDays <= 7;
+      });
+      
+      // Find highest and lowest expenses
+      const sortedByCost = activeItems.sort((a, b) => {
+        const aCost = a.billing === 'Monthly' ? Number(a.cost || 0) : Number(a.cost || 0) / 12;
+        const bCost = b.billing === 'Monthly' ? Number(b.cost || 0) : Number(b.cost || 0) / 12;
+        return bCost - aCost;
+      });
+      
+      const highestExpense = sortedByCost[0];
+      
+      // Calculate cost distribution
+      const highCostItems = activeItems.filter(item => {
+        const monthlyCost = item.billing === 'Monthly' ? Number(item.cost || 0) : Number(item.cost || 0) / 12;
+        return monthlyCost > avgAll;
+      }).length;
+      
+      const lowCostItems = activeItems.filter(item => {
+        const monthlyCost = item.billing === 'Monthly' ? Number(item.cost || 0) : Number(item.cost || 0) / 12;
+        return monthlyCost <= avgAll;
+      }).length;
+      
+      // Calculate total upcoming renewal costs
+      const upcomingRenewalCosts = upcomingRenewals.reduce((sum, item) => {
+        return sum + Number(item.cost || 0);
+      }, 0);
+
+      container.innerHTML = `
+        <div class="analytics-grid-4">
+          <div class="analytics-section">
+            <div class="section-title">Overview</div>
+            <div class="metric-grid">
+              <div class="metric-item">
+                <div class="metric-value">${activeItems.length}</div>
+                <div class="metric-label">Active</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${cancelledItems.length}</div>
+                <div class="metric-label">Cancelled</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="analytics-section">
+            <div class="section-title">Monthly</div>
+            <div class="metric-grid">
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(biz.mUSD)}</div>
+                <div class="metric-label">USD</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${nfINT.format(Math.round(biz.mEGP))}</div>
+                <div class="metric-label">EGP</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="analytics-section">
+            <div class="section-title">Annual</div>
+            <div class="metric-grid">
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(biz.yUSD)}</div>
+                <div class="metric-label">USD</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${nfINT.format(Math.round(biz.yEGP))}</div>
+                <div class="metric-label">EGP</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="analytics-section">
+            <div class="section-title">Daily</div>
+            <div class="metric-grid">
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(dailyBiz)}</div>
+                <div class="metric-label">USD</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(weeklyBiz)}</div>
+                <div class="metric-label">Weekly</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="analytics-grid-3">
+          <div class="analytics-section">
+            <div class="section-title">Billing Distribution</div>
+            <ul class="breakdown-list">
+              <li class="breakdown-item">
+                <span class="breakdown-name">Monthly (${monthlyItems.length})</span>
+                <div>
+                  <span class="breakdown-amount">${nfUSD.format(monthlyItems.reduce((sum, r) => sum + Number(r.cost || 0), 0))}</span>
+                  <span class="breakdown-percentage">${biz.mUSD > 0 ? Math.round((monthlyItems.reduce((sum, r) => sum + Number(r.cost || 0), 0) / biz.mUSD) * 100) : 0}%</span>
+                </div>
+              </li>
+              <li class="breakdown-item">
+                <span class="breakdown-name">Annual (${annualItems.length})</span>
+                <div>
+                  <span class="breakdown-amount">${nfUSD.format(annualItems.reduce((sum, r) => sum + Number(r.cost || 0) / 12, 0))}</span>
+                  <span class="breakdown-percentage">${biz.mUSD > 0 ? Math.round((annualItems.reduce((sum, r) => sum + Number(r.cost || 0) / 12, 0) / biz.mUSD) * 100) : 0}%</span>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <div class="analytics-section">
+            <div class="section-title">Expense Analysis</div>
+            <ul class="breakdown-list">
+              <li class="breakdown-item">
+                <span class="breakdown-name">High-Cost (>${nfUSD.format(avgAll)})</span>
+                <div>
+                  <span class="breakdown-amount">${highCostItems}</span>
+                  <span class="breakdown-percentage">items</span>
+                </div>
+              </li>
+              <li class="breakdown-item">
+                <span class="breakdown-name">Low-Cost (≤${nfUSD.format(avgAll)})</span>
+                <div>
+                  <span class="breakdown-amount">${lowCostItems}</span>
+                  <span class="breakdown-percentage">items</span>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <div class="analytics-section">
+            <div class="section-title">Top Expenses</div>
+            <ul class="breakdown-list">
+              ${sortedByCost.slice(0, 3).map(item => {
+                const monthlyCost = item.billing === 'Monthly' ? Number(item.cost || 0) : Number(item.cost || 0) / 12;
+                return `
+                  <li class="breakdown-item">
+                    <span class="breakdown-name">${item.name || 'Unnamed'}</span>
+                    <div>
+                      <span class="breakdown-amount">${nfUSD.format(monthlyCost)}</span>
+                      <span class="breakdown-percentage">${item.billing}</span>
+                    </div>
+                  </li>
+                `;
+              }).join('')}
+            </ul>
+          </div>
+        </div>
+
+        ${upcomingRenewals.length > 0 ? `
+        <div class="analytics-section">
+          <div class="section-title">Upcoming Renewals</div>
+          <ul class="breakdown-list">
+            ${upcomingRenewals.slice(0, 3).map(item => {
+              const nextDate = new Date(item.next);
+              const today = new Date();
+              const diffTime = nextDate - today;
+              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+              return `
+                <li class="breakdown-item">
+                  <span class="breakdown-name">${item.name || 'Unnamed'}</span>
+                  <div>
+                    <span class="breakdown-amount">${nfUSD.format(Number(item.cost || 0))}</span>
+                    <span class="breakdown-percentage">${diffDays} days</span>
+                  </div>
+                </li>
+              `;
+            }).join('')}
+          </ul>
+        </div>
+        ` : ''}
+
+        <div class="analytics-section">
+          <div class="section-title">Insights</div>
+          <div class="insight-card">
+            <div class="insight-text">
+              <i class="fas fa-briefcase insight-icon"></i>
+              Avg: <strong>${nfUSD.format(avgAll)}</strong> | Monthly: <strong>${nfUSD.format(avgMonthly)}</strong> | Annual: <strong>${nfUSD.format(avgAnnual)}</strong>
+              ${highestExpense ? ` | Highest: <strong>${highestExpense.name || 'Unnamed'}</strong>` : ''}
+              ${upcomingRenewals.length > 0 ? ` | Renewals: <strong>${upcomingRenewals.length}</strong> (${nfUSD.format(upcomingRenewalCosts)})` : ''}
+              ${annualSavings > 0 ? ` | Savings: <strong>${nfUSD.format(annualSavings)}</strong>` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    }
 
     // Icon Picker
     const iconPickerEl = document.getElementById('iconPicker');
@@ -1003,8 +2033,44 @@
 
     let FONTAWESOME_ICONS = [];
     let faLoaded = false;
-    const ICON_CACHE_KEY = 'finance-icon-cache-fontawesome-v2';
+    const ICON_CACHE_KEY = 'finance-icon-cache-fontawesome-v3';
+    const CUSTOM_ICONS_KEY = 'finance-custom-icons-v1';
+    let customIcons = [];
     let currentStyle = 'solid'; // 'solid' or 'regular'
+
+    // Load custom icons from localStorage
+    function loadCustomIcons() {
+      try {
+        const stored = localStorage.getItem(CUSTOM_ICONS_KEY);
+        if (stored) {
+          customIcons = JSON.parse(stored);
+        }
+      } catch (e) {
+        customIcons = [];
+      }
+    }
+
+    // Save custom icons to localStorage
+    function saveCustomIcons() {
+      try {
+        localStorage.setItem(CUSTOM_ICONS_KEY, JSON.stringify(customIcons));
+      } catch (e) {
+        console.error('Failed to save custom icons:', e);
+      }
+    }
+
+    // Add custom icon
+    function addCustomIcon(iconData, type, name) {
+      const customIcon = {
+        id: Date.now().toString(),
+        data: iconData,
+        type: type, // 'image' or 'glyph'
+        name: name || `Custom ${type}`,
+        dateAdded: new Date().toISOString()
+      };
+      customIcons.push(customIcon);
+      saveCustomIcons();
+    }
 
     async function ensureFontAwesomeLoaded(){
       if(faLoaded && FONTAWESOME_ICONS.length) return;
@@ -1017,7 +2083,7 @@
           return;
         }
         
-        // Get only VERIFIED WORKING icons (tested and confirmed)
+        // Get only VERIFIED WORKING icons (tested and confirmed for Font Awesome 7.0.0)
         const curatedIcons = [
           // Personal icons (VERIFIED SOLID)
           'home','user','heart','star','gift','coffee','book','music','camera','car','plane','bus','shopping-cart','wallet','credit-card','calendar','clock','phone','envelope','utensils','bed','laptop','headphones','gamepad','tree','sun','moon','cloud','fire','bolt','shield','lock','key','search','download','upload','share','edit','trash','plus','minus','check','times','arrow-right','arrow-left','arrow-up','arrow-down','eye','bookmark','flag','thumbs-up','smile','comment','bell','cog','wrench','image','video','play','pause','stop','save','folder','file',
@@ -1025,8 +2091,8 @@
           // Business icons (VERIFIED SOLID)
           'briefcase','building','chart-line','chart-bar','chart-pie','calculator','coins','university','store','truck','box','clipboard','list','calendar-check','server','database','sync','users','handshake','target','trophy','award','graduation-cap','archive','inbox','paper-plane','print','expand','compress','check-circle','exclamation-circle','question-circle','info-circle','ban','unlock','sort','th-list','th','table','square','circle','equals','divide','percentage','compass','triangle',
           
-          // Brand icons (VERIFIED BRANDS)
-          'amazon','apple','google','microsoft','facebook','twitter','instagram','linkedin','youtube','github','reddit','discord','slack','telegram','whatsapp','dropbox','stripe','paypal','visa','mastercard','bitcoin','dribbble','behance','figma','trello','wordpress','medium','chrome','firefox','android','spotify','netflix','adobe','shopify','wix','zoom','skype','docker','aws','gitlab','bitbucket','stackoverflow','codepen','npm','node-js','react','vue','angular','html5','css3','js','python','java','git'
+          // Brand icons (VERIFIED BRANDS for FA 7.0.0)
+          'amazon','apple','google','microsoft','facebook','twitter','instagram','linkedin','youtube','github','reddit','discord','slack','telegram','whatsapp','dropbox','stripe','paypal','visa','mastercard','bitcoin','dribbble','behance','figma','trello','wordpress','medium','chrome','firefox','android','spotify','netflix','adobe','shopify','wix','zoom','skype','docker','aws','gitlab','bitbucket','stackoverflow','codepen','npm','node-js','react','vue','angular','html5','css3','js','python','java','git','webflow'
         ];
         
         FONTAWESOME_ICONS = curatedIcons.map(name => `fa:${name}`);
@@ -1043,15 +2109,19 @@
       const q = (filter||'').trim().toLowerCase();
       iconGridEl.innerHTML = '';
       
-      let items = FONTAWESOME_ICONS;
+      let items = [];
       
       // Filter by category
-      if(category === 'personal'){
-        items = items.filter(n => ['home','user','heart','star','gift','coffee','book','music','camera','tv','car','plane','train','bus','shopping','wallet','calendar','phone','envelope','utensils','bed','laptop','mobile','headphones','gamepad','football','tree','leaf','sun','moon','cloud','umbrella','fire','bolt','shield','lock','key','search','filter','download','upload','share','copy','edit','trash','plus','minus','check','times','arrow','eye','bookmark','flag','thumbs','smile','comment','bell','cog','tools','paint','image','video','film','microphone','volume','play','pause','stop','forward','backward','random','repeat','refresh','sync','undo','redo','save','folder','file'].some(keyword => n.includes(keyword)));
+      if(category === 'custom'){
+        items = customIcons.map(icon => `custom:${icon.id}`);
+      } else if(category === 'personal'){
+        items = FONTAWESOME_ICONS.filter(n => ['home','user','heart','star','gift','coffee','book','music','camera','tv','car','plane','train','bus','shopping','wallet','calendar','phone','envelope','utensils','bed','laptop','mobile','headphones','gamepad','football','tree','leaf','sun','moon','cloud','umbrella','fire','bolt','shield','lock','key','search','filter','download','upload','share','copy','edit','trash','plus','minus','check','times','arrow','eye','bookmark','flag','thumbs','smile','comment','bell','cog','tools','paint','image','video','film','microphone','volume','play','pause','stop','forward','backward','random','repeat','refresh','sync','undo','redo','save','folder','file'].some(keyword => n.includes(keyword)));
       } else if(category === 'business'){
-        items = items.filter(n => ['briefcase','building','chart','calculator','file','receipt','money','coins','credit','university','store','warehouse','factory','truck','shipping','box','package','clipboard','list','check','calendar','clock','network','server','database','cloud','sync','cogs','wrench','hammer','tools','project','users','handshake','bullhorn','target','flag','trophy','medal','award','certificate','diploma','graduation','folder','archive','inbox','mail','phone','print','save','undo','redo','expand','compress','window','times','exclamation','question','info','ban','unlock','eye','sort','table','border','square','circle','ellipsis','equal','divide','percentage','trending','line','bar','pie','area','scatter','bubble','radar','polar','doughnut','gauge','speedometer','thermometer','compass','ruler','protractor','triangle','pentagon','hexagon','octagon','diamond','rhombus','trapezoid','parallelogram','kite'].some(keyword => n.includes(keyword)));
+        items = FONTAWESOME_ICONS.filter(n => ['briefcase','building','chart','calculator','file','receipt','money','coins','credit','university','store','warehouse','factory','truck','shipping','box','package','clipboard','list','check','calendar','clock','network','server','database','cloud','sync','cogs','wrench','hammer','tools','project','users','handshake','bullhorn','target','flag','trophy','medal','award','certificate','diploma','graduation','folder','archive','inbox','mail','phone','print','save','undo','redo','expand','compress','window','times','exclamation','question','info','ban','unlock','eye','sort','table','border','square','circle','ellipsis','equal','divide','percentage','trending','line','bar','pie','area','scatter','bubble','radar','polar','doughnut','gauge','speedometer','thermometer','compass','ruler','protractor','triangle','pentagon','hexagon','octagon','diamond','rhombus','trapezoid','parallelogram','kite'].some(keyword => n.includes(keyword)));
       } else if(category === 'brands'){
-        items = items.filter(n => ['amazon','apple','google','microsoft','facebook','twitter','instagram','linkedin','youtube','github','reddit','discord','slack','telegram','whatsapp','dropbox','stripe','paypal','visa','mastercard','bitcoin','dribbble','behance','figma','trello','wordpress','medium','chrome','firefox','android','spotify','netflix','adobe','shopify','wix','zoom','skype','docker','aws','gitlab','bitbucket','stackoverflow','codepen','npm','node-js','react','vue','angular','html5','css3','js','python','java','git'].some(keyword => n.includes(keyword)));
+        items = FONTAWESOME_ICONS.filter(n => ['amazon','apple','google','microsoft','facebook','twitter','instagram','linkedin','youtube','github','reddit','discord','slack','telegram','whatsapp','dropbox','stripe','paypal','visa','mastercard','bitcoin','dribbble','behance','figma','trello','wordpress','medium','chrome','firefox','android','spotify','netflix','adobe','shopify','wix','zoom','skype','docker','aws','gitlab','bitbucket','stackoverflow','codepen','npm','node-js','react','vue','angular','html5','css3','js','python','java','git','webflow'].some(keyword => n.includes(keyword)));
+      } else {
+        items = FONTAWESOME_ICONS;
       }
       
       // Apply search filter
@@ -1073,16 +2143,41 @@
         btn.className = 'icon-tile';
         btn.setAttribute('data-icon', name);
         
+        // Handle custom icons
+        if(name.startsWith('custom:')){
+          const customId = name.replace('custom:', '');
+          const customIcon = customIcons.find(icon => icon.id === customId);
+          if(customIcon){
+            if(customIcon.type === 'image'){
+              btn.innerHTML = `<img src="${customIcon.data}" />`;
+            } else if(customIcon.type === 'glyph'){
+              btn.innerHTML = `<i class="fa-solid" style="font-family:'Font Awesome 7 Free'; color:inherit;">&#x${customIcon.data};</i>`;
+            }
+          }
+        } else {
         // Use appropriate style - brands use fa-brands, others use fa-solid
         const iconName = name.replace('fa:', '');
-        const isBrand = ['amazon','apple','google','microsoft','facebook','twitter','instagram','linkedin','youtube','github','reddit','discord','slack','telegram','whatsapp','dropbox','stripe','paypal','visa','mastercard','bitcoin','dribbble','behance','figma','trello','wordpress','medium','chrome','firefox','android','spotify','netflix','adobe','shopify','wix','zoom','skype','docker','aws','gitlab','bitbucket','stackoverflow','codepen','npm','node-js','react','vue','angular','html5','css3','js','python','java','git'].includes(iconName);
+          const isBrand = ['amazon','apple','google','microsoft','facebook','twitter','instagram','linkedin','youtube','github','reddit','discord','slack','telegram','whatsapp','dropbox','stripe','paypal','visa','mastercard','bitcoin','dribbble','behance','figma','trello','wordpress','medium','chrome','firefox','android','spotify','netflix','adobe','shopify','wix','zoom','skype','docker','aws','gitlab','bitbucket','stackoverflow','codepen','npm','node-js','react','vue','angular','html5','css3','js','python','java','git','webflow'].includes(iconName);
         const iconClass = isBrand ? 'fa-brands' : 'fa-solid';
         btn.innerHTML = `<i class="${iconClass} fa-${iconName}" style="color:inherit;"></i>`;
+        }
         
         btn.addEventListener('click', ()=>{
           if(!iconPickCtx) return;
           const { arr, idx } = iconPickCtx;
+          if(name.startsWith('custom:')){
+            const customId = name.replace('custom:', '');
+            const customIcon = customIcons.find(icon => icon.id === customId);
+            if(customIcon){
+              if(customIcon.type === 'image'){
+                arr[idx].icon = `custom-image:${customIcon.data}`;
+              } else if(customIcon.type === 'glyph'){
+                arr[idx].icon = `fa-glyph:${customIcon.data}`;
+              }
+            }
+          } else {
           arr[idx].icon = name;
+          }
           save();
           iconPickerEl.close();
           iconPickCtx = null;
@@ -1114,7 +2209,52 @@
       if(unicode.length >= 4){
         if(!iconPickCtx) return;
         const { arr, idx } = iconPickCtx;
-        arr[idx].icon = `fa-glyph:${unicode}`;
+        const cleanUnicode = unicode.replace(/^\\u/, '');
+        arr[idx].icon = `fa-glyph:${cleanUnicode}`;
+        
+        // Add to custom icons
+        addCustomIcon(cleanUnicode, 'glyph', `Glyph ${cleanUnicode}`);
+        
+        save();
+        iconPickerEl.close();
+        iconPickCtx = null;
+        renderAll();
+      }
+    });
+    
+    // Custom image upload functionality
+    let customImageData = null;
+    
+    document.getElementById('uploadCustomImage').addEventListener('click', ()=>{
+      document.getElementById('customImageInput').click();
+    });
+    
+    document.getElementById('customImageInput').addEventListener('change', (e)=>{
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = (e)=>{
+        customImageData = e.target.result;
+        const imagePreview = document.getElementById('imagePreview');
+        const applyBtn = document.getElementById('applyCustomImage');
+        
+        // Show preview
+        imagePreview.innerHTML = `<img src="${customImageData}" style="width:16px; height:16px; object-fit:contain; filter: invert(1);" />`;
+        
+        applyBtn.disabled = false;
+      };
+      reader.readAsDataURL(file);
+    });
+    
+    document.getElementById('applyCustomImage').addEventListener('click', ()=>{
+      if (customImageData && iconPickCtx) {
+        const { arr, idx } = iconPickCtx;
+        arr[idx].icon = `custom-image:${customImageData}`;
+        
+        // Add to custom icons
+        addCustomIcon(customImageData, 'image', 'Custom Image');
+        
         save();
         iconPickerEl.close();
         iconPickCtx = null;
@@ -1127,8 +2267,10 @@
     document.getElementById('glyphInput').addEventListener('input', (e)=>{
       const unicode = e.target.value.trim();
       if(unicode.length >= 4){
-        // Show preview
-        glyphPreview.innerHTML = `<i class="fa-solid" style="font-family:'Font Awesome 6 Free';">&#x${unicode};</i>`;
+        // Show preview - try different unicode formats
+        const unicodeValue = unicode.startsWith('\\u') ? unicode : `\\u${unicode}`;
+        const unicodeDecoded = unicodeValue.replace('\\u', '');
+        glyphPreview.innerHTML = `<i class="fa-solid" style="font-family:'Font Awesome 7 Free'; font-size:16px;">&#x${unicodeDecoded};</i>`;
       } else {
         glyphPreview.innerHTML = '';
       }
@@ -1140,7 +2282,8 @@
         if(unicode.length >= 4){
           if(!iconPickCtx) return;
           const { arr, idx } = iconPickCtx;
-          arr[idx].icon = `fa-glyph:${unicode}`;
+          const cleanUnicode = unicode.replace(/^\\u/, '');
+          arr[idx].icon = `fa-glyph:${cleanUnicode}`;
           save();
           iconPickerEl.close();
           iconPickCtx = null;
@@ -1158,6 +2301,14 @@
       document.querySelector('[data-tab="all"]').classList.add('active');
       document.getElementById('glyphInput').value = '';
       document.getElementById('glyphPreview').innerHTML = '';
+      document.getElementById('customImageInput').value = '';
+      document.getElementById('imagePreview').innerHTML = '';
+      document.getElementById('applyCustomImage').disabled = true;
+      customImageData = null;
+      
+      // Load custom icons
+      loadCustomIcons();
+      
       ensureFontAwesomeLoaded().then(()=>{ renderIconPicker('', 'all'); iconPickerEl.showModal(); });
     }
 
@@ -1165,16 +2316,29 @@
       const wrap=document.getElementById(containerId); wrap.innerHTML='';
       arr.forEach((row,idx)=>{
         const mUSD=rowMonthlyUSD(row), yUSD=rowYearlyUSD(row), mEGP=usdToEgp(mUSD), yEGP=usdToEgp(yUSD);
-        const div=document.createElement('div'); div.className=isBiz?'row row-biz':'row';
+        const div=document.createElement('div'); 
+        div.className=isBiz?'row row-biz row-draggable row-drop-zone':'row row-draggable row-drop-zone';
+        div.setAttribute('data-row-index', idx);
+        div.setAttribute('draggable', 'true');
+        
+        // drag handle cell
+        const dragHandleDiv=document.createElement('div'); 
+        dragHandleDiv.className='drag-handle';
+        dragHandleDiv.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4"><path d="M8 6h8M8 12h8M8 18h8"/></svg>';
+        dragHandleDiv.title='Drag to reorder';
+        
         // icon cell
         const iconName = row.icon || (isBiz ? 'fa:briefcase' : 'fa:shopping-cart');
         let iconHTML = '';
-        if(iconName.startsWith('fa-glyph:')){
+        if(iconName.startsWith('custom-image:')){
+          const imageData = iconName.replace('custom-image:', '');
+          iconHTML = `<img src="${imageData}" />`;
+        } else if(iconName.startsWith('fa-glyph:')){
           const unicode = iconName.replace('fa-glyph:', '');
-          iconHTML = `<i class="fa-solid" style="font-family:'Font Awesome 6 Free'; color:inherit;">&#x${unicode};</i>`;
+          iconHTML = `<i class="fa-solid" style="font-family:'Font Awesome 7 Free'; color:inherit;">&#x${unicode};</i>`;
         } else {
           const cleanIconName = iconName.replace(/^(fa-solid|fa-regular|fa:)/, '');
-          const isBrand = ['amazon','apple','google','microsoft','facebook','twitter','instagram','linkedin','youtube','github','reddit','discord','slack','telegram','whatsapp','dropbox','stripe','paypal','visa','mastercard','bitcoin','dribbble','behance','figma','trello','wordpress','medium','chrome','firefox','android','spotify','netflix','adobe','shopify','wix','zoom','skype','docker','aws','gitlab','bitbucket','stackoverflow','codepen','npm','node-js','react','vue','angular','html5','css3','js','python','java','git'].includes(cleanIconName);
+          const isBrand = ['amazon','apple','google','microsoft','facebook','twitter','instagram','linkedin','youtube','github','reddit','discord','slack','telegram','whatsapp','dropbox','stripe','paypal','visa','mastercard','bitcoin','dribbble','behance','figma','trello','wordpress','medium','chrome','firefox','android','spotify','netflix','adobe','shopify','wix','zoom','skype','docker','aws','gitlab','bitbucket','stackoverflow','codepen','npm','node-js','react','vue','angular','html5','css3','js','python','java','git','webflow'].includes(cleanIconName);
           const iconClass = isBrand ? 'fa-brands' : 'fa-solid';
           iconHTML = `<i class="${iconClass} fa-${cleanIconName}" style="color:inherit;"></i>`;
         }
@@ -1183,21 +2347,145 @@
           ${iconHTML}\
         </button>`;
         // name & inputs
-        const nameDiv=document.createElement('div'); nameDiv.innerHTML='<input class="input" type="text" value="'+(row.name||'')+'" placeholder="Item name" />';
-        const costDiv=document.createElement('div'); costDiv.innerHTML='<div class="cost-input-wrapper"><input class="input cost-input" type="number" step="0.01" value="'+(row.cost||0)+'" /></div>';
-        const statusDiv=document.createElement('div'); statusDiv.innerHTML='<div class="select-wrap"><select class="select status-'+(row.status==='Active'?'active':'cancelled')+'"><option value="Active" '+(row.status==='Active'?'selected':'')+'>Active</option><option value="Cancelled" '+(row.status==='Cancelled'?'selected':'')+'>Cancelled</option></select></div>';
-        const billingDiv=document.createElement('div'); billingDiv.innerHTML='<div class="select-wrap"><select class="select"><option '+(row.billing==='Monthly'?'selected':'')+'>Monthly</option><option '+(row.billing==='Annually'?'selected':'')+'>Annually</option></select></div>';
-        div.append(iconDiv,nameDiv,costDiv,statusDiv,billingDiv);
-        if(isBiz){ const dateDiv=document.createElement('div'); dateDiv.innerHTML='<input class="input" type="date" value="'+(row.next||'')+'" />'; div.appendChild(dateDiv); }
-        // computed columns
-        const mUSDd=document.createElement('div'); mUSDd.className='text-sm'; mUSDd.textContent=nfUSD.format(mUSD);
-        const yUSDd=document.createElement('div'); yUSDd.className='text-sm'; yUSDd.textContent=nfUSD.format(yUSD);
-        const mEGPd=document.createElement('div'); mEGPd.className='text-sm'; mEGPd.textContent='EGP '+nfINT.format(Math.round(mEGP));
-        const yEGPd=document.createElement('div'); yEGPd.className='text-sm'; yEGPd.textContent='EGP '+nfINT.format(Math.round(yEGP));
+         const nameDiv=document.createElement('div'); 
+         const nameInput = document.createElement('input');
+         nameInput.className = 'input';
+         nameInput.type = 'text';
+         nameInput.value = row.name || '';
+         nameInput.placeholder = 'Item name';
+         nameInput.addEventListener('input', function() {
+           row.name = this.value;
+           save();
+         });
+         nameDiv.appendChild(nameInput);
+         
+         const costDiv=document.createElement('div'); 
+         const costInput = document.createElement('input');
+         costInput.className = 'input cost-input';
+         costInput.type = 'number';
+         costInput.step = '1';
+         costInput.value = Math.round(row.cost) || 0;
+         costInput.addEventListener('input', function() {
+           const newCost = Math.round(parseFloat(this.value)) || 0;
+           row.cost = newCost;
+           save();
+           // Update only the calculated values in this row, not the entire table
+           updateRowCalculations(div, row, isBiz);
+         });
+         costDiv.innerHTML = '<div class="cost-input-wrapper"></div>';
+         costDiv.querySelector('.cost-input-wrapper').appendChild(costInput);
+         
+         const statusDiv=document.createElement('div'); 
+         const statusSelect = document.createElement('select');
+         statusSelect.className = 'select status-' + (row.status === 'Active' ? 'active' : 'cancelled');
+         
+         const activeOption = document.createElement('option');
+         activeOption.value = 'Active';
+         activeOption.textContent = 'Active';
+         if (row.status === 'Active') activeOption.selected = true;
+         
+         const cancelledOption = document.createElement('option');
+         cancelledOption.value = 'Cancelled';
+         cancelledOption.textContent = 'Cancelled';
+         if (row.status === 'Cancelled') cancelledOption.selected = true;
+         
+         statusSelect.appendChild(activeOption);
+         statusSelect.appendChild(cancelledOption);
+         statusSelect.addEventListener('change', function() {
+           row.status = this.value;
+           this.className = 'select status-' + (this.value === 'Active' ? 'active' : 'cancelled');
+           save();
+           updateRowCalculations(div, row, isBiz);
+           renderKPIs(); // Update KPIs since status affects totals
+         });
+         
+         const statusWrap = document.createElement('div');
+         statusWrap.className = 'select-wrap';
+         statusWrap.appendChild(statusSelect);
+         statusDiv.appendChild(statusWrap);
+         
+         const billingDiv=document.createElement('div'); 
+         const billingSelect = document.createElement('select');
+         billingSelect.className = 'select';
+         
+         const monthlyOption = document.createElement('option');
+         monthlyOption.value = 'Monthly';
+         monthlyOption.textContent = 'Monthly';
+         if (row.billing === 'Monthly') monthlyOption.selected = true;
+         
+         const annuallyOption = document.createElement('option');
+         annuallyOption.value = 'Annually';
+         annuallyOption.textContent = 'Annually';
+         if (row.billing === 'Annually') annuallyOption.selected = true;
+         
+         billingSelect.appendChild(monthlyOption);
+         billingSelect.appendChild(annuallyOption);
+         billingSelect.addEventListener('change', function() {
+           row.billing = this.value;
+           save();
+           updateRowCalculations(div, row, isBiz);
+           renderKPIs(); // Update KPIs since billing affects calculations
+         });
+         
+         const selectWrap = document.createElement('div');
+         selectWrap.className = 'select-wrap';
+         selectWrap.appendChild(billingSelect);
+         billingDiv.appendChild(selectWrap);
+        div.append(dragHandleDiv,iconDiv,nameDiv,costDiv,statusDiv,billingDiv);
+        if(isBiz){ 
+          const dateDiv=document.createElement('div'); 
+          const dateInput = document.createElement('input');
+          dateInput.className = 'input';
+          dateInput.type = 'date';
+          dateInput.value = row.next || '';
+          dateInput.addEventListener('change', function() {
+            row.next = this.value;
+            save();
+            renderKPIs(); // Update KPIs for renewal analytics
+          });
+          dateDiv.appendChild(dateInput);
+          div.appendChild(dateDiv); 
+        }
+        // computed columns - all editable with clean formatting
+        const mUSDd=document.createElement('div'); 
+        mUSDd.className='text-sm editable-value'; 
+        mUSDd.textContent='$' + Math.round(mUSD).toLocaleString();
+        mUSDd.setAttribute('data-field', 'monthlyUSD');
+        mUSDd.setAttribute('data-row-index', idx);
+        mUSDd.setAttribute('data-type', 'usd');
+        mUSDd.setAttribute('data-original', Math.round(mUSD));
+        mUSDd.addEventListener('click', function() { makeEditable(this, row, isBiz, div); });
+        
+        const yUSDd=document.createElement('div'); 
+        yUSDd.className='text-sm editable-value'; 
+        yUSDd.textContent='$' + Math.round(yUSD).toLocaleString();
+        yUSDd.setAttribute('data-field', 'yearlyUSD');
+        yUSDd.setAttribute('data-row-index', idx);
+        yUSDd.setAttribute('data-type', 'usd');
+        yUSDd.setAttribute('data-original', Math.round(yUSD));
+        yUSDd.addEventListener('click', function() { makeEditable(this, row, isBiz, div); });
+        
+        const mEGPd=document.createElement('div'); 
+        mEGPd.className='text-sm editable-value'; 
+        mEGPd.textContent='EGP ' + Math.round(mEGP).toLocaleString();
+        mEGPd.setAttribute('data-field', 'monthlyEGP');
+        mEGPd.setAttribute('data-row-index', idx);
+        mEGPd.setAttribute('data-type', 'egp');
+        mEGPd.setAttribute('data-original', Math.round(mEGP));
+        mEGPd.addEventListener('click', function() { makeEditable(this, row, isBiz, div); });
+        
+        const yEGPd=document.createElement('div'); 
+        yEGPd.className='text-sm editable-value'; 
+        yEGPd.textContent='EGP ' + Math.round(yEGP).toLocaleString();
+        yEGPd.setAttribute('data-field', 'yearlyEGP');
+        yEGPd.setAttribute('data-row-index', idx);
+        yEGPd.setAttribute('data-type', 'egp');
+        yEGPd.setAttribute('data-original', Math.round(yEGP));
+        yEGPd.addEventListener('click', function() { makeEditable(this, row, isBiz, div); });
         div.append(mUSDd,yUSDd,mEGPd,yEGPd);
         // delete
         const del=document.createElement('div'); 
-        del.innerHTML='<button class="btn btn-ghost" data-del aria-label="Delete" style="border:none;">\
+        del.innerHTML='<button class="delete-btn" data-del aria-label="Delete">\
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4"><path d="M7 9h10M9 9v8m6-8v8M5 6h14l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6Zm3-3h8l1 3H7l1-3Z"/></svg></button>';
         div.appendChild(del);
 
@@ -1243,6 +2531,8 @@
       const sumEl=document.getElementById(containerId==='list-personal'?'sum-personal':'sum-biz');
       const t=totals(arr);
       let sumHTML='';
+      // drag handle column
+      sumHTML += '<div></div>';
       // icon column (present for both personal and biz)
       sumHTML += '<div></div>';
       // label
@@ -1274,13 +2564,14 @@
   }
 
   function updateGridTemplate() {
-    // Simple grid template update - no complex column reordering needed
-    const personalTemplate = '32px 1.5fr .8fr .8fr .8fr 1fr 1fr 1fr 1fr 32px';
+    // For Personal table (no Next column)
+    const personalTemplate = `24px 32px 1.5fr .8fr .8fr .8fr ${columnOrder.map(() => '1fr').join(' ')} 32px`;
     document.querySelectorAll('.row:not(.row-biz)').forEach(row => {
       row.style.gridTemplateColumns = personalTemplate;
     });
     
-    const bizTemplate = '32px 1.4fr .8fr .8fr .8fr .8fr .9fr .9fr .9fr .9fr 32px';
+    // For Biz table (with Next column)
+    const bizTemplate = `24px 32px 1.4fr .8fr .8fr .8fr .8fr ${columnOrder.map(() => '.9fr').join(' ')} 32px`;
     document.querySelectorAll('.row-biz').forEach(row => {
       row.style.gridTemplateColumns = bizTemplate;
     });
@@ -1290,20 +2581,282 @@
     $('#btnSettings').addEventListener('click', ()=>{ 
       $('#inputFx').value = state.fx; 
       $('#inputAutosave').value = state.autosave||'on'; 
+      $('#inputIncludeAnnual').value = state.includeAnnualInMonthly ? 'true' : 'false';
       $('#inputDeleteConfirm').value = '';
       $('#btnDeleteAll').disabled = true;
       $('#settings').showModal(); 
     });
+    
+    // Click outside to close modal
+    $('#settings').addEventListener('click', (e) => {
+      if (e.target === $('#settings')) {
+        $('#settings').close();
+      }
+    });
+    // Real-time exchange rate updates
+    $('#inputFx').addEventListener('input', function() {
+      state.fx = Number(this.value) || state.fx;
+      save();
+      renderAll(); // Re-render to update all EGP calculations
+    });
+    
     $('#btnSaveSettings').addEventListener('click', (e)=>{ 
       e.preventDefault(); 
       state.fx = Number($('#inputFx').value||state.fx); 
       state.autosave = $('#inputAutosave').value; 
+      state.includeAnnualInMonthly = $('#inputIncludeAnnual').value === 'true';
       updateAutosaveStatus();
       save(); 
       renderAll(); 
       $('#settings').close(); 
     });
     
+    // Update only the calculated values in a specific row
+    function updateRowCalculations(rowElement, row, isBiz) {
+      const mUSD = rowMonthlyUSD(row);
+      const yUSD = rowYearlyUSD(row);
+      const mEGP = mUSD * state.fx;
+      const yEGP = yUSD * state.fx;
+      
+      // Update the calculated columns in this row
+      const calculatedDivs = rowElement.querySelectorAll('.text-sm');
+      if (calculatedDivs.length >= 4) {
+        // Monthly USD - round to whole number
+        calculatedDivs[0].textContent = '$' + Math.round(mUSD).toLocaleString();
+        calculatedDivs[0].setAttribute('data-original', Math.round(mUSD));
+        
+        // Yearly USD - round to whole number
+        calculatedDivs[1].textContent = '$' + Math.round(yUSD).toLocaleString();
+        calculatedDivs[1].setAttribute('data-original', Math.round(yUSD));
+        
+        // Monthly EGP - round to whole number
+        calculatedDivs[2].textContent = 'EGP ' + Math.round(mEGP).toLocaleString();
+        calculatedDivs[2].setAttribute('data-original', Math.round(mEGP));
+        
+        // Yearly EGP - round to whole number
+        calculatedDivs[3].textContent = 'EGP ' + Math.round(yEGP).toLocaleString();
+        calculatedDivs[3].setAttribute('data-original', Math.round(yEGP));
+      }
+      
+      // Update KPIs and analytics
+      renderKPIs();
+    }
+
+    // Make a calculated value editable
+    function makeEditable(element, row, isBiz, rowElement) {
+      if (element.classList.contains('editing')) return;
+      
+      const field = element.getAttribute('data-field');
+      const currentValue = element.getAttribute('data-original');
+      const type = element.getAttribute('data-type');
+      
+      // Create input field with no styling - looks exactly like original text
+      const input = document.createElement('input');
+      input.type = 'number';
+      input.step = '1';
+      input.className = 'editable-input';
+      input.value = Math.round(parseFloat(currentValue));
+      input.style.width = '100%';
+      input.style.height = '100%';
+      input.style.fontSize = 'inherit';
+      input.style.fontWeight = 'inherit';
+      input.style.textAlign = 'inherit';
+      input.style.padding = '0';
+      input.style.border = 'none';
+      input.style.borderRadius = '0';
+      input.style.background = 'transparent';
+      input.style.color = 'inherit';
+      input.style.outline = 'none';
+      input.style.boxSizing = 'border-box';
+      input.style.margin = '0';
+      
+      // Replace content with input
+      element.innerHTML = '';
+      element.appendChild(input);
+      element.classList.add('editing');
+      
+      // Focus and select
+      input.focus();
+      input.select();
+      
+      // Real-time updates as you type (like cost input) - without losing focus
+      input.addEventListener('input', function() {
+        const newValue = Math.round(parseFloat(this.value));
+        if (!isNaN(newValue)) {
+          updateCalculatedValueRealtime(element, row, field, newValue, type, isBiz, rowElement);
+        }
+      });
+      
+      // Handle save on blur or enter
+      const saveValue = () => {
+        const newValue = Math.round(parseFloat(input.value));
+        if (!isNaN(newValue) && newValue !== Math.round(parseFloat(currentValue))) {
+          updateCalculatedValue(element, row, field, newValue, type, isBiz, rowElement);
+        }
+        element.classList.remove('editing');
+      };
+      
+      input.addEventListener('blur', saveValue);
+      input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          saveValue();
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          element.classList.remove('editing');
+          updateRowCalculations(rowElement, row, isBiz);
+        }
+      });
+    }
+
+    // Update calculated value and recalculate others - real-time version that preserves focus
+    function updateCalculatedValueRealtime(element, row, field, newValue, type, isBiz, rowElement) {
+      let newBaseCost = row.cost;
+      
+      // Calculate the new base cost based on what was changed
+      if (field === 'monthlyUSD') {
+        // Monthly USD changed - calculate base cost
+        const monthlyUSD = Math.max(0, newValue);
+        if (row.billing === 'Monthly') {
+          newBaseCost = monthlyUSD;
+        } else if (row.billing === 'Annually') {
+          newBaseCost = monthlyUSD * 12;
+        }
+      } else if (field === 'yearlyUSD') {
+        // Yearly USD changed - calculate base cost
+        const yearlyUSD = Math.max(0, newValue);
+        if (row.billing === 'Monthly') {
+          newBaseCost = yearlyUSD / 12;
+        } else if (row.billing === 'Annually') {
+          newBaseCost = yearlyUSD;
+        }
+      } else if (field === 'monthlyEGP') {
+        // Monthly EGP changed - convert to USD first, then calculate base cost
+        const monthlyEGP = Math.max(0, newValue);
+        const monthlyUSD = monthlyEGP / state.fx;
+        if (row.billing === 'Monthly') {
+          newBaseCost = monthlyUSD;
+        } else if (row.billing === 'Annually') {
+          newBaseCost = monthlyUSD * 12;
+        }
+      } else if (field === 'yearlyEGP') {
+        // Yearly EGP changed - convert to USD first, then calculate base cost
+        const yearlyEGP = Math.max(0, newValue);
+        const yearlyUSD = yearlyEGP / state.fx;
+        if (row.billing === 'Monthly') {
+          newBaseCost = yearlyUSD / 12;
+        } else if (row.billing === 'Annually') {
+          newBaseCost = yearlyUSD;
+        }
+      }
+      
+      // Update the base cost
+      row.cost = newBaseCost;
+      
+      // Update the cost input field to match the new base cost
+      const costInput = rowElement.querySelector('.cost-input');
+      if (costInput) {
+        costInput.value = newBaseCost;
+      }
+      
+      // Calculate new values
+      const mUSD = rowMonthlyUSD(row);
+      const yUSD = rowYearlyUSD(row);
+      const mEGP = mUSD * state.fx;
+      const yEGP = yUSD * state.fx;
+      
+      // Update only the specific calculated values without re-rendering
+      const calculatedDivs = rowElement.querySelectorAll('.text-sm');
+      if (calculatedDivs.length >= 4) {
+        // Monthly USD - round to whole number
+        if (calculatedDivs[0] !== element) {
+          calculatedDivs[0].textContent = '$' + Math.round(mUSD).toLocaleString();
+          calculatedDivs[0].setAttribute('data-original', Math.round(mUSD));
+        }
+        
+        // Yearly USD - round to whole number
+        if (calculatedDivs[1] !== element) {
+          calculatedDivs[1].textContent = '$' + Math.round(yUSD).toLocaleString();
+          calculatedDivs[1].setAttribute('data-original', Math.round(yUSD));
+        }
+        
+        // Monthly EGP - round to whole number
+        if (calculatedDivs[2] !== element) {
+          calculatedDivs[2].textContent = 'EGP ' + Math.round(mEGP).toLocaleString();
+          calculatedDivs[2].setAttribute('data-original', Math.round(mEGP));
+        }
+        
+        // Yearly EGP - round to whole number
+        if (calculatedDivs[3] !== element) {
+          calculatedDivs[3].textContent = 'EGP ' + Math.round(yEGP).toLocaleString();
+          calculatedDivs[3].setAttribute('data-original', Math.round(yEGP));
+        }
+      }
+      
+      // Save the updated state
+      save();
+      
+      // Update KPIs only (no full re-render)
+      renderKPIs();
+    }
+
+    // Update calculated value and recalculate others - full version for final save
+    function updateCalculatedValue(element, row, field, newValue, type, isBiz, rowElement) {
+      let newBaseCost = row.cost;
+      
+      // Calculate the new base cost based on what was changed
+      if (field === 'monthlyUSD') {
+        // Monthly USD changed - calculate base cost
+        const monthlyUSD = Math.max(0, newValue);
+        if (row.billing === 'Monthly') {
+          newBaseCost = monthlyUSD;
+        } else if (row.billing === 'Annually') {
+          newBaseCost = monthlyUSD * 12;
+        }
+      } else if (field === 'yearlyUSD') {
+        // Yearly USD changed - calculate base cost
+        const yearlyUSD = Math.max(0, newValue);
+        if (row.billing === 'Monthly') {
+          newBaseCost = yearlyUSD / 12;
+        } else if (row.billing === 'Annually') {
+          newBaseCost = yearlyUSD;
+        }
+      } else if (field === 'monthlyEGP') {
+        // Monthly EGP changed - convert to USD first, then calculate base cost
+        const monthlyEGP = Math.max(0, newValue);
+        const monthlyUSD = monthlyEGP / state.fx;
+        if (row.billing === 'Monthly') {
+          newBaseCost = monthlyUSD;
+        } else if (row.billing === 'Annually') {
+          newBaseCost = monthlyUSD * 12;
+        }
+      } else if (field === 'yearlyEGP') {
+        // Yearly EGP changed - convert to USD first, then calculate base cost
+        const yearlyEGP = Math.max(0, newValue);
+        const yearlyUSD = yearlyEGP / state.fx;
+        if (row.billing === 'Monthly') {
+          newBaseCost = yearlyUSD / 12;
+        } else if (row.billing === 'Annually') {
+          newBaseCost = yearlyUSD;
+        }
+      }
+      
+      // Update the base cost
+      row.cost = newBaseCost;
+      
+      // Update the cost input field to match the new base cost
+      const costInput = rowElement.querySelector('.cost-input');
+      if (costInput) {
+        costInput.value = newBaseCost;
+      }
+      
+      // Save the updated state
+      save();
+      
+      // Re-render this row's calculations
+      updateRowCalculations(rowElement, row, isBiz);
+    }
+
     // Update autosave status indicator
     function updateAutosaveStatus() {
       const status = document.getElementById('autosaveStatus');
@@ -1358,6 +2911,58 @@
       }
     });
     
+    // Export/Import functionality
+    $('#btnExportData').addEventListener('click', ()=>{
+      const dataStr = JSON.stringify(state, null, 2);
+      const dataBlob = new Blob([dataStr], {type: 'application/json'});
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'financial-data.json';
+      link.click();
+      URL.revokeObjectURL(url);
+      showNotification('Data exported', 'success', 2000);
+    });
+    
+    $('#btnImportData').addEventListener('click', ()=>{
+      $('#fileInput').click();
+    });
+    
+    $('#fileInput').addEventListener('change', (e)=>{
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = (e)=>{
+        try {
+          const importedData = JSON.parse(e.target.result);
+          if (confirm('This will replace all current data. Continue?')) {
+            state = importedData;
+            save();
+            renderAll();
+            showNotification('Data imported', 'success', 2000);
+          }
+        } catch (error) {
+          showNotification('Invalid file format', 'error', 3000);
+        }
+      };
+      reader.readAsText(file);
+    });
+    
+    function clearAllData() {
+      // Reset state to default
+      state = structuredClone(defaultState);
+      
+      // Clear all localStorage
+      localStorage.clear();
+      
+      // Re-render everything
+      renderAll();
+      
+      // Close settings modal
+      $('#settings').close();
+    }
+    
     // Delete all data functionality
     $('#inputDeleteConfirm').addEventListener('input', (e)=>{
       const btn = $('#btnDeleteAll');
@@ -1367,14 +2972,8 @@
     $('#btnDeleteAll').addEventListener('click', ()=>{
       if ($('#inputDeleteConfirm').value === 'DELETE') {
         if (confirm('Are you absolutely sure? This will permanently delete ALL data and cannot be undone!')) {
-          // Reset to default state
-          state = structuredClone(defaultState);
-          localStorage.removeItem(LS_KEY);
-          localStorage.removeItem('columnOrder');
-          $('#settings').close();
-          renderAll();
-          // Show success message
-          showNotification('Data deleted', 'success', 3000);
+          clearAllData();
+          showNotification('All data deleted', 'success', 3000);
         }
       }
     });
@@ -1384,35 +2983,48 @@
   // Add-row delegation
     document.addEventListener('click', (e)=>{ const t=e.target.closest('[data-add-row]'); if(t) addRow(t.getAttribute('data-add-row')); });
 
+     // KPI Card Analytics - Click to expand
+     document.addEventListener('click', (e) => {
+       const kpiCard = e.target.closest('.kpi[data-analytics]');
+       if (kpiCard && !e.target.closest('.analytics-close') && !e.target.closest('.analytics-content')) {
+         // Close any other expanded cards
+         document.querySelectorAll('.kpi.expanded').forEach(card => {
+           if (card !== kpiCard) {
+             card.classList.remove('expanded');
+           }
+         });
+         
+         // Toggle current card
+         kpiCard.classList.toggle('expanded');
+       }
+     });
+
+     // Close analytics when clicking close button
+     document.addEventListener('click', (e) => {
+       if (e.target.matches('[data-close-analytics]')) {
+         const kpiCard = e.target.closest('.kpi');
+         if (kpiCard) {
+           kpiCard.classList.remove('expanded');
+         }
+       }
+     });
+
+     // Close analytics when clicking outside
+     document.addEventListener('click', (e) => {
+       if (!e.target.closest('.kpi') && !e.target.closest('.analytics-content')) {
+         document.querySelectorAll('.kpi.expanded').forEach(card => {
+           card.classList.remove('expanded');
+         });
+       }
+     });
+
 
   renderAll();
 
-  // Sticky KPIs scroll handler
-  let isSticky = false;
-  window.addEventListener('scroll', ()=>{
-    const kpiSection = document.getElementById('kpis');
-    const stickyKpis = document.getElementById('stickyKpis');
-    if(!kpiSection || !stickyKpis) return;
-    
-    const kpiBottom = kpiSection.offsetTop + kpiSection.offsetHeight;
-    const shouldShow = window.scrollY > kpiBottom;
-    
-    if(shouldShow && !isSticky){
-      stickyKpis.classList.add('show');
-      isSticky = true;
-    } else if(!shouldShow && isSticky){
-      stickyKpis.classList.remove('show');
-      isSticky = false;
-    }
-  });
 
     // Drag and Drop functionality for financial columns
     let draggedElement = null;
     let draggedColumn = null;
-    
-    // Initialize column order from localStorage or default
-    const defaultColumnOrder = ['monthly', 'yearly', 'monthly-egp', 'yearly-egp'];
-    let columnOrder = JSON.parse(localStorage.getItem('columnOrder')) || defaultColumnOrder;
     
     function updateColumnOrder() {
       localStorage.setItem('columnOrder', JSON.stringify(columnOrder));
@@ -1445,19 +3057,6 @@
       updateGridTemplate();
     }
     
-    function updateGridTemplate() {
-      // For Personal table (no Next column)
-      const personalTemplate = `32px 1.5fr .8fr .8fr .8fr ${columnOrder.map(() => '1fr').join(' ')} 32px`;
-      document.querySelectorAll('.row:not(.row-biz)').forEach(row => {
-        row.style.gridTemplateColumns = personalTemplate;
-      });
-      
-      // For Biz table (with Next column)
-      const bizTemplate = `32px 1.4fr .8fr .8fr .8fr .8fr ${columnOrder.map(() => '.9fr').join(' ')} 32px`;
-      document.querySelectorAll('.row-biz').forEach(row => {
-        row.style.gridTemplateColumns = bizTemplate;
-      });
-    }
     
     // Add drag event listeners
     document.addEventListener('dragstart', (e) => {
@@ -1516,6 +3115,92 @@
     
     // Initialize column order on page load (after renderAll)
     applyColumnOrder();
+
+    // Row drag and drop functionality
+    let draggedRow = null;
+    let draggedRowIndex = null;
+    let draggedRowArray = null;
+
+    // Add row drag event listeners
+    document.addEventListener('dragstart', (e) => {
+      if (e.target.classList.contains('row-draggable')) {
+        draggedRow = e.target;
+        draggedRowIndex = parseInt(e.target.getAttribute('data-row-index'));
+        draggedRowArray = e.target.closest('#list-personal') ? state.personal : state.biz;
+        e.target.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', ''); // Prevent default drag behavior
+        
+        // Create a custom drag image (invisible)
+        const dragImage = document.createElement('div');
+        dragImage.style.position = 'absolute';
+        dragImage.style.top = '-1000px';
+        dragImage.style.left = '-1000px';
+        dragImage.style.width = '1px';
+        dragImage.style.height = '1px';
+        dragImage.style.background = 'transparent';
+        document.body.appendChild(dragImage);
+        e.dataTransfer.setDragImage(dragImage, 0, 0);
+        
+        // Clean up the drag image after a short delay
+        setTimeout(() => {
+          if (document.body.contains(dragImage)) {
+            document.body.removeChild(dragImage);
+          }
+        }, 0);
+      }
+    });
+
+    document.addEventListener('dragend', (e) => {
+      if (e.target.classList.contains('row-draggable')) {
+        e.target.classList.remove('dragging');
+        draggedRow = null;
+        draggedRowIndex = null;
+        draggedRowArray = null;
+        // Remove all drag-over classes
+        document.querySelectorAll('.row-drop-zone').forEach(el => el.classList.remove('drag-over'));
+      }
+    });
+
+    document.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      if (e.target.classList.contains('row-drop-zone') && e.target !== draggedRow) {
+        e.target.classList.add('drag-over');
+      }
+    });
+
+    document.addEventListener('dragleave', (e) => {
+      if (e.target.classList.contains('row-drop-zone')) {
+        e.target.classList.remove('drag-over');
+      }
+    });
+
+    document.addEventListener('drop', (e) => {
+      e.preventDefault();
+      if (e.target.classList.contains('row-drop-zone') && e.target !== draggedRow) {
+        e.target.classList.remove('drag-over');
+        
+        const targetRowIndex = parseInt(e.target.getAttribute('data-row-index'));
+        const targetArray = e.target.closest('#list-personal') ? state.personal : state.biz;
+        
+        // Only allow drops within the same table
+        if (draggedRowArray === targetArray && draggedRowIndex !== targetRowIndex) {
+          // Remove the dragged item from its current position
+          const draggedItem = draggedRowArray.splice(draggedRowIndex, 1)[0];
+          
+          // Adjust target index if we're moving down
+          const adjustedTargetIndex = draggedRowIndex < targetRowIndex ? targetRowIndex - 1 : targetRowIndex;
+          
+          // Insert the item at the new position
+          draggedRowArray.splice(adjustedTargetIndex, 0, draggedItem);
+          
+          // Save and re-render
+          save();
+          renderAll();
+          showNotification('Row reordered', 'success', 1500);
+        }
+      }
+    });
 
     // tiny tests
     (function(){
