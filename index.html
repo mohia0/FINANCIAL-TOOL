@@ -1049,6 +1049,13 @@
             <path d="M3 21v-5h5"/>
           </svg>
         </button>
+        <button id="btnSave" class="icon-btn size-10 rounded-xl border hover:bg-white/5 transition" title="Save to cloud" style="border-color:var(--stroke)">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+            <polyline points="17,21 17,13 7,13 7,21"/>
+            <polyline points="7,3 7,8 15,8"/>
+          </svg>
+        </button>
         <button id="btnTheme" class="icon-btn size-10 rounded-xl border hover:bg-white/5 transition" title="Toggle theme" style="border-color:var(--stroke)">
           <svg id="iconTheme" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-5 h-5">
             <path d="M12 3v1m0 16v1m9-9h1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
@@ -1606,15 +1613,37 @@
         
         // Save user preferences
         const userRef = window.firebase.doc(window.firebase.db, 'users', currentUser.uid);
-        await window.firebase.updateDoc(userRef, {
-          preferences: {
-            theme: state.theme,
-            autosave: state.autosave === 'on',
-            includeAnnualInMonthly: state.includeAnnualInMonthly,
-            fxRate: state.fx,
-            columnOrder: columnOrder
-          }
-        });
+        const userSnap = await window.firebase.getDoc(userRef);
+        
+        if (userSnap.exists()) {
+          // Update existing user document
+          await window.firebase.updateDoc(userRef, {
+            preferences: {
+              theme: state.theme,
+              autosave: state.autosave === 'on',
+              includeAnnualInMonthly: state.includeAnnualInMonthly,
+              fxRate: state.fx,
+              columnOrder: columnOrder
+            }
+          });
+        } else {
+          // Create new user document with preferences
+          await window.firebase.setDoc(userRef, {
+            uid: currentUser.uid,
+            email: currentUser.email,
+            displayName: currentUser.displayName,
+            photoUrl: currentUser.photoURL,
+            createdAt: new Date().toISOString(),
+            lastLoginAt: new Date().toISOString(),
+            preferences: {
+              theme: state.theme,
+              autosave: state.autosave === 'on',
+              includeAnnualInMonthly: state.includeAnnualInMonthly,
+              fxRate: state.fx,
+              columnOrder: columnOrder
+            }
+          });
+        }
         
         console.log(`Saved to Firebase: ${personalSaved} personal, ${businessSaved} business expenses`);
         showSaveIndicator();
@@ -1655,12 +1684,18 @@
     }
     
     function save(){ 
+      console.log('Save function called. Autosave:', state.autosave, 'User:', currentUser ? 'Yes' : 'No', 'Firebase ready:', firebaseReady);
+      
       if(state.autosave==='on') {
         if (currentUser && firebaseReady) {
+          console.log('Saving to Firebase...');
           saveToFirebase();
         } else {
+          console.log('Saving to localStorage...');
           saveToLocal();
         }
+      } else {
+        console.log('Autosave is disabled, not saving');
       }
     }
   
@@ -1787,6 +1822,56 @@
 
     // Manual refresh button
     $('#btnRefresh').addEventListener('click', refreshData);
+    
+    // Manual save button
+    $('#btnSave').addEventListener('click', () => {
+      console.log('Manual save button clicked');
+      save();
+    });
+    
+    // Test function to add sample data
+    window.addSampleData = async function() {
+      if (!currentUser) {
+        alert('Please sign in first');
+        return;
+      }
+      
+      console.log('Adding sample data...');
+      
+      // Add sample personal expense
+      const personalRef = window.firebase.collection(window.firebase.db, 'users', currentUser.uid, 'personalExpenses');
+      await window.firebase.addDoc(personalRef, {
+        name: 'Netflix',
+        cost: 15.99,
+        billing: 'Monthly',
+        status: 'Active',
+        icon: 'fa:play',
+        userId: currentUser.uid,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
+      
+      // Add sample business expense
+      const businessRef = window.firebase.collection(window.firebase.db, 'users', currentUser.uid, 'businessExpenses');
+      await window.firebase.addDoc(businessRef, {
+        name: 'Adobe Creative Cloud',
+        cost: 52.99,
+        billing: 'Monthly',
+        status: 'Active',
+        icon: 'fa:adobe',
+        nextPayment: '2024-02-15',
+        isTaxDeductible: true,
+        userId: currentUser.uid,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
+      
+      console.log('Sample data added!');
+      showNotification('Sample data added to Firebase!', 'success');
+      
+      // Reload data
+      loadUserData();
+    };
 
     // Start auto-refresh
     startAutoRefresh();
