@@ -6,7 +6,38 @@
   <title>MY FINANCIALS — USD · EGP</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css">
+  
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+    import { getFirestore, collection, addDoc, updateDoc, deleteDoc, getDocs, doc, setDoc, getDoc, query, where, orderBy, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+    
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyBUH-snNzHS7nO96ZbQeMEwdj-6bE9e45Y",
+      authDomain: "my-financials-space.firebaseapp.com",
+      projectId: "my-financials-space",
+      storageBucket: "my-financials-space.firebasestorage.app",
+      messagingSenderId: "165128668761",
+      appId: "1:165128668761:web:100782fe60d05fba069348",
+      measurementId: "G-WH3RGZFGQN"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const provider = new GoogleAuthProvider();
+    
+    // Configure Google Auth Provider
+    provider.addScope('email');
+    provider.addScope('profile');
+
+    // Make Firebase available globally
+    window.firebase = { auth, db, provider, signInWithPopup, signOut, onAuthStateChanged, collection, addDoc, updateDoc, deleteDoc, getDocs, doc, setDoc, getDoc, query, where, orderBy, onSnapshot };
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -954,58 +985,6 @@
       .kpi .value{ font-size:1.35rem; }
       .btn{ padding:.45rem .7rem; }
     }
-    
-    /* Authentication Modal Styles */
-    .auth-form {
-      transition: all 0.3s ease;
-    }
-    
-    .auth-form.hidden {
-      display: none;
-    }
-    
-    .auth-error {
-      background: rgba(239, 68, 68, 0.1);
-      border: 1px solid rgba(239, 68, 68, 0.3);
-      color: #ef4444;
-      padding: 0.5rem;
-      border-radius: 0.5rem;
-      font-size: 0.75rem;
-    }
-    
-    .auth-success {
-      background: rgba(34, 197, 94, 0.1);
-      border: 1px solid rgba(34, 197, 94, 0.3);
-      color: #22c55e;
-      padding: 0.5rem;
-      border-radius: 0.5rem;
-      font-size: 0.75rem;
-    }
-    
-    .loading {
-      opacity: 0.6;
-      pointer-events: none;
-      position: relative;
-    }
-    
-    .loading::after {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 20px;
-      height: 20px;
-      margin: -10px 0 0 -10px;
-      border: 2px solid transparent;
-      border-top: 2px solid currentColor;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-    
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
   </style>
 </head>
 <body class="h-full">
@@ -1222,7 +1201,37 @@
         <div><label class="text-xs" style="color:var(--muted)">Autosave</label><select id="inputAutosave" class="select"><option value="on">On</option><option value="off">Off</option></select></div>
         <div><label class="text-xs" style="color:var(--muted)">Include Annual in Monthly</label><select id="inputIncludeAnnual" class="select"><option value="true">Yes</option><option value="false">No</option></select></div>
       </div>
-        <div class="flex gap-2 justify-end"><button id="btnSaveSettings" class="btn btn-primary">Save</button></div>
+      
+      <!-- Data Management Section -->
+      <div class="border-t pt-4" style="border-color:var(--stroke)">
+        <h4 class="text-sm font-medium mb-3" style="color:var(--fg)">Data Management</h4>
+        <div class="space-y-3">
+          <div class="flex gap-2">
+            <button id="btnExportData" class="btn btn-ghost" style="padding:.35rem .5rem; font-size:.7rem;">Export Data</button>
+            <button id="btnImportData" class="btn btn-ghost" style="padding:.35rem .5rem; font-size:.7rem;">Import Data</button>
+          </div>
+          <input id="fileInput" type="file" accept=".json" style="display:none;" />
+        </div>
+      </div>
+      
+      <!-- Delete All Data Section -->
+      <div class="border-t pt-4" style="border-color:var(--stroke)">
+        <h4 class="text-sm font-medium mb-3" style="color:var(--fg)">Danger Zone</h4>
+        <div class="space-y-3">
+          <div>
+            <label class="text-xs" style="color:var(--muted)">Delete All Data</label>
+            <p class="text-xs mb-2" style="color:var(--muted)">This will permanently delete all expenses and settings. Type "DELETE" to confirm.</p>
+            <div class="flex gap-2 items-center">
+              <input id="inputDeleteConfirm" type="text" class="input flex-1" placeholder="Type DELETE to confirm" />
+              <button id="btnDeleteAll" class="btn" style="background:#ef4444; color:white; border-color:#ef4444; padding:.35rem .5rem; font-size:.7rem;" disabled>Delete All</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+        <div class="flex gap-2 justify-end">
+          <button id="btnSaveSettings" class="btn btn-primary">Save</button>
+        </div>
     </form>
   </dialog>
 
@@ -1276,6 +1285,319 @@
   <script>
   document.addEventListener('DOMContentLoaded', function(){
     const $ = (s, el)=> (el||document).querySelector(s);
+    
+    // Firebase integration
+    let currentUser = null;
+    let firebaseReady = false;
+    
+    // Wait for Firebase to be ready
+    const checkFirebase = setInterval(() => {
+      if (window.firebase && window.firebase.auth && window.firebase.db) {
+        firebaseReady = true;
+        clearInterval(checkFirebase);
+        console.log('Firebase is ready!');
+        initializeFirebase();
+      }
+    }, 100);
+    
+    // Timeout after 10 seconds
+    setTimeout(() => {
+      if (!firebaseReady) {
+        console.error('Firebase failed to load after 10 seconds');
+        showNotification('Firebase connection failed. Using local storage only.', 'error');
+        loadLocalData();
+      }
+    }, 10000);
+    
+    function initializeFirebase() {
+      console.log('Initializing Firebase...');
+      
+      // Set up authentication state listener
+      window.firebase.onAuthStateChanged(window.firebase.auth, (user) => {
+        console.log('Auth state changed:', user ? 'User signed in' : 'User signed out');
+        currentUser = user;
+        updateAuthUI();
+        if (user) {
+          loadUserData();
+        } else {
+          loadLocalData();
+        }
+      });
+      
+      // Set up authentication event listeners
+      const loginBtn = $('#btnLogin');
+      const logoutBtn = $('#btnLogout');
+      
+      if (loginBtn) {
+        loginBtn.addEventListener('click', signInWithGoogle);
+        console.log('Login button event listener added');
+      }
+      
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', signOut);
+        console.log('Logout button event listener added');
+      }
+      
+      // Show login button immediately
+      updateAuthUI();
+      
+      // Test Firebase connection
+      testFirebaseConnection();
+    }
+    
+    async function testFirebaseConnection() {
+      try {
+        console.log('Testing Firebase connection...');
+        // Try to get current user
+        const user = window.firebase.auth.currentUser;
+        console.log('Current user:', user);
+        
+        // Test Firestore connection
+        const testDoc = window.firebase.doc(window.firebase.db, 'test', 'connection');
+        console.log('Firestore connection test:', testDoc);
+        
+        console.log('Firebase connection test successful!');
+      } catch (error) {
+        console.error('Firebase connection test failed:', error);
+      }
+    }
+    
+    function updateAuthUI() {
+      const loginBtn = $('#btnLogin');
+      const userInfo = $('#userInfo');
+      const userName = $('#userName');
+      const userEmail = $('#userEmail');
+      const userPhoto = $('#userPhoto');
+      
+      if (currentUser) {
+        loginBtn.style.display = 'none';
+        userInfo.style.display = 'flex';
+        userName.textContent = currentUser.displayName || 'User';
+        userEmail.textContent = currentUser.email;
+        if (currentUser.photoURL) {
+          userPhoto.src = currentUser.photoURL;
+          userPhoto.style.display = 'block';
+        }
+      } else {
+        loginBtn.style.display = 'flex';
+        userInfo.style.display = 'none';
+      }
+    }
+    
+    async function signInWithGoogle() {
+      try {
+        console.log('Attempting Google Sign-In...');
+        const result = await window.firebase.signInWithPopup(window.firebase.auth, window.firebase.provider);
+        console.log('Sign-in successful:', result.user);
+        currentUser = result.user;
+        
+        // Create user document if it doesn't exist
+        await createUserDocument(result.user);
+        
+        showNotification('Signed in successfully!', 'success');
+      } catch (error) {
+        console.error('Sign in error details:', error);
+        console.error('Error code:', error.code);
+        console.error('Error message:', error.message);
+        
+        let errorMessage = 'Sign in failed. Please try again.';
+        
+        // Provide specific error messages
+        if (error.code === 'auth/popup-closed-by-user') {
+          errorMessage = 'Sign-in was cancelled. Please try again.';
+        } else if (error.code === 'auth/popup-blocked') {
+          errorMessage = 'Popup was blocked. Please allow popups and try again.';
+        } else if (error.code === 'auth/network-request-failed') {
+          errorMessage = 'Network error. Please check your connection.';
+        } else if (error.code === 'auth/unauthorized-domain') {
+          errorMessage = 'This domain is not authorized. Please contact support.';
+        }
+        
+        showNotification(errorMessage, 'error');
+      }
+    }
+    
+    async function signOut() {
+      try {
+        await window.firebase.signOut(window.firebase.auth);
+        showNotification('Signed out successfully!', 'success');
+      } catch (error) {
+        console.error('Sign out error:', error);
+        showNotification('Sign out failed. Please try again.', 'error');
+      }
+    }
+    
+    async function createUserDocument(user) {
+      const userRef = window.firebase.doc(window.firebase.db, 'users', user.uid);
+      const userSnap = await window.firebase.getDoc(userRef);
+      
+      if (!userSnap.exists()) {
+        await window.firebase.setDoc(userRef, {
+          uid: user.uid,
+          email: user.email,
+          displayName: user.displayName,
+          photoUrl: user.photoURL,
+          createdAt: new Date().toISOString(),
+          lastLoginAt: new Date().toISOString(),
+          preferences: {
+            theme: 'dark',
+            autosave: true,
+            includeAnnualInMonthly: true,
+            fxRate: 48.1843,
+            columnOrder: ['monthly', 'yearly', 'monthly-egp', 'yearly-egp']
+          }
+        });
+      } else {
+        // Update last login
+        await window.firebase.updateDoc(userRef, {
+          lastLoginAt: new Date().toISOString()
+        });
+      }
+    }
+    
+    async function loadUserData() {
+      if (!currentUser) return;
+      
+      try {
+        // Load personal expenses
+        const personalQuery = window.firebase.query(
+          window.firebase.collection(window.firebase.db, 'users', currentUser.uid, 'personalExpenses'),
+          window.firebase.orderBy('createdAt', 'desc')
+        );
+        const personalSnapshot = await window.firebase.getDocs(personalQuery);
+        const personalData = personalSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        // Load business expenses
+        const businessQuery = window.firebase.query(
+          window.firebase.collection(window.firebase.db, 'users', currentUser.uid, 'businessExpenses'),
+          window.firebase.orderBy('createdAt', 'desc')
+        );
+        const businessSnapshot = await window.firebase.getDocs(businessQuery);
+        const businessData = businessSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        // Load user preferences
+        const userRef = window.firebase.doc(window.firebase.db, 'users', currentUser.uid);
+        const userSnap = await window.firebase.getDoc(userRef);
+        const userData = userSnap.exists() ? userSnap.data() : null;
+        
+        // Update state
+        state.personal = personalData;
+        state.biz = businessData;
+        if (userData && userData.preferences) {
+          state.fx = userData.preferences.fxRate || 48.1843;
+          state.theme = userData.preferences.theme || 'dark';
+          state.autosave = userData.preferences.autosave ? 'on' : 'off';
+          state.includeAnnualInMonthly = userData.preferences.includeAnnualInMonthly || true;
+          columnOrder = userData.preferences.columnOrder || ['monthly', 'yearly', 'monthly-egp', 'yearly-egp'];
+        }
+        
+        renderAll();
+        showNotification('Data loaded from cloud!', 'success');
+      } catch (error) {
+        console.error('Error loading user data:', error);
+        showNotification('Failed to load cloud data. Using local data.', 'error');
+        loadLocalData();
+      }
+    }
+    
+    function loadLocalData() {
+      // Fallback to localStorage
+      const stored = localStorage.getItem('finance-notion-v6');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          state.personal = parsed.personal || [];
+          state.biz = parsed.biz || [];
+          state.fx = parsed.fx || 48.1843;
+          state.theme = parsed.theme || 'dark';
+          state.autosave = parsed.autosave || 'on';
+          state.includeAnnualInMonthly = parsed.includeAnnualInMonthly || true;
+        } catch (e) {
+          console.error('Error parsing local data:', e);
+        }
+      }
+      renderAll();
+    }
+    
+    async function saveToFirebase() {
+      if (!currentUser || !firebaseReady) return;
+      
+      try {
+        // Save personal expenses
+        for (const expense of state.personal) {
+          if (expense.id) {
+            // Update existing
+            const expenseRef = window.firebase.doc(window.firebase.db, 'users', currentUser.uid, 'personalExpenses', expense.id);
+            await window.firebase.updateDoc(expenseRef, {
+              ...expense,
+              updatedAt: new Date().toISOString()
+            });
+          } else {
+            // Create new
+            const expenseRef = window.firebase.collection(window.firebase.db, 'users', currentUser.uid, 'personalExpenses');
+            const docRef = await window.firebase.addDoc(expenseRef, {
+              ...expense,
+              userId: currentUser.uid,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            });
+            expense.id = docRef.id;
+          }
+        }
+        
+        // Save business expenses
+        for (const expense of state.biz) {
+          if (expense.id) {
+            // Update existing
+            const expenseRef = window.firebase.doc(window.firebase.db, 'users', currentUser.uid, 'businessExpenses', expense.id);
+            await window.firebase.updateDoc(expenseRef, {
+              ...expense,
+              updatedAt: new Date().toISOString()
+            });
+          } else {
+            // Create new
+            const expenseRef = window.firebase.collection(window.firebase.db, 'users', currentUser.uid, 'businessExpenses');
+            const docRef = await window.firebase.addDoc(expenseRef, {
+              ...expense,
+              userId: currentUser.uid,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            });
+            expense.id = docRef.id;
+          }
+        }
+        
+        // Save user preferences
+        const userRef = window.firebase.doc(window.firebase.db, 'users', currentUser.uid);
+        await window.firebase.updateDoc(userRef, {
+          preferences: {
+            theme: state.theme,
+            autosave: state.autosave === 'on',
+            includeAnnualInMonthly: state.includeAnnualInMonthly,
+            fxRate: state.fx,
+            columnOrder: columnOrder
+          }
+        });
+        
+        showSaveIndicator();
+      } catch (error) {
+        console.error('Error saving to Firebase:', error);
+        showSaveError();
+      }
+    }
+    
+    function saveToLocal() {
+      try {
+        localStorage.setItem('finance-notion-v6', JSON.stringify(state));
+        localStorage.setItem('columnOrder', JSON.stringify(columnOrder));
+        showSaveIndicator();
+      } catch (error) {
+        console.error('Failed to save data locally:', error);
+        showSaveError();
+      }
+    }
+    
+    // Original localStorage key for fallback
     const LS_KEY = 'finance-notion-v6';
 
 
