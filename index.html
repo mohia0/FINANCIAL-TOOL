@@ -1357,6 +1357,23 @@
         console.log('Firestore connection test:', testDoc);
         
         console.log('Firebase connection test successful!');
+        
+        // Test database structure if user is signed in
+        if (user) {
+          console.log('Testing database structure for user:', user.uid);
+          
+          // Test personal expenses collection
+          const personalRef = window.firebase.collection(window.firebase.db, 'users', user.uid, 'personalExpenses');
+          console.log('Personal expenses collection reference:', personalRef);
+          
+          // Test business expenses collection
+          const businessRef = window.firebase.collection(window.firebase.db, 'users', user.uid, 'businessExpenses');
+          console.log('Business expenses collection reference:', businessRef);
+          
+          // Test user document
+          const userRef = window.firebase.doc(window.firebase.db, 'users', user.uid);
+          console.log('User document reference:', userRef);
+        }
       } catch (error) {
         console.error('Firebase connection test failed:', error);
       }
@@ -1456,7 +1473,12 @@
     }
     
     async function loadUserData() {
-      if (!currentUser) return;
+      if (!currentUser) {
+        console.log('No current user, cannot load user data');
+        return;
+      }
+      
+      console.log('Loading data for user:', currentUser.uid, currentUser.email);
       
       try {
         // Load personal expenses
@@ -1466,6 +1488,7 @@
         );
         const personalSnapshot = await window.firebase.getDocs(personalQuery);
         const personalData = personalSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        console.log('Loaded personal expenses:', personalData.length);
         
         // Load business expenses
         const businessQuery = window.firebase.query(
@@ -1474,11 +1497,13 @@
         );
         const businessSnapshot = await window.firebase.getDocs(businessQuery);
         const businessData = businessSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        console.log('Loaded business expenses:', businessData.length);
         
         // Load user preferences
         const userRef = window.firebase.doc(window.firebase.db, 'users', currentUser.uid);
         const userSnap = await window.firebase.getDoc(userRef);
         const userData = userSnap.exists() ? userSnap.data() : null;
+        console.log('Loaded user preferences:', userData ? 'Yes' : 'No');
         
         // Update state
         state.personal = personalData;
@@ -1492,7 +1517,7 @@
         }
         
         renderAll();
-        showNotification('Data loaded from cloud!', 'success');
+        showNotification(`Data loaded from cloud! (${personalData.length} personal, ${businessData.length} business)`, 'success');
       } catch (error) {
         console.error('Error loading user data:', error);
         showNotification('Failed to load cloud data. Using local data.', 'error');
@@ -1520,9 +1545,17 @@
     }
     
     async function saveToFirebase() {
-      if (!currentUser || !firebaseReady) return;
+      if (!currentUser || !firebaseReady) {
+        console.log('Cannot save to Firebase: No user or Firebase not ready');
+        return;
+      }
+      
+      console.log('Saving data to Firebase for user:', currentUser.uid);
       
       try {
+        let personalSaved = 0;
+        let businessSaved = 0;
+        
         // Save personal expenses
         for (const expense of state.personal) {
           if (expense.id) {
@@ -1532,6 +1565,7 @@
               ...expense,
               updatedAt: new Date().toISOString()
             });
+            personalSaved++;
           } else {
             // Create new
             const expenseRef = window.firebase.collection(window.firebase.db, 'users', currentUser.uid, 'personalExpenses');
@@ -1542,6 +1576,7 @@
               updatedAt: new Date().toISOString()
             });
             expense.id = docRef.id;
+            personalSaved++;
           }
         }
         
@@ -1554,6 +1589,7 @@
               ...expense,
               updatedAt: new Date().toISOString()
             });
+            businessSaved++;
           } else {
             // Create new
             const expenseRef = window.firebase.collection(window.firebase.db, 'users', currentUser.uid, 'businessExpenses');
@@ -1564,6 +1600,7 @@
               updatedAt: new Date().toISOString()
             });
             expense.id = docRef.id;
+            businessSaved++;
           }
         }
         
@@ -1579,6 +1616,7 @@
           }
         });
         
+        console.log(`Saved to Firebase: ${personalSaved} personal, ${businessSaved} business expenses`);
         showSaveIndicator();
       } catch (error) {
         console.error('Error saving to Firebase:', error);
