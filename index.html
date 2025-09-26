@@ -10,6 +10,7 @@
   
   <!-- Supabase SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
   <script>
     // Supabase configuration
     const SUPABASE_URL = 'https://mvusbchsponczexuhfuw.supabase.co';
@@ -968,6 +969,310 @@
       .kpi .value{ font-size:1.35rem; }
       .btn{ padding:.45rem .7rem; }
     }
+
+    /* Authentication Modal Styles */
+    .auth-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .auth-modal-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(8px);
+    }
+
+    .auth-modal-content {
+      position: relative;
+      background: var(--card);
+      border: 1px solid var(--stroke);
+      border-radius: 16px;
+      width: 90%;
+      max-width: 420px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      animation: authModalSlideIn 0.3s ease-out;
+    }
+
+    @keyframes authModalSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .auth-modal-header {
+      padding: 24px 24px 16px;
+      text-align: center;
+      position: relative;
+    }
+
+    .auth-modal-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--fg);
+      margin: 0 0 8px 0;
+    }
+
+    .auth-modal-subtitle {
+      font-size: 0.875rem;
+      color: var(--muted);
+      margin: 0;
+    }
+
+    .auth-modal-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .auth-modal-close:hover {
+      background: var(--glass);
+      color: var(--fg);
+    }
+
+    .auth-modal-body {
+      padding: 0 24px 24px;
+    }
+
+    .auth-btn {
+      width: 100%;
+      padding: 12px 16px;
+      border: none;
+      border-radius: 12px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .auth-btn-google {
+      background: white;
+      color: #1f2937;
+      border: 1px solid #e5e7eb;
+    }
+
+    .auth-btn-google:hover {
+      background: #f9fafb;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .auth-btn-icon {
+      width: 20px;
+      height: 20px;
+    }
+
+    .auth-divider {
+      text-align: center;
+      margin: 24px 0;
+      position: relative;
+    }
+
+    .auth-divider::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: var(--stroke);
+    }
+
+    .auth-divider span {
+      background: var(--card);
+      color: var(--muted);
+      padding: 0 16px;
+      font-size: 0.875rem;
+    }
+
+    .auth-form {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .auth-form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .auth-label {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--fg);
+    }
+
+    .auth-input {
+      padding: 12px 16px;
+      border: 1px solid var(--stroke);
+      border-radius: 12px;
+      background: var(--glass);
+      color: var(--fg);
+      font-size: 0.875rem;
+      transition: all 0.2s ease;
+    }
+
+    .auth-input:focus {
+      outline: none;
+      border-color: var(--muted);
+      box-shadow: 0 0 0 3px rgba(var(--muted-rgb), 0.1);
+    }
+
+    .auth-input::placeholder {
+      color: var(--muted);
+    }
+
+    .auth-form-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .auth-btn-primary {
+      flex: 1;
+      background: var(--fg);
+      color: var(--bg);
+    }
+
+    .auth-btn-primary:hover {
+      background: var(--muted);
+    }
+
+    .auth-btn-secondary {
+      flex: 1;
+      background: transparent;
+      color: var(--fg);
+      border: 1px solid var(--stroke);
+    }
+
+    .auth-btn-secondary:hover {
+      background: var(--glass);
+    }
+
+    .auth-status {
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 0.875rem;
+      text-align: center;
+      margin-top: 16px;
+    }
+
+    .auth-status.success {
+      background: rgba(34, 197, 94, 0.1);
+      color: #16a34a;
+      border: 1px solid rgba(34, 197, 94, 0.2);
+    }
+
+    .auth-status.error {
+      background: rgba(239, 68, 68, 0.1);
+      color: #dc2626;
+      border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    .auth-loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 16px;
+      color: var(--muted);
+      font-size: 0.875rem;
+    }
+
+    .auth-spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--stroke);
+      border-top: 2px solid var(--fg);
+      border-radius: 50%;
+      animation: authSpinner 1s linear infinite;
+    }
+
+    @keyframes authSpinner {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .auth-modal-footer {
+      padding: 16px 24px 24px;
+      text-align: center;
+    }
+
+    .auth-footer-text {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin: 0;
+      line-height: 1.4;
+    }
+
+    .auth-forgot-password {
+      text-align: center;
+      margin-top: 16px;
+    }
+
+    .auth-forgot-link {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 0.875rem;
+      text-decoration: underline;
+      cursor: pointer;
+      padding: 8px;
+      transition: color 0.2s ease;
+    }
+
+    .auth-forgot-link:hover {
+      color: var(--fg);
+    }
+
+    /* Mobile Responsiveness for Auth Modal */
+    @media (max-width: 640px) {
+      .auth-modal-content {
+        width: 95%;
+        margin: 20px;
+      }
+      
+      .auth-modal-header {
+        padding: 20px 20px 12px;
+      }
+      
+      .auth-modal-body {
+        padding: 0 20px 20px;
+      }
+      
+      .auth-modal-footer {
+        padding: 12px 20px 20px;
+      }
+    }
   </style>
 </head>
 <body class="h-full">
@@ -1264,6 +1569,75 @@
     </form>
   </dialog>
 
+  <!-- Authentication Modal -->
+  <div id="authModal" class="auth-modal" style="display: none;">
+    <div class="auth-modal-overlay"></div>
+    <div class="auth-modal-content">
+      <div class="auth-modal-header">
+        <h2 class="auth-modal-title">Welcome to Financial Tool</h2>
+        <p class="auth-modal-subtitle">Sign in to sync your data across devices</p>
+        <button class="auth-modal-close" onclick="closeAuthModal()">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      
+      <div class="auth-modal-body">
+        <!-- Email/Password Form -->
+        <div id="emailAuthForm" class="auth-form">
+          <div class="auth-form-group">
+            <label for="authEmail" class="auth-label">Email</label>
+            <input type="email" id="authEmail" class="auth-input" placeholder="Enter your email" required>
+          </div>
+          
+          <div class="auth-form-group">
+            <label for="authPassword" class="auth-label">Password</label>
+            <input type="password" id="authPassword" class="auth-input" placeholder="Enter your password" required>
+          </div>
+          
+          <div class="auth-form-actions">
+            <button id="emailSignInBtn" class="auth-btn auth-btn-primary">Sign In</button>
+            <button id="emailSignUpBtn" class="auth-btn auth-btn-secondary">Create Account</button>
+          </div>
+          
+          <!-- Forgot Password Link -->
+          <div class="auth-forgot-password">
+            <button id="forgotPasswordBtn" class="auth-forgot-link">Forgot your password?</button>
+          </div>
+        </div>
+        
+        <!-- Forgot Password Form (Hidden by default) -->
+        <div id="forgotPasswordForm" class="auth-form" style="display: none;">
+          <div class="auth-form-group">
+            <label for="forgotEmail" class="auth-label">Email</label>
+            <input type="email" id="forgotEmail" class="auth-input" placeholder="Enter your email address" required>
+          </div>
+          
+          <div class="auth-form-actions">
+            <button id="sendResetBtn" class="auth-btn auth-btn-primary">Send Reset Link</button>
+            <button id="backToSignInBtn" class="auth-btn auth-btn-secondary">Back to Sign In</button>
+          </div>
+        </div>
+        
+        <!-- Auth Status Messages -->
+        <div id="authStatus" class="auth-status" style="display: none;"></div>
+        
+        <!-- Loading State -->
+        <div id="authLoading" class="auth-loading" style="display: none;">
+          <div class="auth-spinner"></div>
+          <span>Signing in...</span>
+        </div>
+      </div>
+      
+      <div class="auth-modal-footer">
+        <p class="auth-footer-text">
+          By signing in, you agree to sync your financial data securely across devices.
+        </p>
+      </div>
+    </div>
+  </div>
 
   <script>
   document.addEventListener('DOMContentLoaded', function(){
@@ -1279,7 +1653,7 @@
         supabaseReady = true;
         clearInterval(checkSupabase);
         console.log('Supabase is ready!');
-        initializeSupabase();
+        initializeAuth();
       }
     }, 100);
     
@@ -1292,18 +1666,35 @@
       }
     }, 10000);
     
-    function initializeSupabase() {
-      console.log('Initializing Supabase...');
+    function initializeAuth() {
+      console.log('Initializing Supabase Auth...');
       
-      // Set up authentication state listener
+      // Set up Supabase authentication state listener
       window.supabaseClient.auth.onAuthStateChange((event, session) => {
-        console.log('Auth state changed:', event, session ? 'User signed in' : 'User signed out');
-        currentUser = session?.user || null;
-        updateAuthUI();
-        if (currentUser) {
+        console.log('Supabase auth state changed:', event, session ? 'User signed in' : 'User signed out');
+        if (session?.user) {
+          currentUser = session.user;
+          updateAuthUI();
           loadUserData();
-        } else {
-          loadLocalData();
+        } else if (event === 'SIGNED_OUT') {
+          currentUser = null;
+          updateAuthUI();
+          
+          // Clear all data when signed out
+          state.personal = [];
+          state.biz = [];
+          state.fx = 48.1843;
+          state.theme = 'dark';
+          state.autosave = 'on';
+          state.includeAnnualInMonthly = true;
+          columnOrder = ['monthly', 'yearly', 'monthly-egp', 'yearly-egp'];
+          
+          // Clear local storage
+          localStorage.removeItem('finance-notion-v6');
+          localStorage.removeItem('columnOrder');
+          
+          // Render empty tables
+          renderAll();
         }
       });
       
@@ -1312,13 +1703,75 @@
       const logoutBtn = $('#btnLogout');
       
       if (loginBtn) {
-        loginBtn.addEventListener('click', signInWithGoogle);
+        loginBtn.addEventListener('click', openAuthModal);
         console.log('Login button event listener added');
       }
       
       if (logoutBtn) {
         logoutBtn.addEventListener('click', signOut);
         console.log('Logout button event listener added');
+      }
+      
+      // Modal event listeners
+      const emailSignInBtn = $('#emailSignInBtn');
+      const emailSignUpBtn = $('#emailSignUpBtn');
+      const forgotPasswordBtn = $('#forgotPasswordBtn');
+      const sendResetBtn = $('#sendResetBtn');
+      const backToSignInBtn = $('#backToSignInBtn');
+      
+      if (emailSignInBtn) {
+        emailSignInBtn.addEventListener('click', signInWithEmail);
+        console.log('Email sign-in button event listener added');
+      }
+      
+      if (emailSignUpBtn) {
+        emailSignUpBtn.addEventListener('click', signUpWithEmail);
+        console.log('Email sign-up button event listener added');
+      }
+      
+      if (forgotPasswordBtn) {
+        forgotPasswordBtn.addEventListener('click', showForgotPasswordForm);
+        console.log('Forgot password button event listener added');
+      }
+      
+      if (sendResetBtn) {
+        sendResetBtn.addEventListener('click', sendPasswordReset);
+        console.log('Send reset button event listener added');
+      }
+      
+      if (backToSignInBtn) {
+        backToSignInBtn.addEventListener('click', showSignInForm);
+        console.log('Back to sign-in button event listener added');
+      }
+      
+      // Close modal when clicking overlay
+      const authModal = $('#authModal');
+      if (authModal) {
+        authModal.addEventListener('click', (e) => {
+          if (e.target === authModal || e.target.classList.contains('auth-modal-overlay')) {
+            closeAuthModal();
+          }
+        });
+      }
+      
+      // Handle Enter key in email form
+      const authEmail = $('#authEmail');
+      const authPassword = $('#authPassword');
+      
+      if (authEmail) {
+        authEmail.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            signInWithEmail();
+          }
+        });
+      }
+      
+      if (authPassword) {
+        authPassword.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            signInWithEmail();
+          }
+        });
       }
       
       // Show login button immediately
@@ -1355,54 +1808,221 @@
       if (currentUser) {
         loginBtn.style.display = 'none';
         userInfo.style.display = 'flex';
-        userName.textContent = currentUser.displayName || 'User';
-        userEmail.textContent = currentUser.email;
-        if (currentUser.photoURL) {
-          userPhoto.src = currentUser.photoURL;
+        
+        // Handle Supabase user object
+        const displayName = currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || 'User';
+        const email = currentUser.email || '';
+        const photoURL = currentUser.user_metadata?.avatar_url;
+        
+        userName.textContent = displayName;
+        userEmail.textContent = email;
+        
+        if (photoURL) {
+          userPhoto.src = photoURL;
           userPhoto.style.display = 'block';
+        } else {
+          userPhoto.style.display = 'none';
         }
+        
+        console.log('Auth UI updated for user:', { displayName, email, photoURL });
       } else {
         loginBtn.style.display = 'flex';
         userInfo.style.display = 'none';
+        console.log('Auth UI updated - no user');
       }
     }
     
-    async function signInWithGoogle() {
+    // Modal Functions
+    function openAuthModal() {
+      const modal = $('#authModal');
+      if (modal) {
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+      }
+    }
+    
+    function closeAuthModal() {
+      const modal = $('#authModal');
+      if (modal) {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+        clearAuthStatus();
+      }
+    }
+    
+    // Make functions globally available
+    window.openAuthModal = openAuthModal;
+    window.closeAuthModal = closeAuthModal;
+    
+    function showAuthStatus(message, type = 'success') {
+      const status = $('#authStatus');
+      if (status) {
+        status.textContent = message;
+        status.className = `auth-status ${type}`;
+        status.style.display = 'block';
+      }
+    }
+    
+    function clearAuthStatus() {
+      const status = $('#authStatus');
+      if (status) {
+        status.style.display = 'none';
+      }
+    }
+    
+    function showAuthLoading(show = true) {
+      const loading = $('#authLoading');
+      const form = $('#emailAuthForm');
+      
+      if (loading) loading.style.display = show ? 'flex' : 'none';
+      if (form) form.style.display = show ? 'none' : 'flex';
+    }
+    
+    function showForgotPasswordForm() {
+      const emailForm = $('#emailAuthForm');
+      const forgotForm = $('#forgotPasswordForm');
+      
+      if (emailForm) emailForm.style.display = 'none';
+      if (forgotForm) forgotForm.style.display = 'flex';
+      
+      clearAuthStatus();
+    }
+    
+    function showSignInForm() {
+      const emailForm = $('#emailAuthForm');
+      const forgotForm = $('#forgotPasswordForm');
+      
+      if (emailForm) emailForm.style.display = 'flex';
+      if (forgotForm) forgotForm.style.display = 'none';
+      
+      clearAuthStatus();
+    }
+    
+    async function sendPasswordReset() {
+      const email = $('#forgotEmail').value;
+      
+      if (!email) {
+        showAuthStatus('Please enter your email address', 'error');
+        return;
+      }
+      
       try {
-        console.log('Attempting Google Sign-In...');
-        const { data, error } = await window.supabaseClient.auth.signInWithOAuth({
-          provider: 'google',
-          options: {
-            redirectTo: window.location.origin
-          }
+        showAuthLoading(true);
+        clearAuthStatus();
+        
+        const { error } = await window.supabaseClient.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.origin
         });
         
         if (error) throw error;
         
-        console.log('Sign-in initiated:', data);
-        showNotification('Redirecting to Google...', 'success');
+        showAuthStatus('Password reset link sent! Check your email.', 'success');
+        showAuthLoading(false);
+        
+        // Auto-close modal after 3 seconds
+        setTimeout(() => {
+          closeAuthModal();
+        }, 3000);
+        
       } catch (error) {
-        console.error('Sign in error details:', error);
-        console.error('Error message:', error.message);
+        console.error('Password reset error:', error);
+        showAuthLoading(false);
+        showAuthStatus('Failed to send reset link: ' + error.message, 'error');
+      }
+    }
+    
+    async function signInWithEmail() {
+      const email = $('#authEmail').value;
+      const password = $('#authPassword').value;
+      
+      if (!email || !password) {
+        showAuthStatus('Please enter both email and password', 'error');
+        return;
+      }
+      
+      try {
+        showAuthLoading(true);
+        clearAuthStatus();
         
-        let errorMessage = 'Sign in failed. Please try again.';
+        // Try to sign in first
+        let { data, error } = await window.supabaseClient.auth.signInWithPassword({
+          email: email,
+          password: password
+        });
         
-        // Provide specific error messages
-        if (error.message.includes('popup')) {
-          errorMessage = 'Popup was blocked. Please allow popups and try again.';
-        } else if (error.message.includes('network')) {
-          errorMessage = 'Network error. Please check your connection.';
+        // If sign in fails, try to sign up
+        if (error && error.message.includes('Invalid login credentials')) {
+          console.log('User not found, attempting to sign up...');
+          const { data: signUpData, error: signUpError } = await window.supabaseClient.auth.signUp({
+            email: email,
+            password: password
+          });
+          
+          if (signUpError) throw signUpError;
+          
+          showAuthStatus('Account created! Please check your email to confirm.', 'success');
+          showAuthLoading(false);
+          return;
         }
         
-        showNotification(errorMessage, 'error');
+        if (error) throw error;
+        
+        showNotification('Signed in successfully!', 'success');
+        closeAuthModal();
+      } catch (error) {
+        console.error('Email sign in error:', error);
+        showAuthLoading(false);
+        showAuthStatus('Sign in failed: ' + error.message, 'error');
+      }
+    }
+    
+    async function signUpWithEmail() {
+      const email = $('#authEmail').value;
+      const password = $('#authPassword').value;
+      
+      if (!email || !password) {
+        showAuthStatus('Please enter both email and password', 'error');
+        return;
+      }
+      
+      if (password.length < 6) {
+        showAuthStatus('Password must be at least 6 characters', 'error');
+        return;
+      }
+      
+      try {
+        showAuthLoading(true);
+        clearAuthStatus();
+        
+        const { data, error } = await window.supabaseClient.auth.signUp({
+          email: email,
+          password: password
+        });
+        
+        if (error) throw error;
+        
+        showAuthStatus('Account created! Please check your email to confirm.', 'success');
+        showAuthLoading(false);
+      } catch (error) {
+        console.error('Email sign up error:', error);
+        showAuthLoading(false);
+        showAuthStatus('Sign up failed: ' + error.message, 'error');
       }
     }
     
     async function signOut() {
       try {
-        const { error } = await window.supabaseClient.auth.signOut();
-        if (error) throw error;
+        await window.supabaseClient.auth.signOut();
         showNotification('Signed out successfully!', 'success');
+        
+        // Clear all data immediately
+        clearAllData();
+        
+        // Refresh the page after a short delay to ensure clean state
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+        
       } catch (error) {
         console.error('Sign out error:', error);
         showNotification('Sign out failed. Please try again.', 'error');
@@ -1418,34 +2038,69 @@
       if (!currentUser) return;
       
       try {
-        // Load backup data from Supabase
-        const { data: backupData, error } = await window.supabaseClient
-          .from('backups')
-          .select('data, version, last_updated')
+        // Load user settings
+        const { data: settings, error: settingsError } = await window.supabaseClient
+          .from('user_settings')
+          .select('*')
           .eq('user_id', currentUser.id)
           .single();
         
-        if (error && error.code !== 'PGRST116') {
-          throw error; // PGRST116 is "no rows" error
+        if (settings && !settingsError) {
+          state.fx = settings.fx_rate || 48.1843;
+          state.theme = settings.theme || 'dark';
+          state.autosave = settings.autosave ? 'on' : 'off';
+          state.includeAnnualInMonthly = settings.include_annual_in_monthly || true;
+          columnOrder = settings.column_order || ['monthly', 'yearly', 'monthly-egp', 'yearly-egp'];
         }
         
-        if (backupData && backupData.data) {
-          // Restore data from backup
-          const restoredData = backupData.data;
-          state.personal = restoredData.personal || [];
-          state.biz = restoredData.biz || [];
-          state.fx = restoredData.fx || 48.1843;
-          state.theme = restoredData.theme || 'dark';
-          state.autosave = restoredData.autosave || 'on';
-          state.includeAnnualInMonthly = restoredData.includeAnnualInMonthly || true;
-          columnOrder = restoredData.columnOrder || ['monthly', 'yearly', 'monthly-egp', 'yearly-egp'];
-          
-          renderAll();
-          showNotification('Data loaded from cloud!', 'success');
-        } else {
-          // No backup data, use local data
-          loadLocalData();
+        // Load personal expenses
+        const { data: personalExpenses, error: personalError } = await window.supabaseClient
+          .from('personal_expenses')
+          .select('*')
+          .eq('user_id', currentUser.id)
+          .order('created_at', { ascending: true });
+        
+        if (personalExpenses && !personalError) {
+          state.personal = personalExpenses.map(expense => ({
+            name: expense.name,
+            cost: expense.cost,
+            status: expense.status,
+            billing: expense.billing,
+            monthlyUSD: expense.monthly_usd,
+            yearlyUSD: expense.yearly_usd,
+            monthlyEGP: expense.monthly_egp,
+            yearlyEGP: expense.yearly_egp,
+            icon: expense.icon,
+            id: expense.id
+          }));
         }
+        
+        // Load business expenses
+        const { data: businessExpenses, error: businessError } = await window.supabaseClient
+          .from('business_expenses')
+          .select('*')
+          .eq('user_id', currentUser.id)
+          .order('created_at', { ascending: true });
+        
+        if (businessExpenses && !businessError) {
+          state.biz = businessExpenses.map(expense => ({
+            name: expense.name,
+            cost: expense.cost,
+            status: expense.status,
+            billing: expense.billing,
+            next: expense.next_payment ? new Date(expense.next_payment).toISOString().split('T')[0] : '',
+            monthlyUSD: expense.monthly_usd,
+            yearlyUSD: expense.yearly_usd,
+            monthlyEGP: expense.monthly_egp,
+            yearlyEGP: expense.yearly_egp,
+            icon: expense.icon,
+            id: expense.id
+          }));
+        }
+        
+        renderAll();
+        showNotification('Data loaded from cloud!', 'success');
+        
       } catch (error) {
         console.error('Error loading user data:', error);
         showNotification('Failed to load cloud data. Using local data.', 'error');
@@ -1472,34 +2127,132 @@
       renderAll();
     }
     
+    function clearAllData() {
+      // Clear all data from state
+      state.personal = [];
+      state.biz = [];
+      state.fx = 48.1843;
+      state.theme = 'dark';
+      state.autosave = 'on';
+      state.includeAnnualInMonthly = true;
+      columnOrder = ['monthly', 'yearly', 'monthly-egp', 'yearly-egp'];
+      
+      // Clear local storage
+      localStorage.removeItem('finance-notion-v6');
+      localStorage.removeItem('columnOrder');
+      
+      // Re-render with empty data
+      renderAll();
+      
+      console.log('All data cleared - showing empty tables');
+    }
+    
+    
     async function saveToSupabase() {
       if (!currentUser || !supabaseReady) return;
       
       try {
-        // Create backup object with all data
-        const backupData = {
-          personal: state.personal,
-          biz: state.biz,
-          fx: state.fx,
-          theme: state.theme,
-          autosave: state.autosave,
-          includeAnnualInMonthly: state.includeAnnualInMonthly,
-          columnOrder: columnOrder
-        };
-        
-        // Save to Supabase backups table
-        const { error } = await window.supabaseClient
-          .from('backups')
+        // Save user settings
+        await window.supabaseClient
+          .from('user_settings')
           .upsert({
             user_id: currentUser.id,
-            data: backupData,
-            version: '1.0',
-            last_updated: new Date().toISOString()
+            fx_rate: state.fx,
+            theme: state.theme,
+            autosave: state.autosave === 'on',
+            include_annual_in_monthly: state.includeAnnualInMonthly,
+            column_order: columnOrder
           }, {
             onConflict: 'user_id'
           });
         
-        if (error) throw error;
+        // Save personal expenses
+        for (const expense of state.personal) {
+          if (expense.id) {
+            // Update existing expense
+            await window.supabaseClient
+              .from('personal_expenses')
+              .update({
+                name: expense.name,
+                cost: expense.cost,
+                status: expense.status,
+                billing: expense.billing,
+                monthly_usd: expense.monthlyUSD || 0,
+                yearly_usd: expense.yearlyUSD || 0,
+                monthly_egp: expense.monthlyEGP || 0,
+                yearly_egp: expense.yearlyEGP || 0,
+                icon: expense.icon
+              })
+              .eq('id', expense.id);
+          } else {
+            // Create new expense
+            const { data: newExpense, error } = await window.supabaseClient
+              .from('personal_expenses')
+              .insert({
+                user_id: currentUser.id,
+                name: expense.name,
+                cost: expense.cost,
+                status: expense.status,
+                billing: expense.billing,
+                monthly_usd: expense.monthlyUSD || 0,
+                yearly_usd: expense.yearlyUSD || 0,
+                monthly_egp: expense.monthlyEGP || 0,
+                yearly_egp: expense.yearlyEGP || 0,
+                icon: expense.icon
+              })
+              .select()
+              .single();
+            
+            if (newExpense) {
+              expense.id = newExpense.id;
+            }
+          }
+        }
+        
+        // Save business expenses
+        for (const expense of state.biz) {
+          if (expense.id) {
+            // Update existing expense
+            await window.supabaseClient
+              .from('business_expenses')
+              .update({
+                name: expense.name,
+                cost: expense.cost,
+                status: expense.status,
+                billing: expense.billing,
+                next_payment: expense.next ? new Date(expense.next).toISOString().split('T')[0] : null,
+                monthly_usd: expense.monthlyUSD || 0,
+                yearly_usd: expense.yearlyUSD || 0,
+                monthly_egp: expense.monthlyEGP || 0,
+                yearly_egp: expense.yearlyEGP || 0,
+                icon: expense.icon
+              })
+              .eq('id', expense.id);
+          } else {
+            // Create new expense
+            const { data: newExpense, error } = await window.supabaseClient
+              .from('business_expenses')
+              .insert({
+                user_id: currentUser.id,
+                name: expense.name,
+                cost: expense.cost,
+                status: expense.status,
+                billing: expense.billing,
+                next_payment: expense.next ? new Date(expense.next).toISOString().split('T')[0] : null,
+                monthly_usd: expense.monthlyUSD || 0,
+                yearly_usd: expense.yearlyUSD || 0,
+                monthly_egp: expense.monthlyEGP || 0,
+                yearly_egp: expense.yearlyEGP || 0,
+                icon: expense.icon
+              })
+              .select()
+              .single();
+            
+            if (newExpense) {
+              expense.id = newExpense.id;
+            }
+          }
+        }
         
         showSaveIndicator();
       } catch (error) {
