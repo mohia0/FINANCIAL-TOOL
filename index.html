@@ -1117,6 +1117,13 @@
       display: flex;
       flex-direction: column;
       gap: 16px;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    
+    .auth-form.hidden {
+      opacity: 0;
+      transform: translateY(-10px);
+      pointer-events: none;
     }
 
     .auth-form-group {
@@ -1621,6 +1628,24 @@
           </div>
         </div>
         
+        <!-- Password Reset Form (Hidden by default) -->
+        <div id="passwordResetForm" class="auth-form" style="display: none;">
+          <div class="auth-form-group">
+            <label for="newPassword" class="auth-label">New Password</label>
+            <input type="password" id="newPassword" class="auth-input" placeholder="Enter your new password" required minlength="6">
+          </div>
+          
+          <div class="auth-form-group">
+            <label for="confirmPassword" class="auth-label">Confirm New Password</label>
+            <input type="password" id="confirmPassword" class="auth-input" placeholder="Confirm your new password" required minlength="6">
+          </div>
+          
+          <div class="auth-form-actions">
+            <button id="updatePasswordBtn" class="auth-btn auth-btn-primary">Update Password</button>
+            <button id="cancelResetBtn" class="auth-btn auth-btn-secondary">Cancel</button>
+          </div>
+        </div>
+        
         <!-- Auth Status Messages -->
         <div id="authStatus" class="auth-status" style="display: none;"></div>
         
@@ -1668,6 +1693,9 @@
     
     function initializeAuth() {
       console.log('Initializing Supabase Auth...');
+      
+      // Check if user came from password reset link
+      checkPasswordResetToken();
       
       // Set up Supabase authentication state listener
       window.supabaseClient.auth.onAuthStateChange((event, session) => {
@@ -1742,6 +1770,19 @@
       if (backToSignInBtn) {
         backToSignInBtn.addEventListener('click', showSignInForm);
         console.log('Back to sign-in button event listener added');
+      }
+      
+      const updatePasswordBtn = $('#updatePasswordBtn');
+      const cancelResetBtn = $('#cancelResetBtn');
+      
+      if (updatePasswordBtn) {
+        updatePasswordBtn.addEventListener('click', updatePassword);
+        console.log('Update password button event listener added');
+      }
+      
+      if (cancelResetBtn) {
+        cancelResetBtn.addEventListener('click', showSignInForm);
+        console.log('Cancel reset button event listener added');
       }
       
       // Close modal when clicking overlay
@@ -1838,6 +1879,11 @@
       if (modal) {
         modal.style.display = 'flex';
         document.body.style.overflow = 'hidden';
+        
+        // Ensure sign-in form is shown by default
+        showSignInForm();
+        
+        console.log('Auth modal opened');
       }
     }
     
@@ -1872,18 +1918,50 @@
     
     function showAuthLoading(show = true) {
       const loading = $('#authLoading');
-      const form = $('#emailAuthForm');
+      const emailForm = $('#emailAuthForm');
+      const forgotForm = $('#forgotPasswordForm');
+      const resetForm = $('#passwordResetForm');
       
       if (loading) loading.style.display = show ? 'flex' : 'none';
-      if (form) form.style.display = show ? 'none' : 'flex';
+      
+      // Only hide the currently visible form when loading
+      if (show) {
+        if (emailForm && emailForm.style.display === 'flex') emailForm.style.display = 'none';
+        if (forgotForm && forgotForm.style.display === 'flex') forgotForm.style.display = 'none';
+        if (resetForm && resetForm.style.display === 'flex') resetForm.style.display = 'none';
+      } else {
+        // When loading stops, show the appropriate form
+        if (emailForm && emailForm.style.display !== 'none') emailForm.style.display = 'flex';
+      }
     }
     
     function showForgotPasswordForm() {
       const emailForm = $('#emailAuthForm');
       const forgotForm = $('#forgotPasswordForm');
+      const resetForm = $('#passwordResetForm');
       
-      if (emailForm) emailForm.style.display = 'none';
-      if (forgotForm) forgotForm.style.display = 'flex';
+      // Hide all forms first
+      if (emailForm) {
+        emailForm.style.display = 'none';
+        emailForm.classList.remove('hidden');
+      }
+      if (forgotForm) {
+        forgotForm.style.display = 'none';
+        forgotForm.classList.remove('hidden');
+      }
+      if (resetForm) {
+        resetForm.style.display = 'none';
+        resetForm.classList.remove('hidden');
+      }
+      
+      // Show forgot password form
+      if (forgotForm) {
+        forgotForm.style.display = 'flex';
+        // Small delay for smooth transition
+        setTimeout(() => {
+          forgotForm.classList.remove('hidden');
+        }, 10);
+      }
       
       clearAuthStatus();
     }
@@ -1891,11 +1969,101 @@
     function showSignInForm() {
       const emailForm = $('#emailAuthForm');
       const forgotForm = $('#forgotPasswordForm');
+      const resetForm = $('#passwordResetForm');
       
-      if (emailForm) emailForm.style.display = 'flex';
-      if (forgotForm) forgotForm.style.display = 'none';
+      // Hide all forms first
+      if (emailForm) {
+        emailForm.style.display = 'none';
+        emailForm.classList.remove('hidden');
+      }
+      if (forgotForm) {
+        forgotForm.style.display = 'none';
+        forgotForm.classList.remove('hidden');
+      }
+      if (resetForm) {
+        resetForm.style.display = 'none';
+        resetForm.classList.remove('hidden');
+      }
+      
+      // Show sign-in form
+      if (emailForm) {
+        emailForm.style.display = 'flex';
+        // Small delay for smooth transition
+        setTimeout(() => {
+          emailForm.classList.remove('hidden');
+        }, 10);
+      }
       
       clearAuthStatus();
+    }
+    
+    function showPasswordResetForm() {
+      const emailForm = $('#emailAuthForm');
+      const forgotForm = $('#forgotPasswordForm');
+      const resetForm = $('#passwordResetForm');
+      
+      // Hide all forms first
+      if (emailForm) {
+        emailForm.style.display = 'none';
+        emailForm.classList.remove('hidden');
+      }
+      if (forgotForm) {
+        forgotForm.style.display = 'none';
+        forgotForm.classList.remove('hidden');
+      }
+      if (resetForm) {
+        resetForm.style.display = 'none';
+        resetForm.classList.remove('hidden');
+      }
+      
+      // Show password reset form
+      if (resetForm) {
+        resetForm.style.display = 'flex';
+        // Small delay for smooth transition
+        setTimeout(() => {
+          resetForm.classList.remove('hidden');
+        }, 10);
+      }
+      
+      clearAuthStatus();
+    }
+    
+    function checkPasswordResetToken() {
+      // Check URL parameters for password reset tokens
+      const urlParams = new URLSearchParams(window.location.search);
+      const accessToken = urlParams.get('access_token');
+      const refreshToken = urlParams.get('refresh_token');
+      const type = urlParams.get('type');
+      
+      console.log('URL params:', { accessToken: !!accessToken, refreshToken: !!refreshToken, type });
+      
+      // If this is a password recovery flow
+      if (type === 'recovery' && accessToken && refreshToken) {
+        console.log('Password reset token detected, showing reset form');
+        
+        // Set the session with the tokens
+        window.supabaseClient.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken
+        }).then(({ data, error }) => {
+          if (error) {
+            console.error('Error setting session:', error);
+            showAuthStatus('Invalid or expired reset link. Please request a new one.', 'error');
+            return;
+          }
+          
+          if (data.session) {
+            // User is now authenticated, show password reset form
+            openAuthModal();
+            showPasswordResetForm();
+            showAuthStatus('Please enter your new password', 'success');
+          }
+        });
+        
+        // Clean up URL parameters
+        const newUrl = window.location.origin + window.location.pathname;
+        window.history.replaceState({}, document.title, newUrl);
+      }
     }
     
     async function sendPasswordReset() {
@@ -1911,7 +2079,7 @@
         clearAuthStatus();
         
         const { error } = await window.supabaseClient.auth.resetPasswordForEmail(email, {
-          redirectTo: window.location.origin
+          redirectTo: window.location.origin + window.location.pathname
         });
         
         if (error) throw error;
@@ -1928,6 +2096,54 @@
         console.error('Password reset error:', error);
         showAuthLoading(false);
         showAuthStatus('Failed to send reset link: ' + error.message, 'error');
+      }
+    }
+    
+    async function updatePassword() {
+      const newPassword = $('#newPassword').value;
+      const confirmPassword = $('#confirmPassword').value;
+      
+      if (!newPassword || !confirmPassword) {
+        showAuthStatus('Please fill in all fields', 'error');
+        return;
+      }
+      
+      if (newPassword.length < 6) {
+        showAuthStatus('Password must be at least 6 characters', 'error');
+        return;
+      }
+      
+      if (newPassword !== confirmPassword) {
+        showAuthStatus('Passwords do not match', 'error');
+        return;
+      }
+      
+      try {
+        showAuthLoading(true);
+        clearAuthStatus();
+        
+        const { error } = await window.supabaseClient.auth.updateUser({
+          password: newPassword
+        });
+        
+        if (error) throw error;
+        
+        showAuthStatus('Password updated successfully! You can now sign in.', 'success');
+        showAuthLoading(false);
+        
+        // Clear password fields
+        $('#newPassword').value = '';
+        $('#confirmPassword').value = '';
+        
+        // Auto-close modal after 3 seconds
+        setTimeout(() => {
+          closeAuthModal();
+        }, 3000);
+        
+      } catch (error) {
+        console.error('Password update error:', error);
+        showAuthLoading(false);
+        showAuthStatus('Failed to update password: ' + error.message, 'error');
       }
     }
     
