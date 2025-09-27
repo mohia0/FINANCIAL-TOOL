@@ -205,6 +205,9 @@
       padding: 8px 12px;
       margin: 4px 0;
     }
+    .skeleton-row-biz {
+      grid-template-columns: 24px 40px 1fr 100px 80px 80px 100px 100px 100px 100px 100px 40px;
+    }
     .skeleton-cell {
       height: 20px;
       background: linear-gradient(90deg, var(--glass) 25%, var(--stroke) 50%, var(--glass) 75%);
@@ -222,6 +225,7 @@
     .skeleton-yearly { width: 80px; }
     .skeleton-monthly-egp { width: 80px; }
     .skeleton-yearly-egp { width: 80px; }
+    .skeleton-next { width: 80px; }
     .skeleton-delete { width: 32px; height: 32px; border-radius: 50%; }
     @keyframes skeleton-loading {
       0% { background-position: 200% 0; }
@@ -1324,7 +1328,6 @@
       color: var(--fg);
     }
 
-<<<<<<< HEAD
     /* User Dropdown Styles */
     #userDropdown {
       opacity: 0;
@@ -1345,8 +1348,6 @@
       background: rgba(255, 255, 255, 0.05);
     }
 
-=======
->>>>>>> 4d310d258455633e2cd06ea397dce3e82e9f730e
     /* Mobile Responsiveness for Auth Modal */
     @media (max-width: 640px) {
       .auth-modal-content {
@@ -1620,6 +1621,53 @@
           <div class="row row-head row-biz">
             <div></div><div></div><div>Name</div><div>Cost USD</div><div>Status</div><div>Billing</div><div>Next</div><div class="draggable-header financial-column" data-column="monthly" draggable="true">Monthly USD</div><div class="draggable-header financial-column" data-column="yearly" draggable="true">Yearly USD</div><div class="draggable-header financial-column" data-column="monthly-egp" draggable="true">Monthly EGP</div><div class="draggable-header financial-column" data-column="yearly-egp" draggable="true">Yearly EGP</div><div></div>
           </div>
+          <!-- Loading Skeleton for Business -->
+          <div id="loading-skeleton-biz" class="loading-skeleton">
+            <div class="skeleton-rows">
+              <div class="skeleton-row skeleton-row-biz">
+                <div class="skeleton-cell skeleton-drag"></div>
+                <div class="skeleton-cell skeleton-icon"></div>
+                <div class="skeleton-cell skeleton-name"></div>
+                <div class="skeleton-cell skeleton-cost"></div>
+                <div class="skeleton-cell skeleton-status"></div>
+                <div class="skeleton-cell skeleton-billing"></div>
+                <div class="skeleton-cell skeleton-next"></div>
+                <div class="skeleton-cell skeleton-monthly"></div>
+                <div class="skeleton-cell skeleton-yearly"></div>
+                <div class="skeleton-cell skeleton-monthly-egp"></div>
+                <div class="skeleton-cell skeleton-yearly-egp"></div>
+                <div class="skeleton-cell skeleton-delete"></div>
+              </div>
+              <div class="skeleton-row skeleton-row-biz">
+                <div class="skeleton-cell skeleton-drag"></div>
+                <div class="skeleton-cell skeleton-icon"></div>
+                <div class="skeleton-cell skeleton-name"></div>
+                <div class="skeleton-cell skeleton-cost"></div>
+                <div class="skeleton-cell skeleton-status"></div>
+                <div class="skeleton-cell skeleton-billing"></div>
+                <div class="skeleton-cell skeleton-next"></div>
+                <div class="skeleton-cell skeleton-monthly"></div>
+                <div class="skeleton-cell skeleton-yearly"></div>
+                <div class="skeleton-cell skeleton-monthly-egp"></div>
+                <div class="skeleton-cell skeleton-yearly-egp"></div>
+                <div class="skeleton-cell skeleton-delete"></div>
+              </div>
+              <div class="skeleton-row skeleton-row-biz">
+                <div class="skeleton-cell skeleton-drag"></div>
+                <div class="skeleton-cell skeleton-icon"></div>
+                <div class="skeleton-cell skeleton-name"></div>
+                <div class="skeleton-cell skeleton-cost"></div>
+                <div class="skeleton-cell skeleton-status"></div>
+                <div class="skeleton-cell skeleton-billing"></div>
+                <div class="skeleton-cell skeleton-next"></div>
+                <div class="skeleton-cell skeleton-monthly"></div>
+                <div class="skeleton-cell skeleton-yearly"></div>
+                <div class="skeleton-cell skeleton-monthly-egp"></div>
+                <div class="skeleton-cell skeleton-yearly-egp"></div>
+                <div class="skeleton-cell skeleton-delete"></div>
+              </div>
+            </div>
+          </div>
           <div id="list-biz"></div>
           <button class="btn w-full justify-start text-xs py-3 mx-0 my-3" data-add-row="biz" style="font-size:.65rem; border:1px dashed var(--stroke); background:var(--glass); color:var(--muted); transition:all .2s ease; border-radius:8px; margin-top:8px;">＋ Add a row</button>
           <div id="sum-biz" class="row row-sum row-biz"></div>
@@ -1807,7 +1855,6 @@
           </div>
         </div>
         
-<<<<<<< HEAD
         <!-- Change Password Form (Hidden by default) -->
         <div id="changePasswordForm" class="auth-form" style="display: none;">
           <div class="auth-form-group">
@@ -1831,8 +1878,6 @@
           </div>
         </div>
         
-=======
->>>>>>> 4d310d258455633e2cd06ea397dce3e82e9f730e
         <!-- Auth Status Messages -->
         <div id="authStatus" class="auth-status" style="display: none;"></div>
         
@@ -1889,11 +1934,7 @@
         console.log('Supabase auth state changed:', event, session ? 'User signed in' : 'User signed out');
         if (session?.user) {
           currentUser = session.user;
-<<<<<<< HEAD
         updateAuthUI();
-=======
-          updateAuthUI();
->>>>>>> 4d310d258455633e2cd06ea397dce3e82e9f730e
           loadUserData();
         } else if (event === 'SIGNED_OUT') {
           currentUser = null;
@@ -1905,11 +1946,7 @@
           state.fx = 48.1843;
           state.theme = 'dark';
           state.autosave = 'on';
-<<<<<<< HEAD
           state.includeAnnualInMonthly = false;
-=======
-          state.includeAnnualInMonthly = true;
->>>>>>> 4d310d258455633e2cd06ea397dce3e82e9f730e
           columnOrder = ['monthly', 'yearly', 'monthly-egp', 'yearly-egp'];
           
           // Clear local storage
@@ -1936,14 +1973,11 @@
         console.log('Logout button event listener added');
       }
       
-<<<<<<< HEAD
       if (userMenuBtn) {
         userMenuBtn.addEventListener('click', toggleUserDropdown);
         console.log('User menu button event listener added');
       }
       
-=======
->>>>>>> 4d310d258455633e2cd06ea397dce3e82e9f730e
       // Modal event listeners
       const emailSignInBtn = $('#emailSignInBtn');
       const emailSignUpBtn = $('#emailSignUpBtn');
@@ -1978,12 +2012,9 @@
       
       const updatePasswordBtn = $('#updatePasswordBtn');
       const cancelResetBtn = $('#cancelResetBtn');
-<<<<<<< HEAD
       const changePasswordBtn = $('#changePasswordBtn');
       const savePasswordBtn = $('#savePasswordBtn');
       const cancelChangeBtn = $('#cancelChangeBtn');
-=======
->>>>>>> 4d310d258455633e2cd06ea397dce3e82e9f730e
       
       if (updatePasswordBtn) {
         updatePasswordBtn.addEventListener('click', updatePassword);
@@ -1995,7 +2026,6 @@
         console.log('Cancel reset button event listener added');
       }
       
-<<<<<<< HEAD
       if (changePasswordBtn) {
         changePasswordBtn.addEventListener('click', () => {
           closeUserDropdown();
@@ -2015,8 +2045,6 @@
         console.log('Cancel change button event listener added');
       }
       
-=======
->>>>>>> 4d310d258455633e2cd06ea397dce3e82e9f730e
       // Close modal when clicking overlay
       const authModal = $('#authModal');
       if (authModal) {
@@ -2027,7 +2055,6 @@
         });
       }
       
-<<<<<<< HEAD
       // Close dropdown when clicking outside
       document.addEventListener('click', (e) => {
         const userInfo = $('#userInfo');
@@ -2037,8 +2064,6 @@
         }
       });
       
-=======
->>>>>>> 4d310d258455633e2cd06ea397dce3e82e9f730e
       // Handle Enter key in email form
       const authEmail = $('#authEmail');
       const authPassword = $('#authPassword');
@@ -2095,18 +2120,13 @@
       
       if (currentUser) {
         loginBtn.style.display = 'none';
-<<<<<<< HEAD
         userInfo.style.display = 'block';
-=======
-        userInfo.style.display = 'flex';
->>>>>>> 4d310d258455633e2cd06ea397dce3e82e9f730e
         
         // Handle Supabase user object
         const displayName = currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || 'User';
         const email = currentUser.email || '';
         const photoURL = currentUser.user_metadata?.avatar_url;
         
-<<<<<<< HEAD
         // Update main user info
         userName.textContent = displayName;
         userEmail.textContent = email;
@@ -2128,16 +2148,6 @@
           if (dropdownUserPhoto) {
             dropdownUserPhoto.style.display = 'none';
           }
-=======
-        userName.textContent = displayName;
-        userEmail.textContent = email;
-        
-        if (photoURL) {
-          userPhoto.src = photoURL;
-          userPhoto.style.display = 'block';
-        } else {
-          userPhoto.style.display = 'none';
->>>>>>> 4d310d258455633e2cd06ea397dce3e82e9f730e
         }
         
         console.log('Auth UI updated for user:', { displayName, email, photoURL });
@@ -2148,7 +2158,6 @@
       }
     }
     
-<<<<<<< HEAD
     // User Dropdown Functions
     function toggleUserDropdown() {
       const dropdown = $('#userDropdown');
@@ -2184,8 +2193,6 @@
       }
     }
     
-=======
->>>>>>> 4d310d258455633e2cd06ea397dce3e82e9f730e
     // Modal Functions
     function openAuthModal() {
       const modal = $('#authModal');
@@ -2252,10 +2259,7 @@
       const emailForm = $('#emailAuthForm');
       const forgotForm = $('#forgotPasswordForm');
       const resetForm = $('#passwordResetForm');
-<<<<<<< HEAD
       const changeForm = $('#changePasswordForm');
-=======
->>>>>>> 4d310d258455633e2cd06ea397dce3e82e9f730e
       
       // Hide all forms first
       if (emailForm) {
@@ -2270,13 +2274,10 @@
         resetForm.style.display = 'none';
         resetForm.classList.remove('hidden');
       }
-<<<<<<< HEAD
       if (changeForm) {
         changeForm.style.display = 'none';
         changeForm.classList.remove('hidden');
       }
-=======
->>>>>>> 4d310d258455633e2cd06ea397dce3e82e9f730e
       
       // Show forgot password form
       if (forgotForm) {
@@ -2294,10 +2295,7 @@
       const emailForm = $('#emailAuthForm');
       const forgotForm = $('#forgotPasswordForm');
       const resetForm = $('#passwordResetForm');
-<<<<<<< HEAD
       const changeForm = $('#changePasswordForm');
-=======
->>>>>>> 4d310d258455633e2cd06ea397dce3e82e9f730e
       
       // Hide all forms first
       if (emailForm) {
@@ -2312,13 +2310,10 @@
         resetForm.style.display = 'none';
         resetForm.classList.remove('hidden');
       }
-<<<<<<< HEAD
       if (changeForm) {
         changeForm.style.display = 'none';
         changeForm.classList.remove('hidden');
       }
-=======
->>>>>>> 4d310d258455633e2cd06ea397dce3e82e9f730e
       
       // Show sign-in form
       if (emailForm) {
@@ -2336,10 +2331,7 @@
       const emailForm = $('#emailAuthForm');
       const forgotForm = $('#forgotPasswordForm');
       const resetForm = $('#passwordResetForm');
-<<<<<<< HEAD
       const changeForm = $('#changePasswordForm');
-=======
->>>>>>> 4d310d258455633e2cd06ea397dce3e82e9f730e
       
       // Hide all forms first
       if (emailForm) {
@@ -2354,13 +2346,10 @@
         resetForm.style.display = 'none';
         resetForm.classList.remove('hidden');
       }
-<<<<<<< HEAD
       if (changeForm) {
         changeForm.style.display = 'none';
         changeForm.classList.remove('hidden');
       }
-=======
->>>>>>> 4d310d258455633e2cd06ea397dce3e82e9f730e
       
       // Show password reset form
       if (resetForm) {
@@ -2374,7 +2363,6 @@
       clearAuthStatus();
     }
     
-<<<<<<< HEAD
     function showChangePasswordForm() {
       const emailForm = $('#emailAuthForm');
       const forgotForm = $('#forgotPasswordForm');
@@ -2411,8 +2399,6 @@
       clearAuthStatus();
     }
     
-=======
->>>>>>> 4d310d258455633e2cd06ea397dce3e82e9f730e
     function checkPasswordResetToken() {
       // Check URL parameters for password reset tokens
       const urlParams = new URLSearchParams(window.location.search);
@@ -2532,7 +2518,6 @@
       }
     }
     
-<<<<<<< HEAD
     async function changePassword() {
       const currentPassword = $('#currentPassword').value;
       const newPassword = $('#changeNewPassword').value;
@@ -2555,14 +2540,6 @@
       
       if (currentPassword === newPassword) {
         showAuthStatus('New password must be different from current password', 'error');
-=======
-    async function signInWithEmail() {
-      const email = $('#authEmail').value;
-      const password = $('#authPassword').value;
-      
-      if (!email || !password) {
-        showAuthStatus('Please enter both email and password', 'error');
->>>>>>> 4d310d258455633e2cd06ea397dce3e82e9f730e
         return;
       }
       
@@ -2570,7 +2547,6 @@
         showAuthLoading(true);
         clearAuthStatus();
         
-<<<<<<< HEAD
         // First verify current password by attempting to sign in
         const { error: signInError } = await window.supabaseClient.auth.signInWithPassword({
           email: currentUser.email,
@@ -2645,32 +2621,6 @@
         // Sign in was successful
         showAuthStatus('Sign in successful!', 'success');
         showAuthLoading(false);
-=======
-        // Try to sign in first
-        let { data, error } = await window.supabaseClient.auth.signInWithPassword({
-          email: email,
-          password: password
-        });
-        
-        // If sign in fails, try to sign up
-        if (error && error.message.includes('Invalid login credentials')) {
-          console.log('User not found, attempting to sign up...');
-          const { data: signUpData, error: signUpError } = await window.supabaseClient.auth.signUp({
-            email: email,
-            password: password
-          });
-          
-          if (signUpError) throw signUpError;
-          
-          showAuthStatus('Account created! Please check your email to confirm.', 'success');
-          showAuthLoading(false);
-          return;
-        }
-        
-        if (error) throw error;
-        
-        showNotification('Signed in successfully!', 'success');
->>>>>>> 4d310d258455633e2cd06ea397dce3e82e9f730e
         closeAuthModal();
       } catch (error) {
         console.error('Email sign in error:', error);
@@ -2749,7 +2699,6 @@
           .single();
         
         if (settings && !settingsError) {
-<<<<<<< HEAD
           console.log('Loaded settings from Supabase:', settings);
           state.fx = settings.fx_rate || 48.1843;
           state.theme = settings.theme || 'dark';
@@ -2761,13 +2710,6 @@
           
           // Update UI elements to reflect loaded settings
           updateSettingsUI();
-=======
-          state.fx = settings.fx_rate || 48.1843;
-          state.theme = settings.theme || 'dark';
-          state.autosave = settings.autosave ? 'on' : 'off';
-          state.includeAnnualInMonthly = settings.include_annual_in_monthly || true;
-          columnOrder = settings.column_order || ['monthly', 'yearly', 'monthly-egp', 'yearly-egp'];
->>>>>>> 4d310d258455633e2cd06ea397dce3e82e9f730e
         }
         
         // Load personal expenses
@@ -2814,15 +2756,9 @@
             id: expense.id
           }));
         }
-<<<<<<< HEAD
           
           renderAll();
           showNotification('Data loaded from cloud!', 'success');
-=======
-        
-        renderAll();
-        showNotification('Data loaded from cloud!', 'success');
->>>>>>> 4d310d258455633e2cd06ea397dce3e82e9f730e
         
       } catch (error) {
         console.error('Error loading user data:', error);
@@ -2857,11 +2793,7 @@
       state.fx = 48.1843;
       state.theme = 'dark';
       state.autosave = 'on';
-<<<<<<< HEAD
-      state.includeAnnualInMonthly = false;
-=======
       state.includeAnnualInMonthly = true;
->>>>>>> 4d310d258455633e2cd06ea397dce3e82e9f730e
       columnOrder = ['monthly', 'yearly', 'monthly-egp', 'yearly-egp'];
       
       // Clear local storage
@@ -2880,7 +2812,6 @@
       
       try {
         // Save user settings
-<<<<<<< HEAD
         console.log('Saving settings to Supabase:', {
           user_id: currentUser.id,
           fx_rate: state.fx,
@@ -2890,8 +2821,6 @@
           column_order: columnOrder
         });
         
-=======
->>>>>>> 4d310d258455633e2cd06ea397dce3e82e9f730e
         await window.supabaseClient
           .from('user_settings')
           .upsert({
@@ -3020,7 +2949,7 @@
       fx: 48.1843,
       autosave: 'on',
       theme: 'dark',
-      includeAnnualInMonthly: false,
+        includeAnnualInMonthly: false,
       personal: [],
       biz: []
     };
@@ -3201,7 +3130,9 @@
       setText('kpiBizMonthlyEGP', 'EGP ' + nfINT.format(Math.round(b.mEGP)));
       setText('kpiBizYearly', nfUSD.format(b.yUSD));
       setText('kpiBizYearlyEGP', 'EGP ' + nfINT.format(Math.round(b.yEGP)));
-    const total = all.mUSD || 1; const sp = Math.round((p.mUSD/total)*100); const sb = 100 - sp;
+    const total = all.mUSD; 
+    const sp = total > 0 ? Math.round((p.mUSD/total)*100) : 0; 
+    const sb = total > 0 ? Math.round((b.mUSD/total)*100) : 0;
       setText('sharePersonalVal', sp + '%'); setText('shareBizVal', sb + '%');
       const ps=$('#sharePersonalBar'); if(ps) ps.style.width=sp+'%'; const bs=$('#shareBizBar'); if(bs) bs.style.width=sb+'%';
     
@@ -3275,57 +3206,57 @@
       container.innerHTML = `
         <div class="analytics-grid-4">
           <div class="analytics-section">
-            <div class="section-title">Overview</div>
+            <div class="section-title">Total Subscriptions</div>
             <div class="metric-grid">
               <div class="metric-item">
-                <div class="metric-value">${totalActive}</div>
-                <div class="metric-label">Active</div>
+                <div class="metric-value">${totalActive + totalCancelled}</div>
+                <div class="metric-label">All Time</div>
               </div>
               <div class="metric-item">
-                <div class="metric-value">${totalCancelled}</div>
-                <div class="metric-label">Cancelled</div>
+                <div class="metric-value">${Math.round(((totalActive / (totalActive + totalCancelled)) * 100) || 0)}%</div>
+                <div class="metric-label">Active Rate</div>
               </div>
             </div>
           </div>
           
           <div class="analytics-section">
-            <div class="section-title">Monthly</div>
+            <div class="section-title">Cost Efficiency</div>
             <div class="metric-grid">
               <div class="metric-item">
-                <div class="metric-value">${nfUSD.format(all.mUSD)}</div>
-                <div class="metric-label">USD</div>
+                <div class="metric-value">${nfUSD.format(avgAll)}</div>
+                <div class="metric-label">Avg/Service</div>
               </div>
               <div class="metric-item">
-                <div class="metric-value">${nfINT.format(Math.round(all.mEGP))}</div>
-                <div class="metric-label">EGP</div>
+                <div class="metric-value">${nfUSD.format(Math.max(...[personal.mUSD, biz.mUSD]))}</div>
+                <div class="metric-label">Highest Category</div>
               </div>
             </div>
           </div>
           
           <div class="analytics-section">
-            <div class="section-title">Annual</div>
-            <div class="metric-grid">
-              <div class="metric-item">
-                <div class="metric-value">${nfUSD.format(all.yUSD)}</div>
-                <div class="metric-label">USD</div>
-              </div>
-              <div class="metric-item">
-                <div class="metric-value">${nfINT.format(Math.round(all.yEGP))}</div>
-                <div class="metric-label">EGP</div>
-              </div>
-            </div>
-          </div>
-          
-          <div class="analytics-section">
-            <div class="section-title">Daily</div>
+            <div class="section-title">Spending Velocity</div>
             <div class="metric-grid">
               <div class="metric-item">
                 <div class="metric-value">${nfUSD.format(dailySpending)}</div>
-                <div class="metric-label">USD</div>
+                <div class="metric-label">Per Day</div>
               </div>
               <div class="metric-item">
                 <div class="metric-value">${nfUSD.format(weeklySpending)}</div>
-                <div class="metric-label">Weekly</div>
+                <div class="metric-label">Per Week</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="analytics-section">
+            <div class="section-title">Currency Split</div>
+            <div class="metric-grid">
+              <div class="metric-item">
+                <div class="metric-value">${Math.round((all.mUSD / (all.mUSD + all.mEGP * 0.032) * 100) || 0)}%</div>
+                <div class="metric-label">USD Share</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${Math.round((all.mEGP * 0.032 / (all.mUSD + all.mEGP * 0.032) * 100) || 0)}%</div>
+                <div class="metric-label">EGP Share</div>
               </div>
             </div>
           </div>
@@ -3397,8 +3328,9 @@
           <div class="insight-card">
             <div class="insight-text">
               <i class="fas fa-chart-line insight-icon"></i>
-              Avg: <strong>${nfUSD.format(avgAll)}</strong> | Personal: <strong>${nfUSD.format(avgPersonal)}</strong> | Business: <strong>${nfUSD.format(avgBiz)}</strong>
-              ${highestExpense ? ` | Highest: <strong>${highestExpense.name || 'Unnamed'}</strong>` : ''}
+              Total Portfolio: <strong>${totalActive + totalCancelled}</strong> services | Monthly Burn: <strong>${nfUSD.format(all.mUSD)}</strong> | 
+              Efficiency: <strong>${Math.round((totalActive / (totalActive + totalCancelled)) * 100) || 0}%</strong> active rate
+              ${highestExpense ? ` | Top Expense: <strong>${highestExpense.name || 'Unnamed'}</strong> (${nfUSD.format(highestExpense.billing === 'Monthly' ? Number(highestExpense.cost || 0) : Number(highestExpense.cost || 0) / 12)})` : ''}
             </div>
           </div>
         </div>
@@ -3455,57 +3387,57 @@
       container.innerHTML = `
         <div class="analytics-grid-4">
           <div class="analytics-section">
-            <div class="section-title">Overview</div>
+            <div class="section-title">Personal Portfolio</div>
             <div class="metric-grid">
               <div class="metric-item">
                 <div class="metric-value">${activeItems.length}</div>
-                <div class="metric-label">Active</div>
+                <div class="metric-label">Active Services</div>
               </div>
               <div class="metric-item">
                 <div class="metric-value">${cancelledItems.length}</div>
-                <div class="metric-label">Cancelled</div>
+                <div class="metric-label">Discontinued</div>
               </div>
             </div>
           </div>
           
           <div class="analytics-section">
-            <div class="section-title">Monthly</div>
+            <div class="section-title">Spending Patterns</div>
             <div class="metric-grid">
               <div class="metric-item">
-                <div class="metric-value">${nfUSD.format(personal.mUSD)}</div>
-                <div class="metric-label">USD</div>
+                <div class="metric-value">${nfUSD.format(avgMonthly)}</div>
+                <div class="metric-label">Avg Monthly</div>
               </div>
               <div class="metric-item">
-                <div class="metric-value">${nfINT.format(Math.round(personal.mEGP))}</div>
-                <div class="metric-label">EGP</div>
+                <div class="metric-value">${nfUSD.format(avgAnnual)}</div>
+                <div class="metric-label">Avg Annual</div>
               </div>
             </div>
           </div>
           
           <div class="analytics-section">
-            <div class="section-title">Annual</div>
+            <div class="section-title">Cost Distribution</div>
             <div class="metric-grid">
               <div class="metric-item">
-                <div class="metric-value">${nfUSD.format(personal.yUSD)}</div>
-                <div class="metric-label">USD</div>
+                <div class="metric-value">${highCostItems}</div>
+                <div class="metric-label">Premium Items</div>
               </div>
               <div class="metric-item">
-                <div class="metric-value">${nfINT.format(Math.round(personal.yEGP))}</div>
-                <div class="metric-label">EGP</div>
+                <div class="metric-value">${lowCostItems}</div>
+                <div class="metric-label">Budget Items</div>
               </div>
             </div>
           </div>
           
           <div class="analytics-section">
-            <div class="section-title">Daily</div>
+            <div class="section-title">Time Analysis</div>
             <div class="metric-grid">
               <div class="metric-item">
                 <div class="metric-value">${nfUSD.format(dailyPersonal)}</div>
-                <div class="metric-label">USD</div>
+                <div class="metric-label">Per Day</div>
               </div>
               <div class="metric-item">
-                <div class="metric-value">${nfUSD.format(weeklyPersonal)}</div>
-                <div class="metric-label">Weekly</div>
+                <div class="metric-value">${nfUSD.format(hourlyPersonal)}</div>
+                <div class="metric-label">Per Hour</div>
               </div>
             </div>
           </div>
@@ -3576,9 +3508,11 @@
           <div class="insight-card">
             <div class="insight-text">
               <i class="fas fa-home insight-icon"></i>
-              Avg: <strong>${nfUSD.format(avgAll)}</strong> | Monthly: <strong>${nfUSD.format(avgMonthly)}</strong> | Annual: <strong>${nfUSD.format(avgAnnual)}</strong>
-              ${highestExpense ? ` | Highest: <strong>${highestExpense.name || 'Unnamed'}</strong>` : ''}
-              ${annualSavings > 0 ? ` | Savings: <strong>${nfUSD.format(annualSavings)}</strong>` : ''}
+              Personal Budget: <strong>${nfUSD.format(personal.mUSD)}</strong>/month | 
+              Cost Efficiency: <strong>${Math.round((highCostItems / activeItems.length) * 100) || 0}%</strong> premium services | 
+              Daily Impact: <strong>${nfUSD.format(dailyPersonal)}</strong>/day
+              ${highestExpense ? ` | Biggest Expense: <strong>${highestExpense.name || 'Unnamed'}</strong> (${nfUSD.format(highestExpense.billing === 'Monthly' ? Number(highestExpense.cost || 0) : Number(highestExpense.cost || 0) / 12)})` : ''}
+              ${annualSavings > 0 ? ` | Annual Savings Potential: <strong>${nfUSD.format(annualSavings)}</strong>` : ''}
             </div>
           </div>
         </div>
@@ -3654,57 +3588,57 @@
       container.innerHTML = `
         <div class="analytics-grid-4">
           <div class="analytics-section">
-            <div class="section-title">Overview</div>
+            <div class="section-title">Business Portfolio</div>
             <div class="metric-grid">
               <div class="metric-item">
                 <div class="metric-value">${activeItems.length}</div>
-                <div class="metric-label">Active</div>
+                <div class="metric-label">Active Tools</div>
               </div>
               <div class="metric-item">
                 <div class="metric-value">${cancelledItems.length}</div>
-                <div class="metric-label">Cancelled</div>
+                <div class="metric-label">Discontinued</div>
               </div>
             </div>
           </div>
           
           <div class="analytics-section">
-            <div class="section-title">Monthly</div>
+            <div class="section-title">Renewal Status</div>
             <div class="metric-grid">
               <div class="metric-item">
-                <div class="metric-value">${nfUSD.format(biz.mUSD)}</div>
-                <div class="metric-label">USD</div>
+                <div class="metric-value">${upcomingRenewals.length}</div>
+                <div class="metric-label">Due Soon</div>
               </div>
               <div class="metric-item">
-                <div class="metric-value">${nfINT.format(Math.round(biz.mEGP))}</div>
-                <div class="metric-label">EGP</div>
+                <div class="metric-value">${urgentRenewals.length}</div>
+                <div class="metric-label">Urgent (7d)</div>
               </div>
             </div>
           </div>
           
           <div class="analytics-section">
-            <div class="section-title">Annual</div>
+            <div class="section-title">Investment Analysis</div>
             <div class="metric-grid">
               <div class="metric-item">
-                <div class="metric-value">${nfUSD.format(biz.yUSD)}</div>
-                <div class="metric-label">USD</div>
+                <div class="metric-value">${nfUSD.format(avgMonthly)}</div>
+                <div class="metric-label">Avg Monthly</div>
               </div>
               <div class="metric-item">
-                <div class="metric-value">${nfINT.format(Math.round(biz.yEGP))}</div>
-                <div class="metric-label">EGP</div>
+                <div class="metric-value">${nfUSD.format(avgAnnual)}</div>
+                <div class="metric-label">Avg Annual</div>
               </div>
             </div>
           </div>
           
           <div class="analytics-section">
-            <div class="section-title">Daily</div>
+            <div class="section-title">Cost Efficiency</div>
             <div class="metric-grid">
               <div class="metric-item">
-                <div class="metric-value">${nfUSD.format(dailyBiz)}</div>
-                <div class="metric-label">USD</div>
+                <div class="metric-value">${highCostItems}</div>
+                <div class="metric-label">High-Value</div>
               </div>
               <div class="metric-item">
-                <div class="metric-value">${nfUSD.format(weeklyBiz)}</div>
-                <div class="metric-label">Weekly</div>
+                <div class="metric-value">${lowCostItems}</div>
+                <div class="metric-label">Essential</div>
               </div>
             </div>
           </div>
@@ -3798,10 +3732,12 @@
           <div class="insight-card">
             <div class="insight-text">
               <i class="fas fa-briefcase insight-icon"></i>
-              Avg: <strong>${nfUSD.format(avgAll)}</strong> | Monthly: <strong>${nfUSD.format(avgMonthly)}</strong> | Annual: <strong>${nfUSD.format(avgAnnual)}</strong>
-              ${highestExpense ? ` | Highest: <strong>${highestExpense.name || 'Unnamed'}</strong>` : ''}
-              ${upcomingRenewals.length > 0 ? ` | Renewals: <strong>${upcomingRenewals.length}</strong> (${nfUSD.format(upcomingRenewalCosts)})` : ''}
-              ${annualSavings > 0 ? ` | Savings: <strong>${nfUSD.format(annualSavings)}</strong>` : ''}
+              Business Investment: <strong>${nfUSD.format(biz.mUSD)}</strong>/month | 
+              Tool Efficiency: <strong>${Math.round((highCostItems / activeItems.length) * 100) || 0}%</strong> high-value tools | 
+              Renewal Alert: <strong>${upcomingRenewals.length}</strong> due soon
+              ${highestExpense ? ` | Top Investment: <strong>${highestExpense.name || 'Unnamed'}</strong> (${nfUSD.format(highestExpense.billing === 'Monthly' ? Number(highestExpense.cost || 0) : Number(highestExpense.cost || 0) / 12)})` : ''}
+              ${upcomingRenewalCosts > 0 ? ` | Upcoming Costs: <strong>${nfUSD.format(upcomingRenewalCosts)}</strong>` : ''}
+              ${annualSavings > 0 ? ` | Annual Savings: <strong>${nfUSD.format(annualSavings)}</strong>` : ''}
             </div>
           </div>
         </div>
@@ -5014,16 +4950,24 @@
       }
     });
     
-    // Show loading skeleton for first 2 seconds
+    // Show loading skeletons for first 2 seconds
     const loadingSkeleton = document.getElementById('loading-skeleton');
+    const loadingSkeletonBiz = document.getElementById('loading-skeleton-biz');
+    
     if (loadingSkeleton) {
       loadingSkeleton.classList.remove('hidden');
     }
+    if (loadingSkeletonBiz) {
+      loadingSkeletonBiz.classList.remove('hidden');
+    }
     
-    // Hide skeleton after minimum loading time
+    // Hide skeletons after minimum loading time
     setTimeout(() => {
       if (loadingSkeleton) {
         loadingSkeleton.classList.add('hidden');
+      }
+      if (loadingSkeletonBiz) {
+        loadingSkeletonBiz.classList.add('hidden');
       }
     }, 2000);
     
