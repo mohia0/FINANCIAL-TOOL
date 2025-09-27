@@ -1324,6 +1324,7 @@
       color: var(--fg);
     }
 
+<<<<<<< HEAD
     /* User Dropdown Styles */
     #userDropdown {
       opacity: 0;
@@ -1344,6 +1345,8 @@
       background: rgba(255, 255, 255, 0.05);
     }
 
+=======
+>>>>>>> 4d310d258455633e2cd06ea397dce3e82e9f730e
     /* Mobile Responsiveness for Auth Modal */
     @media (max-width: 640px) {
       .auth-modal-content {
@@ -1804,6 +1807,7 @@
           </div>
         </div>
         
+<<<<<<< HEAD
         <!-- Change Password Form (Hidden by default) -->
         <div id="changePasswordForm" class="auth-form" style="display: none;">
           <div class="auth-form-group">
@@ -1827,6 +1831,8 @@
           </div>
         </div>
         
+=======
+>>>>>>> 4d310d258455633e2cd06ea397dce3e82e9f730e
         <!-- Auth Status Messages -->
         <div id="authStatus" class="auth-status" style="display: none;"></div>
         
@@ -1883,7 +1889,11 @@
         console.log('Supabase auth state changed:', event, session ? 'User signed in' : 'User signed out');
         if (session?.user) {
           currentUser = session.user;
+<<<<<<< HEAD
         updateAuthUI();
+=======
+          updateAuthUI();
+>>>>>>> 4d310d258455633e2cd06ea397dce3e82e9f730e
           loadUserData();
         } else if (event === 'SIGNED_OUT') {
           currentUser = null;
@@ -1895,7 +1905,11 @@
           state.fx = 48.1843;
           state.theme = 'dark';
           state.autosave = 'on';
+<<<<<<< HEAD
           state.includeAnnualInMonthly = false;
+=======
+          state.includeAnnualInMonthly = true;
+>>>>>>> 4d310d258455633e2cd06ea397dce3e82e9f730e
           columnOrder = ['monthly', 'yearly', 'monthly-egp', 'yearly-egp'];
           
           // Clear local storage
@@ -1922,11 +1936,14 @@
         console.log('Logout button event listener added');
       }
       
+<<<<<<< HEAD
       if (userMenuBtn) {
         userMenuBtn.addEventListener('click', toggleUserDropdown);
         console.log('User menu button event listener added');
       }
       
+=======
+>>>>>>> 4d310d258455633e2cd06ea397dce3e82e9f730e
       // Modal event listeners
       const emailSignInBtn = $('#emailSignInBtn');
       const emailSignUpBtn = $('#emailSignUpBtn');
@@ -1961,9 +1978,12 @@
       
       const updatePasswordBtn = $('#updatePasswordBtn');
       const cancelResetBtn = $('#cancelResetBtn');
+<<<<<<< HEAD
       const changePasswordBtn = $('#changePasswordBtn');
       const savePasswordBtn = $('#savePasswordBtn');
       const cancelChangeBtn = $('#cancelChangeBtn');
+=======
+>>>>>>> 4d310d258455633e2cd06ea397dce3e82e9f730e
       
       if (updatePasswordBtn) {
         updatePasswordBtn.addEventListener('click', updatePassword);
@@ -1975,6 +1995,7 @@
         console.log('Cancel reset button event listener added');
       }
       
+<<<<<<< HEAD
       if (changePasswordBtn) {
         changePasswordBtn.addEventListener('click', () => {
           closeUserDropdown();
@@ -1994,6 +2015,8 @@
         console.log('Cancel change button event listener added');
       }
       
+=======
+>>>>>>> 4d310d258455633e2cd06ea397dce3e82e9f730e
       // Close modal when clicking overlay
       const authModal = $('#authModal');
       if (authModal) {
@@ -2004,6 +2027,7 @@
         });
       }
       
+<<<<<<< HEAD
       // Close dropdown when clicking outside
       document.addEventListener('click', (e) => {
         const userInfo = $('#userInfo');
@@ -2013,6 +2037,8 @@
         }
       });
       
+=======
+>>>>>>> 4d310d258455633e2cd06ea397dce3e82e9f730e
       // Handle Enter key in email form
       const authEmail = $('#authEmail');
       const authPassword = $('#authPassword');
@@ -2069,13 +2095,18 @@
       
       if (currentUser) {
         loginBtn.style.display = 'none';
+<<<<<<< HEAD
         userInfo.style.display = 'block';
+=======
+        userInfo.style.display = 'flex';
+>>>>>>> 4d310d258455633e2cd06ea397dce3e82e9f730e
         
         // Handle Supabase user object
         const displayName = currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || 'User';
         const email = currentUser.email || '';
         const photoURL = currentUser.user_metadata?.avatar_url;
         
+<<<<<<< HEAD
         // Update main user info
         userName.textContent = displayName;
         userEmail.textContent = email;
@@ -2097,6 +2128,16 @@
           if (dropdownUserPhoto) {
             dropdownUserPhoto.style.display = 'none';
           }
+=======
+        userName.textContent = displayName;
+        userEmail.textContent = email;
+        
+        if (photoURL) {
+          userPhoto.src = photoURL;
+          userPhoto.style.display = 'block';
+        } else {
+          userPhoto.style.display = 'none';
+>>>>>>> 4d310d258455633e2cd06ea397dce3e82e9f730e
         }
         
         console.log('Auth UI updated for user:', { displayName, email, photoURL });
@@ -2107,6 +2148,7 @@
       }
     }
     
+<<<<<<< HEAD
     // User Dropdown Functions
     function toggleUserDropdown() {
       const dropdown = $('#userDropdown');
@@ -2142,6 +2184,8 @@
       }
     }
     
+=======
+>>>>>>> 4d310d258455633e2cd06ea397dce3e82e9f730e
     // Modal Functions
     function openAuthModal() {
       const modal = $('#authModal');
@@ -2208,7 +2252,10 @@
       const emailForm = $('#emailAuthForm');
       const forgotForm = $('#forgotPasswordForm');
       const resetForm = $('#passwordResetForm');
+<<<<<<< HEAD
       const changeForm = $('#changePasswordForm');
+=======
+>>>>>>> 4d310d258455633e2cd06ea397dce3e82e9f730e
       
       // Hide all forms first
       if (emailForm) {
@@ -2223,10 +2270,13 @@
         resetForm.style.display = 'none';
         resetForm.classList.remove('hidden');
       }
+<<<<<<< HEAD
       if (changeForm) {
         changeForm.style.display = 'none';
         changeForm.classList.remove('hidden');
       }
+=======
+>>>>>>> 4d310d258455633e2cd06ea397dce3e82e9f730e
       
       // Show forgot password form
       if (forgotForm) {
@@ -2244,7 +2294,10 @@
       const emailForm = $('#emailAuthForm');
       const forgotForm = $('#forgotPasswordForm');
       const resetForm = $('#passwordResetForm');
+<<<<<<< HEAD
       const changeForm = $('#changePasswordForm');
+=======
+>>>>>>> 4d310d258455633e2cd06ea397dce3e82e9f730e
       
       // Hide all forms first
       if (emailForm) {
@@ -2259,10 +2312,13 @@
         resetForm.style.display = 'none';
         resetForm.classList.remove('hidden');
       }
+<<<<<<< HEAD
       if (changeForm) {
         changeForm.style.display = 'none';
         changeForm.classList.remove('hidden');
       }
+=======
+>>>>>>> 4d310d258455633e2cd06ea397dce3e82e9f730e
       
       // Show sign-in form
       if (emailForm) {
@@ -2280,7 +2336,10 @@
       const emailForm = $('#emailAuthForm');
       const forgotForm = $('#forgotPasswordForm');
       const resetForm = $('#passwordResetForm');
+<<<<<<< HEAD
       const changeForm = $('#changePasswordForm');
+=======
+>>>>>>> 4d310d258455633e2cd06ea397dce3e82e9f730e
       
       // Hide all forms first
       if (emailForm) {
@@ -2295,10 +2354,13 @@
         resetForm.style.display = 'none';
         resetForm.classList.remove('hidden');
       }
+<<<<<<< HEAD
       if (changeForm) {
         changeForm.style.display = 'none';
         changeForm.classList.remove('hidden');
       }
+=======
+>>>>>>> 4d310d258455633e2cd06ea397dce3e82e9f730e
       
       // Show password reset form
       if (resetForm) {
@@ -2312,6 +2374,7 @@
       clearAuthStatus();
     }
     
+<<<<<<< HEAD
     function showChangePasswordForm() {
       const emailForm = $('#emailAuthForm');
       const forgotForm = $('#forgotPasswordForm');
@@ -2348,6 +2411,8 @@
       clearAuthStatus();
     }
     
+=======
+>>>>>>> 4d310d258455633e2cd06ea397dce3e82e9f730e
     function checkPasswordResetToken() {
       // Check URL parameters for password reset tokens
       const urlParams = new URLSearchParams(window.location.search);
@@ -2467,6 +2532,7 @@
       }
     }
     
+<<<<<<< HEAD
     async function changePassword() {
       const currentPassword = $('#currentPassword').value;
       const newPassword = $('#changeNewPassword').value;
@@ -2489,6 +2555,14 @@
       
       if (currentPassword === newPassword) {
         showAuthStatus('New password must be different from current password', 'error');
+=======
+    async function signInWithEmail() {
+      const email = $('#authEmail').value;
+      const password = $('#authPassword').value;
+      
+      if (!email || !password) {
+        showAuthStatus('Please enter both email and password', 'error');
+>>>>>>> 4d310d258455633e2cd06ea397dce3e82e9f730e
         return;
       }
       
@@ -2496,6 +2570,7 @@
         showAuthLoading(true);
         clearAuthStatus();
         
+<<<<<<< HEAD
         // First verify current password by attempting to sign in
         const { error: signInError } = await window.supabaseClient.auth.signInWithPassword({
           email: currentUser.email,
@@ -2570,6 +2645,32 @@
         // Sign in was successful
         showAuthStatus('Sign in successful!', 'success');
         showAuthLoading(false);
+=======
+        // Try to sign in first
+        let { data, error } = await window.supabaseClient.auth.signInWithPassword({
+          email: email,
+          password: password
+        });
+        
+        // If sign in fails, try to sign up
+        if (error && error.message.includes('Invalid login credentials')) {
+          console.log('User not found, attempting to sign up...');
+          const { data: signUpData, error: signUpError } = await window.supabaseClient.auth.signUp({
+            email: email,
+            password: password
+          });
+          
+          if (signUpError) throw signUpError;
+          
+          showAuthStatus('Account created! Please check your email to confirm.', 'success');
+          showAuthLoading(false);
+          return;
+        }
+        
+        if (error) throw error;
+        
+        showNotification('Signed in successfully!', 'success');
+>>>>>>> 4d310d258455633e2cd06ea397dce3e82e9f730e
         closeAuthModal();
       } catch (error) {
         console.error('Email sign in error:', error);
@@ -2648,6 +2749,7 @@
           .single();
         
         if (settings && !settingsError) {
+<<<<<<< HEAD
           console.log('Loaded settings from Supabase:', settings);
           state.fx = settings.fx_rate || 48.1843;
           state.theme = settings.theme || 'dark';
@@ -2659,6 +2761,13 @@
           
           // Update UI elements to reflect loaded settings
           updateSettingsUI();
+=======
+          state.fx = settings.fx_rate || 48.1843;
+          state.theme = settings.theme || 'dark';
+          state.autosave = settings.autosave ? 'on' : 'off';
+          state.includeAnnualInMonthly = settings.include_annual_in_monthly || true;
+          columnOrder = settings.column_order || ['monthly', 'yearly', 'monthly-egp', 'yearly-egp'];
+>>>>>>> 4d310d258455633e2cd06ea397dce3e82e9f730e
         }
         
         // Load personal expenses
@@ -2705,9 +2814,15 @@
             id: expense.id
           }));
         }
+<<<<<<< HEAD
           
           renderAll();
           showNotification('Data loaded from cloud!', 'success');
+=======
+        
+        renderAll();
+        showNotification('Data loaded from cloud!', 'success');
+>>>>>>> 4d310d258455633e2cd06ea397dce3e82e9f730e
         
       } catch (error) {
         console.error('Error loading user data:', error);
@@ -2742,7 +2857,11 @@
       state.fx = 48.1843;
       state.theme = 'dark';
       state.autosave = 'on';
+<<<<<<< HEAD
       state.includeAnnualInMonthly = false;
+=======
+      state.includeAnnualInMonthly = true;
+>>>>>>> 4d310d258455633e2cd06ea397dce3e82e9f730e
       columnOrder = ['monthly', 'yearly', 'monthly-egp', 'yearly-egp'];
       
       // Clear local storage
@@ -2761,6 +2880,7 @@
       
       try {
         // Save user settings
+<<<<<<< HEAD
         console.log('Saving settings to Supabase:', {
           user_id: currentUser.id,
           fx_rate: state.fx,
@@ -2770,6 +2890,8 @@
           column_order: columnOrder
         });
         
+=======
+>>>>>>> 4d310d258455633e2cd06ea397dce3e82e9f730e
         await window.supabaseClient
           .from('user_settings')
           .upsert({
