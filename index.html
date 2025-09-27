@@ -10,6 +10,7 @@
   
   <!-- Supabase SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
   <script>
     // Supabase configuration
     const SUPABASE_URL = 'https://mvusbchsponczexuhfuw.supabase.co';
@@ -158,10 +159,73 @@
       position:relative; 
       display:flex; 
       align-items:center; 
+      gap: 2px;
+      background: var(--glass);
+      border: 1px solid var(--stroke);
+      border-radius: 6px;
+      padding: 2px 6px;
+      min-height: 32px;
     }
     .cost-input{
       font-size:.75rem !important;
-      padding:.35rem .5rem !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      border: none !important;
+      background: transparent !important;
+      flex: 1;
+      outline: none;
+    }
+    .cost-dollar-display{
+      font-size:.75rem;
+      color: var(--text);
+      font-weight: 600;
+      min-width: 16px;
+      text-align: left;
+      margin-right: 2px;
+    }
+    
+    /* Loading Skeleton */
+    .loading-skeleton {
+      display: block;
+    }
+    .loading-skeleton.hidden {
+      display: none;
+    }
+    .skeleton-rows {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .skeleton-row {
+      display: grid;
+      grid-template-columns: 24px 40px 1fr 100px 80px 80px 100px 100px 100px 100px 40px;
+      gap: 8px;
+      height: 48px;
+      align-items: center;
+      padding: 8px 12px;
+      margin: 4px 0;
+    }
+    .skeleton-cell {
+      height: 20px;
+      background: linear-gradient(90deg, var(--glass) 25%, var(--stroke) 50%, var(--glass) 75%);
+      background-size: 200% 100%;
+      animation: skeleton-loading 1.5s infinite;
+      border-radius: 4px;
+    }
+    .skeleton-drag { width: 20px; }
+    .skeleton-icon { width: 32px; height: 32px; border-radius: 50%; }
+    .skeleton-name { width: 100%; }
+    .skeleton-cost { width: 80px; }
+    .skeleton-status { width: 60px; }
+    .skeleton-billing { width: 60px; }
+    .skeleton-monthly { width: 80px; }
+    .skeleton-yearly { width: 80px; }
+    .skeleton-monthly-egp { width: 80px; }
+    .skeleton-yearly-egp { width: 80px; }
+    .skeleton-delete { width: 32px; height: 32px; border-radius: 50%; }
+    @keyframes skeleton-loading {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
     }
     
     .select-wrap{ position:relative; }
@@ -968,6 +1032,337 @@
       .kpi .value{ font-size:1.35rem; }
       .btn{ padding:.45rem .7rem; }
     }
+
+    /* Authentication Modal Styles */
+    .auth-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .auth-modal-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(8px);
+    }
+
+    .auth-modal-content {
+      position: relative;
+      background: var(--card);
+      border: 1px solid var(--stroke);
+      border-radius: 16px;
+      width: 90%;
+      max-width: 420px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      animation: authModalSlideIn 0.3s ease-out;
+    }
+
+    @keyframes authModalSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .auth-modal-header {
+      padding: 24px 24px 16px;
+      text-align: center;
+      position: relative;
+    }
+
+    .auth-modal-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--fg);
+      margin: 0 0 8px 0;
+    }
+
+    .auth-modal-subtitle {
+      font-size: 0.875rem;
+      color: var(--muted);
+      margin: 0;
+    }
+
+    .auth-modal-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .auth-modal-close:hover {
+      background: var(--glass);
+      color: var(--fg);
+    }
+
+    .auth-modal-body {
+      padding: 0 24px 24px;
+    }
+
+    .auth-btn {
+      width: 100%;
+      padding: 12px 16px;
+      border: none;
+      border-radius: 12px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .auth-btn-google {
+      background: white;
+      color: #1f2937;
+      border: 1px solid #e5e7eb;
+    }
+
+    .auth-btn-google:hover {
+      background: #f9fafb;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .auth-btn-icon {
+      width: 20px;
+      height: 20px;
+    }
+
+    .auth-divider {
+      text-align: center;
+      margin: 24px 0;
+      position: relative;
+    }
+
+    .auth-divider::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: var(--stroke);
+    }
+
+    .auth-divider span {
+      background: var(--card);
+      color: var(--muted);
+      padding: 0 16px;
+      font-size: 0.875rem;
+    }
+
+    .auth-form {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    
+    .auth-form.hidden {
+      opacity: 0;
+      transform: translateY(-10px);
+      pointer-events: none;
+    }
+
+    .auth-form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .auth-label {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--fg);
+    }
+
+    .auth-input {
+      padding: 12px 16px;
+      border: 1px solid var(--stroke);
+      border-radius: 12px;
+      background: var(--glass);
+      color: var(--fg);
+      font-size: 0.875rem;
+      transition: all 0.2s ease;
+    }
+
+    .auth-input:focus {
+      outline: none;
+      border-color: var(--muted);
+      box-shadow: 0 0 0 3px rgba(var(--muted-rgb), 0.1);
+    }
+
+    .auth-input::placeholder {
+      color: var(--muted);
+    }
+
+    .auth-form-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .auth-btn-primary {
+      flex: 1;
+      background: var(--fg);
+      color: var(--bg);
+    }
+
+    .auth-btn-primary:hover {
+      background: var(--muted);
+    }
+
+    .auth-btn-secondary {
+      flex: 1;
+      background: transparent;
+      color: var(--fg);
+      border: 1px solid var(--stroke);
+    }
+
+    .auth-btn-secondary:hover {
+      background: var(--glass);
+    }
+
+    .auth-status {
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 0.875rem;
+      text-align: center;
+      margin-top: 16px;
+    }
+
+    .auth-status.success {
+      background: rgba(34, 197, 94, 0.1);
+      color: #16a34a;
+      border: 1px solid rgba(34, 197, 94, 0.2);
+    }
+
+    .auth-status.error {
+      background: rgba(239, 68, 68, 0.1);
+      color: #dc2626;
+      border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    .auth-loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 16px;
+      color: var(--muted);
+      font-size: 0.875rem;
+    }
+
+    .auth-spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--stroke);
+      border-top: 2px solid var(--fg);
+      border-radius: 50%;
+      animation: authSpinner 1s linear infinite;
+    }
+
+    @keyframes authSpinner {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .auth-modal-footer {
+      padding: 16px 24px 24px;
+      text-align: center;
+    }
+
+    .auth-footer-text {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin: 0;
+      line-height: 1.4;
+    }
+
+    .auth-forgot-password {
+      text-align: center;
+      margin-top: 16px;
+    }
+
+    .auth-forgot-link {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 0.875rem;
+      text-decoration: underline;
+      cursor: pointer;
+      padding: 8px;
+      transition: color 0.2s ease;
+    }
+
+    .auth-forgot-link:hover {
+      color: var(--fg);
+    }
+
+    /* User Dropdown Styles */
+    #userDropdown {
+      opacity: 0;
+      transform: translateY(-10px);
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      pointer-events: none;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    }
+
+    #userDropdown.show {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    #userMenuBtn:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    /* Mobile Responsiveness for Auth Modal */
+    @media (max-width: 640px) {
+      .auth-modal-content {
+        width: 95%;
+        margin: 20px;
+      }
+      
+      .auth-modal-header {
+        padding: 20px 20px 12px;
+      }
+      
+      .auth-modal-body {
+        padding: 0 20px 20px;
+      }
+      
+      .auth-modal-footer {
+        padding: 12px 20px 20px;
+      }
+    }
   </style>
 </head>
 <body class="h-full">
@@ -1006,19 +1401,50 @@
           </button>
           
           <!-- User Info (shown when authenticated) -->
-          <div id="userInfo" class="flex items-center gap-2" style="display: none;">
+          <div id="userInfo" class="relative" style="display: none;">
+            <button id="userMenuBtn" class="flex items-center gap-2 p-2 rounded-lg hover:bg-white/5 transition cursor-pointer">
             <img id="userPhoto" src="" alt="User" class="w-8 h-8 rounded-full" style="display: none;">
             <div class="text-right">
               <div id="userName" class="text-sm font-medium"></div>
               <div id="userEmail" class="text-xs" style="color:var(--muted)"></div>
             </div>
-            <button id="btnLogout" class="icon-btn size-8 rounded-lg border hover:bg-white/5 transition" title="Sign Out" style="border-color:var(--stroke)">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4" style="color:var(--muted)">
+                <polyline points="6,9 12,15 18,9"></polyline>
+              </svg>
+            </button>
+            
+            <!-- User Dropdown Menu -->
+            <div id="userDropdown" class="absolute right-0 top-full mt-2 w-48 rounded-lg shadow-lg z-50" style="display: none; background:var(--bg);">
+              <div class="p-3">
+                <div class="flex items-center gap-2 mb-3">
+                  <img id="dropdownUserPhoto" src="" alt="User" class="w-8 h-8 rounded-full" style="display: none;">
+                  <div class="min-w-0 flex-1">
+                    <div id="dropdownUserName" class="font-medium text-sm truncate"></div>
+                    <div id="dropdownUserEmail" class="text-xs truncate" style="color:var(--muted)"></div>
+                  </div>
+                </div>
+                
+                <div class="space-y-1">
+                  <button id="changePasswordBtn" class="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-white/5 transition rounded text-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                      <circle cx="12" cy="16" r="1"></circle>
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
+                    <span>Change Password</span>
+                  </button>
+                  
+                  <button id="btnLogout" class="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-white/5 transition rounded text-sm text-red-400">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
                 <polyline points="16,17 21,12 16,7"/>
                 <line x1="21" y1="12" x2="9" y2="12"/>
               </svg>
+                    <span>Sign Out</span>
             </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         
@@ -1131,6 +1557,50 @@
         <div class="table">
           <div class="row row-head">
             <div></div><div></div><div>Name</div><div>Cost USD</div><div>Status</div><div>Billing</div><div class="draggable-header financial-column" data-column="monthly" draggable="true">Monthly USD</div><div class="draggable-header financial-column" data-column="yearly" draggable="true">Yearly USD</div><div class="draggable-header financial-column" data-column="monthly-egp" draggable="true">Monthly EGP</div><div class="draggable-header financial-column" data-column="yearly-egp" draggable="true">Yearly EGP</div><div></div>
+          </div>
+          <!-- Loading Skeleton -->
+          <div id="loading-skeleton" class="loading-skeleton">
+            <div class="skeleton-rows">
+              <div class="skeleton-row">
+                <div class="skeleton-cell skeleton-drag"></div>
+                <div class="skeleton-cell skeleton-icon"></div>
+                <div class="skeleton-cell skeleton-name"></div>
+                <div class="skeleton-cell skeleton-cost"></div>
+                <div class="skeleton-cell skeleton-status"></div>
+                <div class="skeleton-cell skeleton-billing"></div>
+                <div class="skeleton-cell skeleton-monthly"></div>
+                <div class="skeleton-cell skeleton-yearly"></div>
+                <div class="skeleton-cell skeleton-monthly-egp"></div>
+                <div class="skeleton-cell skeleton-yearly-egp"></div>
+                <div class="skeleton-cell skeleton-delete"></div>
+              </div>
+              <div class="skeleton-row">
+                <div class="skeleton-cell skeleton-drag"></div>
+                <div class="skeleton-cell skeleton-icon"></div>
+                <div class="skeleton-cell skeleton-name"></div>
+                <div class="skeleton-cell skeleton-cost"></div>
+                <div class="skeleton-cell skeleton-status"></div>
+                <div class="skeleton-cell skeleton-billing"></div>
+                <div class="skeleton-cell skeleton-monthly"></div>
+                <div class="skeleton-cell skeleton-yearly"></div>
+                <div class="skeleton-cell skeleton-monthly-egp"></div>
+                <div class="skeleton-cell skeleton-yearly-egp"></div>
+                <div class="skeleton-cell skeleton-delete"></div>
+              </div>
+              <div class="skeleton-row">
+                <div class="skeleton-cell skeleton-drag"></div>
+                <div class="skeleton-cell skeleton-icon"></div>
+                <div class="skeleton-cell skeleton-name"></div>
+                <div class="skeleton-cell skeleton-cost"></div>
+                <div class="skeleton-cell skeleton-status"></div>
+                <div class="skeleton-cell skeleton-billing"></div>
+                <div class="skeleton-cell skeleton-monthly"></div>
+                <div class="skeleton-cell skeleton-yearly"></div>
+                <div class="skeleton-cell skeleton-monthly-egp"></div>
+                <div class="skeleton-cell skeleton-yearly-egp"></div>
+                <div class="skeleton-cell skeleton-delete"></div>
+              </div>
+            </div>
           </div>
           <div id="list-personal"></div>
           <button class="btn w-full justify-start text-xs py-3 mx-0 my-3" data-add-row="personal" style="font-size:.65rem; border:1px dashed var(--stroke); background:var(--glass); color:var(--muted); transition:all .2s ease; border-radius:8px; margin-top:8px;">＋ Add a row</button>
@@ -1264,6 +1734,116 @@
     </form>
   </dialog>
 
+  <!-- Authentication Modal -->
+  <div id="authModal" class="auth-modal" style="display: none;">
+    <div class="auth-modal-overlay"></div>
+    <div class="auth-modal-content">
+      <div class="auth-modal-header">
+        <h2 class="auth-modal-title">Welcome to Financial Tool</h2>
+        <p class="auth-modal-subtitle">Sign in to sync your data across devices</p>
+        <button class="auth-modal-close" onclick="closeAuthModal()">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      
+      <div class="auth-modal-body">
+        <!-- Email/Password Form -->
+        <div id="emailAuthForm" class="auth-form">
+          <div class="auth-form-group">
+            <label for="authEmail" class="auth-label">Email</label>
+            <input type="email" id="authEmail" class="auth-input" placeholder="Enter your email" required>
+          </div>
+          
+          <div class="auth-form-group">
+            <label for="authPassword" class="auth-label">Password</label>
+            <input type="password" id="authPassword" class="auth-input" placeholder="Enter your password" required>
+          </div>
+          
+          <div class="auth-form-actions">
+            <button id="emailSignInBtn" class="auth-btn auth-btn-primary">Sign In</button>
+            <button id="emailSignUpBtn" class="auth-btn auth-btn-secondary">Create Account</button>
+          </div>
+          
+          <!-- Forgot Password Link -->
+          <div class="auth-forgot-password">
+            <button id="forgotPasswordBtn" class="auth-forgot-link">Forgot your password?</button>
+          </div>
+        </div>
+        
+        <!-- Forgot Password Form (Hidden by default) -->
+        <div id="forgotPasswordForm" class="auth-form" style="display: none;">
+          <div class="auth-form-group">
+            <label for="forgotEmail" class="auth-label">Email</label>
+            <input type="email" id="forgotEmail" class="auth-input" placeholder="Enter your email address" required>
+          </div>
+          
+          <div class="auth-form-actions">
+            <button id="sendResetBtn" class="auth-btn auth-btn-primary">Send Reset Link</button>
+            <button id="backToSignInBtn" class="auth-btn auth-btn-secondary">Back to Sign In</button>
+          </div>
+        </div>
+        
+        <!-- Password Reset Form (Hidden by default) -->
+        <div id="passwordResetForm" class="auth-form" style="display: none;">
+          <div class="auth-form-group">
+            <label for="newPassword" class="auth-label">New Password</label>
+            <input type="password" id="newPassword" class="auth-input" placeholder="Enter your new password" required minlength="6">
+          </div>
+          
+          <div class="auth-form-group">
+            <label for="confirmPassword" class="auth-label">Confirm New Password</label>
+            <input type="password" id="confirmPassword" class="auth-input" placeholder="Confirm your new password" required minlength="6">
+          </div>
+          
+          <div class="auth-form-actions">
+            <button id="updatePasswordBtn" class="auth-btn auth-btn-primary">Update Password</button>
+            <button id="cancelResetBtn" class="auth-btn auth-btn-secondary">Cancel</button>
+          </div>
+        </div>
+        
+        <!-- Change Password Form (Hidden by default) -->
+        <div id="changePasswordForm" class="auth-form" style="display: none;">
+          <div class="auth-form-group">
+            <label for="currentPassword" class="auth-label">Current Password</label>
+            <input type="password" id="currentPassword" class="auth-input" placeholder="Enter your current password" required>
+          </div>
+          
+          <div class="auth-form-group">
+            <label for="changeNewPassword" class="auth-label">New Password</label>
+            <input type="password" id="changeNewPassword" class="auth-input" placeholder="Enter your new password" required minlength="6">
+          </div>
+          
+          <div class="auth-form-group">
+            <label for="changeConfirmPassword" class="auth-label">Confirm New Password</label>
+            <input type="password" id="changeConfirmPassword" class="auth-input" placeholder="Confirm your new password" required minlength="6">
+          </div>
+          
+          <div class="auth-form-actions">
+            <button id="savePasswordBtn" class="auth-btn auth-btn-primary">Change Password</button>
+            <button id="cancelChangeBtn" class="auth-btn auth-btn-secondary">Cancel</button>
+          </div>
+        </div>
+        
+        <!-- Auth Status Messages -->
+        <div id="authStatus" class="auth-status" style="display: none;"></div>
+        
+        <!-- Loading State -->
+        <div id="authLoading" class="auth-loading" style="display: none;">
+          <div class="auth-spinner"></div>
+          <span>Signing in...</span>
+        </div>
+      </div>
+      
+      <div class="auth-modal-footer">
+        <p class="auth-footer-text">
+          By signing in, you agree to sync your financial data securely across devices.
+        </p>
+      </div>
+    </div>
+  </div>
 
   <script>
   document.addEventListener('DOMContentLoaded', function(){
@@ -1279,7 +1859,7 @@
         supabaseReady = true;
         clearInterval(checkSupabase);
         console.log('Supabase is ready!');
-        initializeSupabase();
+        initializeAuth();
       }
     }, 100);
     
@@ -1292,33 +1872,165 @@
       }
     }, 10000);
     
-    function initializeSupabase() {
-      console.log('Initializing Supabase...');
+    function initializeAuth() {
+      console.log('Initializing Supabase Auth...');
       
-      // Set up authentication state listener
+      // Check if user came from password reset link
+      checkPasswordResetToken();
+      
+      // Set up Supabase authentication state listener
       window.supabaseClient.auth.onAuthStateChange((event, session) => {
-        console.log('Auth state changed:', event, session ? 'User signed in' : 'User signed out');
-        currentUser = session?.user || null;
+        console.log('Supabase auth state changed:', event, session ? 'User signed in' : 'User signed out');
+        if (session?.user) {
+          currentUser = session.user;
         updateAuthUI();
-        if (currentUser) {
           loadUserData();
-        } else {
-          loadLocalData();
+        } else if (event === 'SIGNED_OUT') {
+          currentUser = null;
+          updateAuthUI();
+          
+          // Clear all data when signed out
+          state.personal = [];
+          state.biz = [];
+          state.fx = 48.1843;
+          state.theme = 'dark';
+          state.autosave = 'on';
+          state.includeAnnualInMonthly = false;
+          columnOrder = ['monthly', 'yearly', 'monthly-egp', 'yearly-egp'];
+          
+          // Clear local storage
+          localStorage.removeItem('finance-notion-v6');
+          localStorage.removeItem('columnOrder');
+          
+          // Render empty tables
+          renderAll();
         }
       });
       
       // Set up authentication event listeners
       const loginBtn = $('#btnLogin');
       const logoutBtn = $('#btnLogout');
+      const userMenuBtn = $('#userMenuBtn');
       
       if (loginBtn) {
-        loginBtn.addEventListener('click', signInWithGoogle);
+        loginBtn.addEventListener('click', openAuthModal);
         console.log('Login button event listener added');
       }
       
       if (logoutBtn) {
         logoutBtn.addEventListener('click', signOut);
         console.log('Logout button event listener added');
+      }
+      
+      if (userMenuBtn) {
+        userMenuBtn.addEventListener('click', toggleUserDropdown);
+        console.log('User menu button event listener added');
+      }
+      
+      // Modal event listeners
+      const emailSignInBtn = $('#emailSignInBtn');
+      const emailSignUpBtn = $('#emailSignUpBtn');
+      const forgotPasswordBtn = $('#forgotPasswordBtn');
+      const sendResetBtn = $('#sendResetBtn');
+      const backToSignInBtn = $('#backToSignInBtn');
+      
+      if (emailSignInBtn) {
+        emailSignInBtn.addEventListener('click', signInWithEmail);
+        console.log('Email sign-in button event listener added');
+      }
+      
+      if (emailSignUpBtn) {
+        emailSignUpBtn.addEventListener('click', signUpWithEmail);
+        console.log('Email sign-up button event listener added');
+      }
+      
+      if (forgotPasswordBtn) {
+        forgotPasswordBtn.addEventListener('click', showForgotPasswordForm);
+        console.log('Forgot password button event listener added');
+      }
+      
+      if (sendResetBtn) {
+        sendResetBtn.addEventListener('click', sendPasswordReset);
+        console.log('Send reset button event listener added');
+      }
+      
+      if (backToSignInBtn) {
+        backToSignInBtn.addEventListener('click', showSignInForm);
+        console.log('Back to sign-in button event listener added');
+      }
+      
+      const updatePasswordBtn = $('#updatePasswordBtn');
+      const cancelResetBtn = $('#cancelResetBtn');
+      const changePasswordBtn = $('#changePasswordBtn');
+      const savePasswordBtn = $('#savePasswordBtn');
+      const cancelChangeBtn = $('#cancelChangeBtn');
+      
+      if (updatePasswordBtn) {
+        updatePasswordBtn.addEventListener('click', updatePassword);
+        console.log('Update password button event listener added');
+      }
+      
+      if (cancelResetBtn) {
+        cancelResetBtn.addEventListener('click', showSignInForm);
+        console.log('Cancel reset button event listener added');
+      }
+      
+      if (changePasswordBtn) {
+        changePasswordBtn.addEventListener('click', () => {
+          closeUserDropdown();
+          openAuthModal();
+          showChangePasswordForm();
+        });
+        console.log('Change password button event listener added');
+      }
+      
+      if (savePasswordBtn) {
+        savePasswordBtn.addEventListener('click', changePassword);
+        console.log('Save password button event listener added');
+      }
+      
+      if (cancelChangeBtn) {
+        cancelChangeBtn.addEventListener('click', closeAuthModal);
+        console.log('Cancel change button event listener added');
+      }
+      
+      // Close modal when clicking overlay
+      const authModal = $('#authModal');
+      if (authModal) {
+        authModal.addEventListener('click', (e) => {
+          if (e.target === authModal || e.target.classList.contains('auth-modal-overlay')) {
+            closeAuthModal();
+          }
+        });
+      }
+      
+      // Close dropdown when clicking outside
+      document.addEventListener('click', (e) => {
+        const userInfo = $('#userInfo');
+        const userDropdown = $('#userDropdown');
+        if (userInfo && userDropdown && !userInfo.contains(e.target)) {
+          closeUserDropdown();
+        }
+      });
+      
+      // Handle Enter key in email form
+      const authEmail = $('#authEmail');
+      const authPassword = $('#authPassword');
+      
+      if (authEmail) {
+        authEmail.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            signInWithEmail();
+          }
+        });
+      }
+      
+      if (authPassword) {
+        authPassword.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            signInWithEmail();
+          }
+        });
       }
       
       // Show login button immediately
@@ -1351,58 +2063,568 @@
       const userName = $('#userName');
       const userEmail = $('#userEmail');
       const userPhoto = $('#userPhoto');
+      const dropdownUserName = $('#dropdownUserName');
+      const dropdownUserEmail = $('#dropdownUserEmail');
+      const dropdownUserPhoto = $('#dropdownUserPhoto');
       
       if (currentUser) {
         loginBtn.style.display = 'none';
-        userInfo.style.display = 'flex';
-        userName.textContent = currentUser.displayName || 'User';
-        userEmail.textContent = currentUser.email;
-        if (currentUser.photoURL) {
-          userPhoto.src = currentUser.photoURL;
+        userInfo.style.display = 'block';
+        
+        // Handle Supabase user object
+        const displayName = currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || 'User';
+        const email = currentUser.email || '';
+        const photoURL = currentUser.user_metadata?.avatar_url;
+        
+        // Update main user info
+        userName.textContent = displayName;
+        userEmail.textContent = email;
+        
+        // Update dropdown user info
+        if (dropdownUserName) dropdownUserName.textContent = displayName;
+        if (dropdownUserEmail) dropdownUserEmail.textContent = email;
+        
+        // Handle profile photos
+        if (photoURL) {
+          userPhoto.src = photoURL;
           userPhoto.style.display = 'block';
+          if (dropdownUserPhoto) {
+            dropdownUserPhoto.src = photoURL;
+            dropdownUserPhoto.style.display = 'block';
+          }
+        } else {
+          userPhoto.style.display = 'none';
+          if (dropdownUserPhoto) {
+            dropdownUserPhoto.style.display = 'none';
+          }
         }
+        
+        console.log('Auth UI updated for user:', { displayName, email, photoURL });
       } else {
         loginBtn.style.display = 'flex';
         userInfo.style.display = 'none';
+        console.log('Auth UI updated - no user');
       }
     }
     
-    async function signInWithGoogle() {
-      try {
-        console.log('Attempting Google Sign-In...');
-        const { data, error } = await window.supabaseClient.auth.signInWithOAuth({
-          provider: 'google',
-          options: {
-            redirectTo: window.location.origin
+    // User Dropdown Functions
+    function toggleUserDropdown() {
+      const dropdown = $('#userDropdown');
+      if (dropdown) {
+        const isVisible = dropdown.classList.contains('show');
+        if (isVisible) {
+          closeUserDropdown();
+        } else {
+          openUserDropdown();
+        }
+      }
+    }
+    
+    function openUserDropdown() {
+      const dropdown = $('#userDropdown');
+      if (dropdown) {
+        dropdown.style.display = 'block';
+        // Small delay for smooth animation
+        setTimeout(() => {
+          dropdown.classList.add('show');
+        }, 10);
+      }
+    }
+    
+    function closeUserDropdown() {
+      const dropdown = $('#userDropdown');
+      if (dropdown) {
+        dropdown.classList.remove('show');
+        // Hide after animation completes
+        setTimeout(() => {
+          dropdown.style.display = 'none';
+        }, 200);
+      }
+    }
+    
+    // Modal Functions
+    function openAuthModal() {
+      const modal = $('#authModal');
+      if (modal) {
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+        
+        // Ensure sign-in form is shown by default
+        showSignInForm();
+        
+        console.log('Auth modal opened');
+      }
+    }
+    
+    function closeAuthModal() {
+      const modal = $('#authModal');
+      if (modal) {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+        clearAuthStatus();
+      }
+    }
+    
+    // Make functions globally available
+    window.openAuthModal = openAuthModal;
+    window.closeAuthModal = closeAuthModal;
+    
+    function showAuthStatus(message, type = 'success') {
+      const status = $('#authStatus');
+      if (status) {
+        status.textContent = message;
+        status.className = `auth-status ${type}`;
+        status.style.display = 'block';
+      }
+    }
+    
+    function clearAuthStatus() {
+      const status = $('#authStatus');
+      if (status) {
+        status.style.display = 'none';
+      }
+    }
+    
+    function showAuthLoading(show = true) {
+      const loading = $('#authLoading');
+      const emailForm = $('#emailAuthForm');
+      const forgotForm = $('#forgotPasswordForm');
+      const resetForm = $('#passwordResetForm');
+      
+      if (loading) loading.style.display = show ? 'flex' : 'none';
+      
+      // Only hide the currently visible form when loading
+      if (show) {
+        if (emailForm && emailForm.style.display === 'flex') emailForm.style.display = 'none';
+        if (forgotForm && forgotForm.style.display === 'flex') forgotForm.style.display = 'none';
+        if (resetForm && resetForm.style.display === 'flex') resetForm.style.display = 'none';
+      } else {
+        // When loading stops, show the appropriate form
+        if (emailForm && emailForm.style.display !== 'none') emailForm.style.display = 'flex';
+      }
+    }
+    
+    function showForgotPasswordForm() {
+      const emailForm = $('#emailAuthForm');
+      const forgotForm = $('#forgotPasswordForm');
+      const resetForm = $('#passwordResetForm');
+      const changeForm = $('#changePasswordForm');
+      
+      // Hide all forms first
+      if (emailForm) {
+        emailForm.style.display = 'none';
+        emailForm.classList.remove('hidden');
+      }
+      if (forgotForm) {
+        forgotForm.style.display = 'none';
+        forgotForm.classList.remove('hidden');
+      }
+      if (resetForm) {
+        resetForm.style.display = 'none';
+        resetForm.classList.remove('hidden');
+      }
+      if (changeForm) {
+        changeForm.style.display = 'none';
+        changeForm.classList.remove('hidden');
+      }
+      
+      // Show forgot password form
+      if (forgotForm) {
+        forgotForm.style.display = 'flex';
+        // Small delay for smooth transition
+        setTimeout(() => {
+          forgotForm.classList.remove('hidden');
+        }, 10);
+      }
+      
+      clearAuthStatus();
+    }
+    
+    function showSignInForm() {
+      const emailForm = $('#emailAuthForm');
+      const forgotForm = $('#forgotPasswordForm');
+      const resetForm = $('#passwordResetForm');
+      const changeForm = $('#changePasswordForm');
+      
+      // Hide all forms first
+      if (emailForm) {
+        emailForm.style.display = 'none';
+        emailForm.classList.remove('hidden');
+      }
+      if (forgotForm) {
+        forgotForm.style.display = 'none';
+        forgotForm.classList.remove('hidden');
+      }
+      if (resetForm) {
+        resetForm.style.display = 'none';
+        resetForm.classList.remove('hidden');
+      }
+      if (changeForm) {
+        changeForm.style.display = 'none';
+        changeForm.classList.remove('hidden');
+      }
+      
+      // Show sign-in form
+      if (emailForm) {
+        emailForm.style.display = 'flex';
+        // Small delay for smooth transition
+        setTimeout(() => {
+          emailForm.classList.remove('hidden');
+        }, 10);
+      }
+      
+      clearAuthStatus();
+    }
+    
+    function showPasswordResetForm() {
+      const emailForm = $('#emailAuthForm');
+      const forgotForm = $('#forgotPasswordForm');
+      const resetForm = $('#passwordResetForm');
+      const changeForm = $('#changePasswordForm');
+      
+      // Hide all forms first
+      if (emailForm) {
+        emailForm.style.display = 'none';
+        emailForm.classList.remove('hidden');
+      }
+      if (forgotForm) {
+        forgotForm.style.display = 'none';
+        forgotForm.classList.remove('hidden');
+      }
+      if (resetForm) {
+        resetForm.style.display = 'none';
+        resetForm.classList.remove('hidden');
+      }
+      if (changeForm) {
+        changeForm.style.display = 'none';
+        changeForm.classList.remove('hidden');
+      }
+      
+      // Show password reset form
+      if (resetForm) {
+        resetForm.style.display = 'flex';
+        // Small delay for smooth transition
+        setTimeout(() => {
+          resetForm.classList.remove('hidden');
+        }, 10);
+      }
+      
+      clearAuthStatus();
+    }
+    
+    function showChangePasswordForm() {
+      const emailForm = $('#emailAuthForm');
+      const forgotForm = $('#forgotPasswordForm');
+      const resetForm = $('#passwordResetForm');
+      const changeForm = $('#changePasswordForm');
+      
+      // Hide all forms first
+      if (emailForm) {
+        emailForm.style.display = 'none';
+        emailForm.classList.remove('hidden');
+      }
+      if (forgotForm) {
+        forgotForm.style.display = 'none';
+        forgotForm.classList.remove('hidden');
+      }
+      if (resetForm) {
+        resetForm.style.display = 'none';
+        resetForm.classList.remove('hidden');
+      }
+      if (changeForm) {
+        changeForm.style.display = 'none';
+        changeForm.classList.remove('hidden');
+      }
+      
+      // Show change password form
+      if (changeForm) {
+        changeForm.style.display = 'flex';
+        // Small delay for smooth transition
+        setTimeout(() => {
+          changeForm.classList.remove('hidden');
+        }, 10);
+      }
+      
+      clearAuthStatus();
+    }
+    
+    function checkPasswordResetToken() {
+      // Check URL parameters for password reset tokens
+      const urlParams = new URLSearchParams(window.location.search);
+      const accessToken = urlParams.get('access_token');
+      const refreshToken = urlParams.get('refresh_token');
+      const type = urlParams.get('type');
+      
+      console.log('URL params:', { accessToken: !!accessToken, refreshToken: !!refreshToken, type });
+      
+      // If this is a password recovery flow
+      if (type === 'recovery' && accessToken && refreshToken) {
+        console.log('Password reset token detected, showing reset form');
+        
+        // Set the session with the tokens
+        window.supabaseClient.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken
+        }).then(({ data, error }) => {
+          if (error) {
+            console.error('Error setting session:', error);
+            showAuthStatus('Invalid or expired reset link. Please request a new one.', 'error');
+            return;
           }
+          
+          if (data.session) {
+            // User is now authenticated, show password reset form
+            openAuthModal();
+            showPasswordResetForm();
+            showAuthStatus('Please enter your new password', 'success');
+          }
+        });
+        
+        // Clean up URL parameters
+        const newUrl = window.location.origin + window.location.pathname;
+        window.history.replaceState({}, document.title, newUrl);
+      }
+    }
+    
+    async function sendPasswordReset() {
+      const email = $('#forgotEmail').value;
+      
+      if (!email) {
+        showAuthStatus('Please enter your email address', 'error');
+        return;
+      }
+      
+      try {
+        showAuthLoading(true);
+        clearAuthStatus();
+        
+        const { error } = await window.supabaseClient.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.origin + window.location.pathname
         });
         
         if (error) throw error;
         
-        console.log('Sign-in initiated:', data);
-        showNotification('Redirecting to Google...', 'success');
+        showAuthStatus('Password reset link sent! Check your email.', 'success');
+        showAuthLoading(false);
+        
+        // Auto-close modal after 3 seconds
+        setTimeout(() => {
+          closeAuthModal();
+        }, 3000);
+        
       } catch (error) {
-        console.error('Sign in error details:', error);
-        console.error('Error message:', error.message);
+        console.error('Password reset error:', error);
+        showAuthLoading(false);
+        showAuthStatus('Failed to send reset link: ' + error.message, 'error');
+      }
+    }
+    
+    async function updatePassword() {
+      const newPassword = $('#newPassword').value;
+      const confirmPassword = $('#confirmPassword').value;
+      
+      if (!newPassword || !confirmPassword) {
+        showAuthStatus('Please fill in all fields', 'error');
+        return;
+      }
+      
+      if (newPassword.length < 6) {
+        showAuthStatus('Password must be at least 6 characters', 'error');
+        return;
+      }
+      
+      if (newPassword !== confirmPassword) {
+        showAuthStatus('Passwords do not match', 'error');
+        return;
+      }
+      
+      try {
+        showAuthLoading(true);
+        clearAuthStatus();
         
-        let errorMessage = 'Sign in failed. Please try again.';
+        const { error } = await window.supabaseClient.auth.updateUser({
+          password: newPassword
+        });
         
-        // Provide specific error messages
-        if (error.message.includes('popup')) {
-          errorMessage = 'Popup was blocked. Please allow popups and try again.';
-        } else if (error.message.includes('network')) {
-          errorMessage = 'Network error. Please check your connection.';
+        if (error) throw error;
+        
+        showAuthStatus('Password updated successfully! You can now sign in.', 'success');
+        showAuthLoading(false);
+        
+        // Clear password fields
+        $('#newPassword').value = '';
+        $('#confirmPassword').value = '';
+        
+        // Auto-close modal after 3 seconds
+        setTimeout(() => {
+          closeAuthModal();
+        }, 3000);
+        
+      } catch (error) {
+        console.error('Password update error:', error);
+        showAuthLoading(false);
+        showAuthStatus('Failed to update password: ' + error.message, 'error');
+      }
+    }
+    
+    async function changePassword() {
+      const currentPassword = $('#currentPassword').value;
+      const newPassword = $('#changeNewPassword').value;
+      const confirmPassword = $('#changeConfirmPassword').value;
+      
+      if (!currentPassword || !newPassword || !confirmPassword) {
+        showAuthStatus('Please fill in all fields', 'error');
+        return;
+      }
+      
+      if (newPassword.length < 6) {
+        showAuthStatus('New password must be at least 6 characters', 'error');
+        return;
+      }
+      
+      if (newPassword !== confirmPassword) {
+        showAuthStatus('New passwords do not match', 'error');
+        return;
+      }
+      
+      if (currentPassword === newPassword) {
+        showAuthStatus('New password must be different from current password', 'error');
+        return;
+      }
+      
+      try {
+        showAuthLoading(true);
+        clearAuthStatus();
+        
+        // First verify current password by attempting to sign in
+        const { error: signInError } = await window.supabaseClient.auth.signInWithPassword({
+          email: currentUser.email,
+          password: currentPassword
+        });
+        
+        if (signInError) {
+          throw new Error('Current password is incorrect');
         }
         
-        showNotification(errorMessage, 'error');
+        // If current password is correct, update to new password
+        const { error: updateError } = await window.supabaseClient.auth.updateUser({
+          password: newPassword
+        });
+        
+        if (updateError) throw updateError;
+        
+        showAuthStatus('Password changed successfully!', 'success');
+        showAuthLoading(false);
+        
+        // Clear password fields
+        $('#currentPassword').value = '';
+        $('#changeNewPassword').value = '';
+        $('#changeConfirmPassword').value = '';
+        
+        // Auto-close modal after 2 seconds
+        setTimeout(() => {
+          closeAuthModal();
+        }, 2000);
+        
+      } catch (error) {
+        console.error('Password change error:', error);
+        showAuthLoading(false);
+        showAuthStatus('Failed to change password: ' + error.message, 'error');
+      }
+    }
+    
+    async function signInWithEmail() {
+      const email = $('#authEmail').value;
+      const password = $('#authPassword').value;
+      
+      if (!email || !password) {
+        showAuthStatus('Please enter both email and password', 'error');
+        return;
+      }
+      
+      try {
+        showAuthLoading(true);
+        clearAuthStatus();
+        
+        // Try to sign in first
+        let { data, error } = await window.supabaseClient.auth.signInWithPassword({
+          email: email,
+          password: password
+        });
+        
+        // If sign in fails, check the error type
+        if (error) {
+          if (error.message.includes('email not confirmed') || error.message.includes('Email not confirmed')) {
+            showAuthStatus('Please check your email and click the confirmation link before signing in.', 'error');
+            showAuthLoading(false);
+            return;
+          } else if (error.message.includes('Invalid login credentials')) {
+            showAuthStatus('Invalid email or password. Please try again.', 'error');
+            showAuthLoading(false);
+            return;
+          } else {
+            throw error;
+          }
+        }
+        
+        // Sign in was successful
+        showAuthStatus('Sign in successful!', 'success');
+        showAuthLoading(false);
+        closeAuthModal();
+      } catch (error) {
+        console.error('Email sign in error:', error);
+        showAuthLoading(false);
+        showAuthStatus('Sign in failed: ' + error.message, 'error');
+      }
+    }
+    
+    async function signUpWithEmail() {
+      const email = $('#authEmail').value;
+      const password = $('#authPassword').value;
+      
+      if (!email || !password) {
+        showAuthStatus('Please enter both email and password', 'error');
+        return;
+      }
+      
+      if (password.length < 6) {
+        showAuthStatus('Password must be at least 6 characters', 'error');
+        return;
+      }
+      
+      try {
+        showAuthLoading(true);
+        clearAuthStatus();
+        
+        const { data, error } = await window.supabaseClient.auth.signUp({
+          email: email,
+          password: password
+        });
+        
+        if (error) throw error;
+        
+        showAuthStatus('Account created! Please check your email to confirm.', 'success');
+        showAuthLoading(false);
+      } catch (error) {
+        console.error('Email sign up error:', error);
+        showAuthLoading(false);
+        showAuthStatus('Sign up failed: ' + error.message, 'error');
       }
     }
     
     async function signOut() {
       try {
-        const { error } = await window.supabaseClient.auth.signOut();
-        if (error) throw error;
+        await window.supabaseClient.auth.signOut();
         showNotification('Signed out successfully!', 'success');
+        
+        // Clear all data immediately
+        clearAllData();
+        
+        // Refresh the page after a short delay to ensure clean state
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+        
       } catch (error) {
         console.error('Sign out error:', error);
         showNotification('Sign out failed. Please try again.', 'error');
@@ -1418,34 +2640,75 @@
       if (!currentUser) return;
       
       try {
-        // Load backup data from Supabase
-        const { data: backupData, error } = await window.supabaseClient
-          .from('backups')
-          .select('data, version, last_updated')
+        // Load user settings
+        const { data: settings, error: settingsError } = await window.supabaseClient
+          .from('user_settings')
+          .select('*')
           .eq('user_id', currentUser.id)
           .single();
         
-        if (error && error.code !== 'PGRST116') {
-          throw error; // PGRST116 is "no rows" error
+        if (settings && !settingsError) {
+          console.log('Loaded settings from Supabase:', settings);
+          state.fx = settings.fx_rate || 48.1843;
+          state.theme = settings.theme || 'dark';
+          state.autosave = settings.autosave ? 'on' : 'off';
+          state.includeAnnualInMonthly = settings.include_annual_in_monthly === true || settings.include_annual_in_monthly === 'true' || false;
+          columnOrder = settings.column_order || ['monthly', 'yearly', 'monthly-egp', 'yearly-egp'];
+          
+          console.log('includeAnnualInMonthly loaded as:', state.includeAnnualInMonthly);
+          
+          // Update UI elements to reflect loaded settings
+          updateSettingsUI();
         }
         
-        if (backupData && backupData.data) {
-          // Restore data from backup
-          const restoredData = backupData.data;
-          state.personal = restoredData.personal || [];
-          state.biz = restoredData.biz || [];
-          state.fx = restoredData.fx || 48.1843;
-          state.theme = restoredData.theme || 'dark';
-          state.autosave = restoredData.autosave || 'on';
-          state.includeAnnualInMonthly = restoredData.includeAnnualInMonthly || true;
-          columnOrder = restoredData.columnOrder || ['monthly', 'yearly', 'monthly-egp', 'yearly-egp'];
+        // Load personal expenses
+        const { data: personalExpenses, error: personalError } = await window.supabaseClient
+          .from('personal_expenses')
+          .select('*')
+          .eq('user_id', currentUser.id)
+          .order('created_at', { ascending: true });
+        
+        if (personalExpenses && !personalError) {
+          state.personal = personalExpenses.map(expense => ({
+            name: expense.name,
+            cost: expense.cost,
+            status: expense.status,
+            billing: expense.billing,
+            monthlyUSD: expense.monthly_usd,
+            yearlyUSD: expense.yearly_usd,
+            monthlyEGP: expense.monthly_egp,
+            yearlyEGP: expense.yearly_egp,
+            icon: expense.icon,
+            id: expense.id
+          }));
+        }
+        
+        // Load business expenses
+        const { data: businessExpenses, error: businessError } = await window.supabaseClient
+          .from('business_expenses')
+          .select('*')
+          .eq('user_id', currentUser.id)
+          .order('created_at', { ascending: true });
+        
+        if (businessExpenses && !businessError) {
+          state.biz = businessExpenses.map(expense => ({
+            name: expense.name,
+            cost: expense.cost,
+            status: expense.status,
+            billing: expense.billing,
+            next: expense.next_payment ? new Date(expense.next_payment).toISOString().split('T')[0] : '',
+            monthlyUSD: expense.monthly_usd,
+            yearlyUSD: expense.yearly_usd,
+            monthlyEGP: expense.monthly_egp,
+            yearlyEGP: expense.yearly_egp,
+            icon: expense.icon,
+            id: expense.id
+          }));
+        }
           
           renderAll();
           showNotification('Data loaded from cloud!', 'success');
-        } else {
-          // No backup data, use local data
-          loadLocalData();
-        }
+        
       } catch (error) {
         console.error('Error loading user data:', error);
         showNotification('Failed to load cloud data. Using local data.', 'error');
@@ -1472,34 +2735,141 @@
       renderAll();
     }
     
+    function clearAllData() {
+      // Clear all data from state
+      state.personal = [];
+      state.biz = [];
+      state.fx = 48.1843;
+      state.theme = 'dark';
+      state.autosave = 'on';
+      state.includeAnnualInMonthly = false;
+      columnOrder = ['monthly', 'yearly', 'monthly-egp', 'yearly-egp'];
+      
+      // Clear local storage
+      localStorage.removeItem('finance-notion-v6');
+      localStorage.removeItem('columnOrder');
+      
+      // Re-render with empty data
+      renderAll();
+      
+      console.log('All data cleared - showing empty tables');
+    }
+    
+    
     async function saveToSupabase() {
       if (!currentUser || !supabaseReady) return;
       
       try {
-        // Create backup object with all data
-        const backupData = {
-          personal: state.personal,
-          biz: state.biz,
-          fx: state.fx,
+        // Save user settings
+        console.log('Saving settings to Supabase:', {
+          user_id: currentUser.id,
+          fx_rate: state.fx,
           theme: state.theme,
-          autosave: state.autosave,
-          includeAnnualInMonthly: state.includeAnnualInMonthly,
-          columnOrder: columnOrder
-        };
+          autosave: state.autosave === 'on',
+          include_annual_in_monthly: state.includeAnnualInMonthly,
+          column_order: columnOrder
+        });
         
-        // Save to Supabase backups table
-        const { error } = await window.supabaseClient
-          .from('backups')
+        await window.supabaseClient
+          .from('user_settings')
           .upsert({
             user_id: currentUser.id,
-            data: backupData,
-            version: '1.0',
-            last_updated: new Date().toISOString()
+            fx_rate: state.fx,
+            theme: state.theme,
+            autosave: state.autosave === 'on',
+            include_annual_in_monthly: state.includeAnnualInMonthly,
+            column_order: columnOrder
           }, {
             onConflict: 'user_id'
           });
         
-        if (error) throw error;
+        // Save personal expenses
+        for (const expense of state.personal) {
+          if (expense.id) {
+            // Update existing expense
+            await window.supabaseClient
+              .from('personal_expenses')
+              .update({
+                name: expense.name,
+                cost: expense.cost,
+                status: expense.status,
+                billing: expense.billing,
+                monthly_usd: expense.monthlyUSD || 0,
+                yearly_usd: expense.yearlyUSD || 0,
+                monthly_egp: expense.monthlyEGP || 0,
+                yearly_egp: expense.yearlyEGP || 0,
+                icon: expense.icon
+              })
+              .eq('id', expense.id);
+          } else {
+            // Create new expense
+            const { data: newExpense, error } = await window.supabaseClient
+              .from('personal_expenses')
+              .insert({
+                user_id: currentUser.id,
+                name: expense.name,
+                cost: expense.cost,
+                status: expense.status,
+                billing: expense.billing,
+                monthly_usd: expense.monthlyUSD || 0,
+                yearly_usd: expense.yearlyUSD || 0,
+                monthly_egp: expense.monthlyEGP || 0,
+                yearly_egp: expense.yearlyEGP || 0,
+                icon: expense.icon
+              })
+              .select()
+              .single();
+            
+            if (newExpense) {
+              expense.id = newExpense.id;
+            }
+          }
+        }
+        
+        // Save business expenses
+        for (const expense of state.biz) {
+          if (expense.id) {
+            // Update existing expense
+            await window.supabaseClient
+              .from('business_expenses')
+              .update({
+                name: expense.name,
+                cost: expense.cost,
+                status: expense.status,
+                billing: expense.billing,
+                next_payment: expense.next ? new Date(expense.next).toISOString().split('T')[0] : null,
+                monthly_usd: expense.monthlyUSD || 0,
+                yearly_usd: expense.yearlyUSD || 0,
+                monthly_egp: expense.monthlyEGP || 0,
+                yearly_egp: expense.yearlyEGP || 0,
+                icon: expense.icon
+              })
+              .eq('id', expense.id);
+          } else {
+            // Create new expense
+            const { data: newExpense, error } = await window.supabaseClient
+              .from('business_expenses')
+              .insert({
+                user_id: currentUser.id,
+                name: expense.name,
+                cost: expense.cost,
+                status: expense.status,
+                billing: expense.billing,
+                next_payment: expense.next ? new Date(expense.next).toISOString().split('T')[0] : null,
+                monthly_usd: expense.monthlyUSD || 0,
+                yearly_usd: expense.yearlyUSD || 0,
+                monthly_egp: expense.monthlyEGP || 0,
+                yearly_egp: expense.yearlyEGP || 0,
+                icon: expense.icon
+              })
+              .select()
+              .single();
+            
+            if (newExpense) {
+              expense.id = newExpense.id;
+            }
+          }
+        }
         
         showSaveIndicator();
       } catch (error) {
@@ -1528,7 +2898,7 @@
       fx: 48.1843,
       autosave: 'on',
       theme: 'dark',
-      includeAnnualInMonthly: true,
+      includeAnnualInMonthly: false,
       personal: [],
       biz: []
     };
@@ -2657,15 +4027,25 @@
          costInput.step = '0.01';
          costInput.value = (row.cost || 0).toFixed(2);
          costInput.addEventListener('input', function() {
-           const newCost = parseFloat(this.value) || 0;
-           row.cost = newCost;
-           this.value = newCost.toFixed(2); // Keep 2 decimal places in display
+           row.cost = Number(this.value) || 0;
            save();
-           // Update only the calculated values in this row, not the entire table
+         });
+         
+         // Update calculations when user finishes typing
+         costInput.addEventListener('blur', function() {
            updateRowCalculations(div, row, isBiz);
+           renderKPIs();
          });
          costDiv.innerHTML = '<div class="cost-input-wrapper"></div>';
-         costDiv.querySelector('.cost-input-wrapper').appendChild(costInput);
+         const wrapper = costDiv.querySelector('.cost-input-wrapper');
+         
+         // Add dollar sign display BEFORE the input
+         const dollarDisplay = document.createElement('span');
+         dollarDisplay.className = 'cost-dollar-display';
+         dollarDisplay.textContent = '$';
+         wrapper.appendChild(dollarDisplay);
+         
+         wrapper.appendChild(costInput);
          
          const statusDiv=document.createElement('div'); 
          const statusSelect = document.createElement('select');
@@ -2787,15 +4167,26 @@
         costInp.addEventListener('input', ()=>{ 
           row.cost=Number(costInp.value||0); 
           save(); 
-          renderKPIs(); // Only update KPIs, don't re-render entire list
+        });
+        
+        // Update calculations when user finishes typing
+        costInp.addEventListener('blur', ()=>{ 
+          updateRowCalculations(div, row, isBiz);
+          renderKPIs();
         });
         const statusSel=statusDiv.querySelector('select'); statusSel.addEventListener('change', ()=>{ 
           row.status=statusSel.value; 
           statusSel.className = 'select status-'+(row.status==='Active'?'active':'cancelled');
           save(); 
-          renderAll(); 
+          updateRowCalculations(div, row, isBiz);
+          renderKPIs();
         });
-        const billingSel=billingDiv.querySelector('select'); billingSel.addEventListener('change', ()=>{ row.billing=billingSel.value; save(); renderAll(); });
+        const billingSel=billingDiv.querySelector('select'); billingSel.addEventListener('change', ()=>{ 
+          row.billing=billingSel.value; 
+          save(); 
+          updateRowCalculations(div, row, isBiz);
+          renderKPIs();
+        });
         if(isBiz){ const dateInp=div.querySelector('input[type="date"]'); if(dateInp){ dateInp.addEventListener('change', ()=>{ row.next=dateInp.value; save(); }); } }
         const iconBtn=iconDiv.querySelector('[data-choose-icon]');
         iconBtn.addEventListener('click', ()=> openIconPicker(arr, idx));
@@ -2889,7 +4280,8 @@
     $('#inputFx').addEventListener('input', function() {
       state.fx = Number(this.value) || state.fx;
       save();
-      renderAll(); // Re-render to update all EGP calculations
+      // Update only EGP calculations without re-rendering inputs
+      updateAllCalculationsWithoutRerender();
     });
     
     $('#btnSaveSettings').addEventListener('click', (e)=>{ 
@@ -2899,7 +4291,8 @@
       state.includeAnnualInMonthly = $('#inputIncludeAnnual').value === 'true';
       updateAutosaveStatus();
       save(); 
-      renderAll(); 
+      // Update only calculations without re-rendering inputs
+      updateAllCalculationsWithoutRerender();
       $('#settings').close(); 
     });
     
@@ -3185,6 +4578,57 @@
       }
     }
     
+    function updateSettingsUI() {
+      // Update FX rate display
+      const fxDisplay = document.getElementById('fxDisplay');
+      if (fxDisplay) {
+        fxDisplay.textContent = state.fx.toFixed(4);
+      }
+      
+      // Update autosave status
+      updateAutosaveStatus();
+      
+      // Update theme if needed
+      if (state.theme === 'light') {
+        document.documentElement.setAttribute('data-theme', 'light');
+      } else {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+      
+      // Update Include Annual in Monthly setting
+      const includeAnnualSelect = document.getElementById('inputIncludeAnnual');
+      if (includeAnnualSelect) {
+        includeAnnualSelect.value = state.includeAnnualInMonthly ? 'true' : 'false';
+        console.log('Updated Include Annual setting in UI:', state.includeAnnualInMonthly);
+      }
+      
+      // Update calculations without re-rendering inputs
+      updateAllCalculationsWithoutRerender();
+    }
+    
+    function updateAllCalculationsWithoutRerender() {
+      // Update all EGP values in existing rows without re-rendering
+      const personalRows = document.querySelectorAll('#list-personal .row');
+      personalRows.forEach((rowEl, idx) => {
+        const rowData = state.personal[idx];
+        if (rowData) {
+          updateRowCalculations(rowEl, rowData, false);
+        }
+      });
+      
+      const bizRows = document.querySelectorAll('#list-biz .row');
+      bizRows.forEach((rowEl, idx) => {
+        const rowData = state.biz[idx];
+        if (rowData) {
+          updateRowCalculations(rowEl, rowData, true);
+        }
+      });
+      
+      // Update KPIs
+      renderKPIs();
+    }
+    
+    
     // Refresh FX rate button
     $('#btnRefreshFx').addEventListener('click', async ()=>{
       const btn = $('#btnRefreshFx');
@@ -3447,6 +4891,19 @@
         }
       }
     });
+    
+    // Show loading skeleton for first 2 seconds
+    const loadingSkeleton = document.getElementById('loading-skeleton');
+    if (loadingSkeleton) {
+      loadingSkeleton.classList.remove('hidden');
+    }
+    
+    // Hide skeleton after minimum loading time
+    setTimeout(() => {
+      if (loadingSkeleton) {
+        loadingSkeleton.classList.add('hidden');
+      }
+    }, 2000);
     
     // Initialize column order on page load (after renderAll)
     applyColumnOrder();
