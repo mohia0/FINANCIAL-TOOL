@@ -360,6 +360,66 @@
       background: var(--card);
       color: var(--fg);
     }
+    
+    /* Sync Button Styles */
+    .sync-button {
+      position: relative;
+      overflow: visible;
+    }
+    
+    .sync-status {
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--muted);
+      transition: all 0.3s ease;
+      opacity: 0;
+      transform: scale(0);
+    }
+    
+    .sync-status.syncing {
+      background: #f59e0b;
+      opacity: 1;
+      transform: scale(1);
+      animation: syncPulse 1s ease-in-out infinite;
+    }
+    
+    .sync-status.success {
+      background: #10b981;
+      opacity: 1;
+      transform: scale(1);
+    }
+    
+    .sync-status.error {
+      background: #ef4444;
+      opacity: 1;
+      transform: scale(1);
+    }
+    
+    .sync-status.offline {
+      background: #6b7280;
+      opacity: 1;
+      transform: scale(1);
+    }
+    
+    @keyframes syncPulse {
+      0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+      50% {
+        transform: scale(1.2);
+        opacity: 0.7;
+      }
+    }
+    
+    .sync-button:hover .sync-status {
+      opacity: 1;
+      transform: scale(1);
+    }
 
     .kpi{ 
       border-radius:1rem; 
@@ -774,10 +834,7 @@
     }
     
     .tag-dropdown {
-      position: absolute;
-      top: 100%;
-      left: 0;
-      right: 0;
+      position: fixed;
       background: var(--card);
       border: 1px solid var(--stroke);
       border-radius: 8px;
@@ -788,16 +845,17 @@
       visibility: hidden;
       transform: translateY(-8px);
       transition: all 0.2s ease;
-      margin-top: 4px;
       max-height: 200px;
       overflow-y: auto;
       min-width: 150px;
+      pointer-events: none;
     }
     
     .tag-dropdown.show {
       opacity: 1;
       visibility: visible;
       transform: translateY(0);
+      pointer-events: auto;
     }
     
     .tag-suggestion {
@@ -1061,13 +1119,23 @@
       filter:invert(.7); 
       margin-right:0;
       cursor: pointer;
+      width: 14px;
+      height: 14px;
+      position: absolute;
+      right: 0.6rem;
+      top: 50%;
+      transform: translateY(-50%);
     }
     [data-theme="light"] input[type=date]::-webkit-calendar-picker-indicator{ 
       filter:invert(.3); 
       margin-right:0;
     }
     input[type=date]{
-      padding-right:1.5rem;
+      padding-right:2.8rem;
+      min-width: 120px;
+      max-width: 140px;
+      font-size: 0.75rem;
+      height: 2rem;
     }
     
     /* Enhanced Date Input */
@@ -1093,22 +1161,26 @@
     /* Minimal Date Input for Income Rows */
     .date-input-minimal {
       font-size: 0.75rem;
-      padding: 0.5rem 2rem 0.5rem 0.75rem;
-      min-width: 100px;
-      width: 100%;
+      padding: 0.4rem 2.8rem 0.4rem 0.6rem !important;
+      min-width: 120px;
+      max-width: 140px;
+      width: auto;
+      height: 2rem;
       text-align: left;
       border-radius: 8px;
+      flex-shrink: 0;
     }
     
     .date-input-minimal::-webkit-calendar-picker-indicator {
-      filter: invert(0.6);
+      filter: invert(0.6) !important;
       cursor: pointer;
-      width: 16px;
-      height: 16px;
-      position: absolute;
-      right: 0.5rem;
-      top: 50%;
-      transform: translateY(-50%);
+      width: 14px !important;
+      height: 14px !important;
+      position: absolute !important;
+      right: 0.6rem !important;
+      top: 50% !important;
+      transform: translateY(-50%) !important;
+      margin-right: 0 !important;
     }
     
     .date-input-minimal:hover::-webkit-calendar-picker-indicator {
@@ -1169,10 +1241,7 @@
     }
     
     .method-menu-minimal {
-      position: absolute;
-      top: 100%;
-      left: 0;
-      right: 0;
+      position: fixed;
       background: var(--card);
       border: 1px solid var(--stroke);
       border-radius: 8px;
@@ -1183,16 +1252,17 @@
       visibility: hidden;
       transform: translateY(-8px);
       transition: all 0.2s ease;
-      margin-top: 4px;
       max-height: 200px;
       overflow-y: auto;
       min-width: 150px;
+      pointer-events: none;
     }
     
     .method-menu-minimal.show {
       opacity: 1;
       visibility: visible;
       transform: translateY(0);
+      pointer-events: auto;
     }
     
     .method-item-minimal {
@@ -2066,19 +2136,19 @@
         margin-top: 0;
         width: auto;
         height: auto;
-        max-width: 200px;
+        max-width: 220px;
       }
       
       .notification-content {
-        padding: 0.3rem 0.5rem;
+        padding: 0.4rem 0.6rem;
         background: var(--card);
         border: none;
         border-radius: 6px;
         min-width: auto;
-        max-width: 160px;
+        max-width: 180px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         backdrop-filter: blur(8px);
-        white-space: nowrap;
+        white-space: normal;
       }
     
     .notification-content::before {
@@ -2097,12 +2167,14 @@
         font-size: 0.65rem;
         font-weight: 500;
         color: var(--fg);
-        line-height: 1.0;
+        line-height: 1.2;
         text-align: center;
-        white-space: nowrap;
+        white-space: normal;
         letter-spacing: 0.01em;
         margin: 0;
         padding: 0;
+        word-wrap: break-word;
+        max-width: 160px;
       }
     
     /* Simple notification types */

@@ -132,7 +132,7 @@ window.supabaseClient = supabase;
       });
     }
     
-    function confirmRemoveYear(year) {
+    async function confirmRemoveYear(year) {
       // Remove from state
       delete state.income[year];
       
@@ -151,16 +151,32 @@ window.supabaseClient = supabase;
         }
       }
       
+      // Delete all income records for this year from Supabase
+      if (supabaseReady && currentUser) {
+        try {
+          const { error } = await window.supabaseClient
+            .from('income')
+            .delete()
+            .eq('user_id', currentUser.id)
+            .eq('year', parseInt(year));
+          
+          if (error) throw error;
+          console.log(`Deleted all income records for year ${year} from Supabase`);
+        } catch (error) {
+          console.error('Error deleting year data from Supabase:', error);
+        }
+      }
+      
       // Refresh year management panel
       refreshYearManagementPanel();
       
-      // Save changes
-      save();
+      // Save changes to Supabase (for other data)
+      saveToSupabase();
       
       // Close dialog
       closeYearConfirmDialog();
       
-      console.log(`Removed year ${year} from income data`);
+      console.log(`Removed year ${year} from income data and Supabase`);
     }
     
     function closeYearConfirmDialog() {
@@ -335,6 +351,38 @@ window.supabaseClient = supabase;
       console.log(`Added year ${newYear} between ${year1} and ${year2}`);
     }
     
+    function createYearTabsFromData(incomeData) {
+      const yearTabsContainer = $('#yearTabsContainer');
+      if (!yearTabsContainer) return;
+      
+      // Clear existing year tabs (except the manage button)
+      const existingTabs = yearTabsContainer.querySelectorAll('.year-tab');
+      existingTabs.forEach(tab => tab.remove());
+      
+      // Get all years from income data and sort them
+      const years = Object.keys(incomeData).map(year => parseInt(year)).sort((a, b) => a - b);
+      
+      // Create year tabs for all years
+      years.forEach(year => {
+        const yearTab = document.createElement('button');
+        yearTab.className = 'year-tab';
+        yearTab.setAttribute('data-year', year);
+        yearTab.textContent = year;
+        yearTab.addEventListener('click', () => switchYear(year.toString()));
+        
+        // Insert before manage button
+        const manageBtn = $('#manageYearsBtn');
+        yearTabsContainer.insertBefore(yearTab, manageBtn);
+      });
+      
+      // Set the first year as active if no current year is set
+      if (years.length > 0 && !currentYear) {
+        switchYear(years[0].toString());
+      }
+      
+      console.log(`Created year tabs from Supabase data:`, years);
+    }
+    
     function addYearToTabs(newYear) {
       const yearTabsContainer = $('#yearTabsContainer');
       if (!yearTabsContainer) return;
@@ -366,6 +414,11 @@ window.supabaseClient = supabase;
       }
       
       yearTabsContainer.insertBefore(newYearTab, insertBefore);
+      
+      // Save changes to Supabase
+      saveToSupabase();
+      
+      console.log(`Added year ${newYear} to income data and synced with Supabase`);
     }
     
     function updateIncomeForYear(year) {
@@ -595,6 +648,7 @@ window.supabaseClient = supabase;
         console.log('Change password button event listener added');
       }
       
+      
       if (savePasswordBtn) {
         savePasswordBtn.addEventListener('click', changePassword);
         console.log('Save password button event listener added');
@@ -604,6 +658,7 @@ window.supabaseClient = supabase;
         cancelChangeBtn.addEventListener('click', closeAuthModal);
         console.log('Cancel change button event listener added');
       }
+      
       
       // Close modal when clicking overlay
       const authModal = $('#authModal');
@@ -1192,6 +1247,7 @@ window.supabaseClient = supabase;
       }
     }
     
+    
     async function signInWithEmail() {
       const email = $('#authEmail').value;
       const password = $('#authPassword').value;
@@ -1391,6 +1447,9 @@ window.supabaseClient = supabase;
               id: income.id
             });
           });
+          
+          // Create year tabs for all years found in Supabase data
+          createYearTabsFromData(state.income);
         }
           
           renderAll();
@@ -1642,6 +1701,7 @@ window.supabaseClient = supabase;
     const defaultState = {
       fx: 48.1843,
       autosave: 'on',
+      autosaveInterval: 15,
       theme: 'dark',
         includeAnnualInMonthly: false,
       personal: [],
@@ -1750,11 +1810,19 @@ window.supabaseClient = supabase;
   }
   
   function showSaveIndicator() {
-    showNotification('Saved', 'save', 2000);
+    if (currentUser && supabaseReady) {
+      showNotification('Saved to cloud', 'save', 2000);
+    } else {
+      showNotification('Saved locally', 'save', 2000);
+    }
   }
   
   function showSaveError() {
-    showNotification('Save failed', 'error', 3000);
+    if (currentUser && supabaseReady) {
+      showNotification('Cloud save failed', 'error', 3000);
+    } else {
+      showNotification('Local save failed', 'error', 3000);
+    }
   }
 
     let state = structuredClone(defaultState);
@@ -1801,24 +1869,33 @@ window.supabaseClient = supabase;
       isRefreshing = true;
       
       const refreshIcon = document.getElementById('iconRefresh');
+      const syncStatus = document.getElementById('syncStatus');
       const originalTransform = refreshIcon.style.transform;
+      
+      // Update sync status
+      updateSyncStatus('syncing');
       
       // Add spinning animation
       refreshIcon.style.transform = 'rotate(360deg)';
       refreshIcon.style.transition = 'transform 0.5s ease';
       
-      // Reload data from Supabase or localStorage
+      // Smart sync: Try cloud first, fallback to local
       if (currentUser && supabaseReady) {
-        loadUserData().then(() => {
-          showNotification('Data refreshed from cloud', 'success', 2000);
+        syncWithCloud().then(() => {
+          updateSyncStatus('success');
+          showNotification('Data synced from cloud', 'success', 2000);
           resetRefreshIcon();
-        }).catch(() => {
-          showNotification('Failed to refresh from cloud', 'error', 2000);
+        }).catch((error) => {
+          console.error('Cloud sync failed, falling back to local:', error);
+          loadLocalData();
+          updateSyncStatus('error');
+          showNotification('Cloud sync failed, using local data', 'warning', 3000);
           resetRefreshIcon();
         });
       } else {
         loadLocalData();
-        showNotification('Data refreshed locally', 'success', 2000);
+        updateSyncStatus('offline');
+        showNotification('Offline mode - using local data', 'info', 2000);
         resetRefreshIcon();
       }
       
@@ -1826,14 +1903,93 @@ window.supabaseClient = supabase;
         setTimeout(() => {
           refreshIcon.style.transform = originalTransform;
           isRefreshing = false;
+          // Keep success status for 2 seconds, then hide
+          if (syncStatus.classList.contains('success')) {
+            setTimeout(() => {
+              updateSyncStatus('');
+            }, 2000);
+          }
         }, 500);
+      }
+    }
+    
+    function updateSyncStatus(status) {
+      const syncStatus = document.getElementById('syncStatus');
+      if (!syncStatus) return;
+      
+      // Remove all status classes
+      syncStatus.classList.remove('syncing', 'success', 'error', 'offline');
+      
+      // Add new status class
+      if (status) {
+        syncStatus.classList.add(status);
+      }
+    }
+    
+    async function syncWithCloud() {
+      try {
+        // First, save current data to cloud
+        await saveToSupabase();
+        
+        // Then, load fresh data from cloud
+        await loadUserData();
+        
+        // Verify sync was successful
+        if (currentUser && supabaseReady) {
+          console.log('Cloud sync completed successfully');
+          return true;
+        } else {
+          throw new Error('Sync verification failed');
+        }
+      } catch (error) {
+        console.error('Cloud sync error:', error);
+        throw error;
       }
     }
 
     function startAutoRefresh() {
       if (refreshInterval) clearInterval(refreshInterval);
-      refreshInterval = setInterval(refreshData, 15000); // 15 seconds
+      const intervalSeconds = (state.autosaveInterval || 15) * 1000; // Convert to milliseconds
+      refreshInterval = setInterval(refreshData, intervalSeconds);
     }
+    
+    function updateAutoRefreshInterval() {
+      if (state.autosave === 'on') {
+        startAutoRefresh();
+      } else {
+        stopAutoRefresh();
+      }
+    }
+    
+    // Check connection status and update sync indicator
+    function checkConnectionStatus() {
+      const syncStatus = document.getElementById('syncStatus');
+      if (!syncStatus) return;
+      
+      if (navigator.onLine) {
+        if (currentUser && supabaseReady) {
+          updateSyncStatus('success');
+        } else {
+          updateSyncStatus('offline');
+        }
+      } else {
+        updateSyncStatus('error');
+      }
+    }
+    
+    // Monitor connection status
+    window.addEventListener('online', () => {
+      checkConnectionStatus();
+      showNotification('Connection restored', 'success', 2000);
+    });
+    
+    window.addEventListener('offline', () => {
+      updateSyncStatus('error');
+      showNotification('Connection lost - using offline mode', 'warning', 3000);
+    });
+    
+    // Initial connection check
+    checkConnectionStatus();
 
     function stopAutoRefresh() {
       if (refreshInterval) {
@@ -1921,17 +2077,31 @@ window.supabaseClient = supabase;
     setText('kpiIncomeYearlyTarget', nfUSD.format(i.yUSD * 1.2)); // 20% above current as target
     setText('kpiIncomeYearlyTargetEGP', 'EGP ' + nfINT.format(Math.round(i.yEGP * 1.2)));
     
-    // Income status bars
-    const activeIncome = currentYearData.filter(r => r.status === 'Active').length;
-    const totalIncome = currentYearData.length;
-    const completedPct = totalIncome > 0 ? Math.round((activeIncome / totalIncome) * 100) : 0;
-    const pendingPct = 100 - completedPct;
-    setText('shareIncomeCompletedVal', completedPct + '%');
-    setText('shareIncomePendingVal', pendingPct + '%');
+    // Year progress calculation
+    const now = new Date();
+    const currentYearNum = parseInt(currentYear);
+    const yearStart = new Date(currentYearNum, 0, 1);
+    const yearEnd = new Date(currentYearNum, 11, 31, 23, 59, 59);
+    const yearProgress = Math.round(((now - yearStart) / (yearEnd - yearStart)) * 100);
+    const yearProgressPct = Math.min(Math.max(yearProgress, 0), 100);
+    
+    // Calculate days left in the year
+    const daysLeft = Math.max(0, Math.ceil((yearEnd - now) / (1000 * 60 * 60 * 24)));
+    
+    setText('shareIncomeCompletedVal', yearProgressPct + '%');
+    setText('shareIncomePendingVal', daysLeft.toString());
     const completedBar = $('#shareIncomeCompletedBar');
     const pendingBar = $('#shareIncomePendingBar');
-    if (completedBar) completedBar.style.width = completedPct + '%';
-    if (pendingBar) pendingBar.style.width = pendingPct + '%';
+    if (completedBar) {
+      completedBar.style.width = yearProgressPct + '%';
+      completedBar.style.background = 'linear-gradient(90deg, #10b981, #059669)';
+    }
+    if (pendingBar) {
+      // Show days left as a visual indicator (inverse of year progress)
+      const daysLeftPct = Math.round((daysLeft / 365) * 100);
+      pendingBar.style.width = daysLeftPct + '%';
+      pendingBar.style.background = 'linear-gradient(90deg, #f59e0b, #d97706)';
+    }
     
     // Update analytics content
     updateAnalytics();
@@ -2007,15 +2177,35 @@ window.supabaseClient = supabase;
           </div>
           
           <div class="analytics-section">
-            <div class="section-title">Daily Revenue</div>
+            <div class="section-title">Time Breakdown</div>
             <div class="metric-grid">
               <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(income.mUSD)}</div>
+                <div class="metric-label">Monthly</div>
+              </div>
+              <div class="metric-item">
                 <div class="metric-value">${nfUSD.format(dailyIncome)}</div>
-                <div class="metric-label">Per Day</div>
+                <div class="metric-label">Daily</div>
               </div>
               <div class="metric-item">
                 <div class="metric-value">${nfUSD.format(weeklyIncome)}</div>
-                <div class="metric-label">Per Week</div>
+                <div class="metric-label">Weekly</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(dailyIncome / 24)}</div>
+                <div class="metric-label">Hourly</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format((dailyIncome / 24) / 60)}</div>
+                <div class="metric-label">Per Minute</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(((dailyIncome / 24) / 60) / 60)}</div>
+                <div class="metric-label">Per Second</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(income.yUSD)}</div>
+                <div class="metric-label">Yearly</div>
               </div>
             </div>
           </div>
@@ -2099,12 +2289,28 @@ window.supabaseClient = supabase;
             <div class="section-title">Time Breakdown</div>
             <div class="metric-grid">
               <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(income.mUSD)}</div>
+                <div class="metric-label">Monthly</div>
+              </div>
+              <div class="metric-item">
                 <div class="metric-value">${nfUSD.format(dailyIncome)}</div>
                 <div class="metric-label">Daily</div>
               </div>
               <div class="metric-item">
                 <div class="metric-value">${nfUSD.format(hourlyIncome)}</div>
                 <div class="metric-label">Hourly</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(hourlyIncome / 60)}</div>
+                <div class="metric-label">Per Minute</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format((hourlyIncome / 60) / 60)}</div>
+                <div class="metric-label">Per Second</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(income.yUSD)}</div>
+                <div class="metric-label">Yearly</div>
               </div>
             </div>
           </div>
@@ -2294,15 +2500,35 @@ window.supabaseClient = supabase;
           </div>
           
           <div class="analytics-section">
-            <div class="section-title">Spending Velocity</div>
+            <div class="section-title">Time Breakdown</div>
             <div class="metric-grid">
               <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(all.mUSD)}</div>
+                <div class="metric-label">Monthly</div>
+              </div>
+              <div class="metric-item">
                 <div class="metric-value">${nfUSD.format(dailySpending)}</div>
-                <div class="metric-label">Per Day</div>
+                <div class="metric-label">Daily</div>
               </div>
               <div class="metric-item">
                 <div class="metric-value">${nfUSD.format(weeklySpending)}</div>
-                <div class="metric-label">Per Week</div>
+                <div class="metric-label">Weekly</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(hourlySpending)}</div>
+                <div class="metric-label">Hourly</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(hourlySpending / 60)}</div>
+                <div class="metric-label">Per Minute</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format((hourlySpending / 60) / 60)}</div>
+                <div class="metric-label">Per Second</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(all.yUSD)}</div>
+                <div class="metric-label">Yearly</div>
               </div>
             </div>
           </div>
@@ -2489,15 +2715,31 @@ window.supabaseClient = supabase;
           </div>
           
           <div class="analytics-section">
-            <div class="section-title">Time Analysis</div>
+            <div class="section-title">Time Breakdown</div>
             <div class="metric-grid">
               <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(personal.mUSD)}</div>
+                <div class="metric-label">Monthly</div>
+              </div>
+              <div class="metric-item">
                 <div class="metric-value">${nfUSD.format(dailyPersonal)}</div>
-                <div class="metric-label">Per Day</div>
+                <div class="metric-label">Daily</div>
               </div>
               <div class="metric-item">
                 <div class="metric-value">${nfUSD.format(hourlyPersonal)}</div>
-                <div class="metric-label">Per Hour</div>
+                <div class="metric-label">Hourly</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(hourlyPersonal / 60)}</div>
+                <div class="metric-label">Per Minute</div>
+            </div>
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format((hourlyPersonal / 60) / 60)}</div>
+                <div class="metric-label">Per Second</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(personal.yUSD)}</div>
+                <div class="metric-label">Yearly</div>
               </div>
             </div>
           </div>
@@ -2685,6 +2927,40 @@ window.supabaseClient = supabase;
               <div class="metric-item">
                 <div class="metric-value">${nfUSD.format(avgAnnual)}</div>
                 <div class="metric-label">Avg Annual</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="analytics-section">
+            <div class="section-title">Time Breakdown</div>
+            <div class="metric-grid">
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(biz.mUSD)}</div>
+                <div class="metric-label">Monthly</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(dailyBiz)}</div>
+                <div class="metric-label">Daily</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(weeklyBiz)}</div>
+                <div class="metric-label">Weekly</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(dailyBiz / 24)}</div>
+                <div class="metric-label">Hourly</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format((dailyBiz / 24) / 60)}</div>
+                <div class="metric-label">Per Minute</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(((dailyBiz / 24) / 60) / 60)}</div>
+                <div class="metric-label">Per Second</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(biz.yUSD)}</div>
+                <div class="metric-label">Yearly</div>
               </div>
             </div>
           </div>
@@ -3592,12 +3868,30 @@ window.supabaseClient = supabase;
         document.querySelectorAll('.method-dropdown-minimal.open').forEach(dd => {
           if (dd !== methodDropdown) {
             dd.classList.remove('open');
-            dd.querySelector('.method-menu-minimal').classList.remove('show');
+            const menu = dd.querySelector('.method-menu-minimal');
+            if (menu) {
+              menu.classList.remove('show');
+              menu.remove(); // Remove from document.body
+            }
           }
         });
         
         methodDropdown.classList.toggle('open');
-        methodMenu.classList.toggle('show');
+        
+        if (methodMenu.classList.contains('show')) {
+          methodMenu.classList.remove('show');
+          methodMenu.remove(); // Remove from document.body
+        } else {
+          // Position dropdown using getBoundingClientRect
+          const triggerRect = methodTrigger.getBoundingClientRect();
+          methodMenu.style.left = triggerRect.left + 'px';
+          methodMenu.style.top = (triggerRect.bottom + 4) + 'px';
+          methodMenu.style.minWidth = triggerRect.width + 'px';
+          
+          // Append to document body
+          document.body.appendChild(methodMenu);
+          methodMenu.classList.add('show');
+        }
       });
       
       methodDropdown.appendChild(methodTrigger);
@@ -3606,9 +3900,12 @@ window.supabaseClient = supabase;
       
       // Close dropdown when clicking outside
       document.addEventListener('click', function(e) {
-        if (!methodDropdown.contains(e.target)) {
+        if (!methodDropdown.contains(e.target) && !methodMenu.contains(e.target)) {
           methodDropdown.classList.remove('open');
           methodMenu.classList.remove('show');
+          if (methodMenu.parentNode) {
+            methodMenu.remove(); // Remove from document.body
+          }
         }
       });
       
@@ -3726,6 +4023,7 @@ window.supabaseClient = supabase;
     $('#btnSettings').addEventListener('click', ()=>{ 
       $('#inputFx').value = state.fx; 
       $('#inputAutosave').value = state.autosave||'on'; 
+      $('#inputAutosaveInterval').value = state.autosaveInterval || 15;
       $('#inputIncludeAnnual').value = state.includeAnnualInMonthly ? 'true' : 'false';
       $('#inputDeleteConfirm').value = '';
       $('#btnDeleteAll').disabled = true;
@@ -3750,8 +4048,10 @@ window.supabaseClient = supabase;
       e.preventDefault(); 
       state.fx = Number($('#inputFx').value||state.fx); 
       state.autosave = $('#inputAutosave').value; 
+      state.autosaveInterval = Number($('#inputAutosaveInterval').value) || 15;
       state.includeAnnualInMonthly = $('#inputIncludeAnnual').value === 'true';
       updateAutosaveStatus();
+      updateAutoRefreshInterval();
       save(); 
       // Update only calculations without re-rendering inputs
       updateAllCalculationsWithoutRerender();
@@ -4093,11 +4393,15 @@ window.supabaseClient = supabase;
     
     
     // Refresh FX rate button
-    $('#btnRefreshFx').addEventListener('click', async ()=>{
+    // Currency refresh function
+    async function refreshCurrencyRate(showFeedback = true) {
       const btn = $('#btnRefreshFx');
       const originalContent = btn.innerHTML;
+      
+      if (showFeedback) {
       btn.innerHTML = '<svg class="w-3 h-3 animate-spin" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 11-6.364-6.364"/></svg>';
       btn.disabled = true;
+      }
       
       try {
         // Try to fetch live USD/EGP rate from a free API
@@ -4106,6 +4410,9 @@ window.supabaseClient = supabase;
         const newRate = data.rates.EGP;
         if (newRate && newRate > 0) {
           $('#inputFx').value = newRate.toFixed(4);
+          state.fx = newRate;
+          
+          if (showFeedback) {
           // Show success feedback
           btn.style.background = '#10b981';
           btn.style.borderColor = '#10b981';
@@ -4113,6 +4420,11 @@ window.supabaseClient = supabase;
             btn.style.background = '';
             btn.style.borderColor = '';
           }, 2000);
+          }
+          
+          // Save the new rate
+          save();
+          return true;
         } else {
           throw new Error('Invalid rate received');
         }
@@ -4120,17 +4432,34 @@ window.supabaseClient = supabase;
         console.log('Failed to fetch live rate, using fallback');
         // Fallback to a reasonable rate if API fails
         $('#inputFx').value = '48.1843';
+        state.fx = 48.1843;
+        
+        if (showFeedback) {
         btn.style.background = '#f59e0b';
         btn.style.borderColor = '#f59e0b';
         setTimeout(() => {
           btn.style.background = '';
           btn.style.borderColor = '';
         }, 2000);
+        }
+        
+        save();
+        return false;
       } finally {
+        if (showFeedback) {
         btn.innerHTML = originalContent;
         btn.disabled = false;
       }
-    });
+      }
+    }
+    
+    // Refresh FX rate button
+    $('#btnRefreshFx').addEventListener('click', () => refreshCurrencyRate(true));
+    
+    // Auto-refresh currency every 10 seconds
+    setInterval(() => {
+      refreshCurrencyRate(false);
+    }, 10000);
     
     // Enhanced Export/Import functionality - moved inside DOMContentLoaded
     setTimeout(() => {
@@ -4858,8 +5187,6 @@ window.supabaseClient = supabase;
       
       const dropdown = document.createElement('div');
       dropdown.className = 'tag-dropdown';
-      dropdown.style.display = 'block'; // Force display for debugging
-      wrapper.appendChild(dropdown);
       
       // Get all existing tags from all income rows
       const allTags = getAllExistingTags();
@@ -4877,7 +5204,6 @@ window.supabaseClient = supabase;
       console.log('Input value:', inputValue);
       
       if (filteredTags.length === 0) {
-        dropdown.style.display = 'none';
         return;
       }
       
@@ -4912,6 +5238,15 @@ window.supabaseClient = supabase;
         dropdown.appendChild(suggestion);
       });
       
+      // Position dropdown using getBoundingClientRect
+      const inputRect = input.getBoundingClientRect();
+      dropdown.style.left = inputRect.left + 'px';
+      dropdown.style.top = (inputRect.bottom + 4) + 'px';
+      dropdown.style.minWidth = inputRect.width + 'px';
+      
+      // Append to document body
+      document.body.appendChild(dropdown);
+      
       // Show dropdown
       console.log('Dropdown created with', filteredTags.length, 'suggestions');
       setTimeout(() => {
@@ -4921,7 +5256,7 @@ window.supabaseClient = supabase;
     }
     
     function hideTagSuggestions(wrapper) {
-      const dropdown = wrapper.querySelector('.tag-dropdown');
+      const dropdown = document.querySelector('.tag-dropdown');
       if (dropdown) {
         dropdown.remove();
       }
