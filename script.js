@@ -13,7 +13,7 @@ window.supabaseClient = supabase;
     
     // Page Navigation
     let currentPage = 'expenses';
-    let currentYear = '2025';
+    let currentYear = new Date().getFullYear().toString(); // Default to current year
     
     // Add resize listener for responsive grid updates
     window.addEventListener('resize', function() {
@@ -79,6 +79,8 @@ window.supabaseClient = supabase;
     }
     
     function switchYear(year) {
+      console.log('Switching to year:', year);
+      
       // Remove active class from all year tabs
       document.querySelectorAll('.year-tab').forEach(tab => {
         tab.classList.remove('active');
@@ -89,6 +91,7 @@ window.supabaseClient = supabase;
       if (selectedTab) {
         selectedTab.classList.add('active');
         currentYear = year;
+        console.log('Current year set to:', currentYear);
         
         // Update income data for selected year
         if (currentPage === 'income') {
@@ -98,29 +101,59 @@ window.supabaseClient = supabase;
     }
     
     function addNewYear() {
+      // Show a simple prompt to enter the year
+      const yearInput = prompt('Enter the year to add (e.g., 2021, 2020, etc.):');
+      
+      if (!yearInput) return; // User cancelled
+      
+      const year = parseInt(yearInput);
+      if (isNaN(year) || year < 1900 || year > 2100) {
+        alert('Please enter a valid year between 1900 and 2100');
+        return;
+      }
+      
+      // Check if year already exists
+      const existingYearTab = document.querySelector(`[data-year="${year}"]`);
+      if (existingYearTab) {
+        alert(`Year ${year} already exists!`);
+        return;
+      }
+      
       const yearTabsContainer = $('#yearTabsContainer');
       if (!yearTabsContainer) return;
       
-      const existingYears = Array.from(document.querySelectorAll('.year-tab'))
-        .map(tab => parseInt(tab.getAttribute('data-year')))
-        .sort((a, b) => b - a);
-      
-      const nextYear = existingYears[0] + 1;
-      
       // Initialize the year in the income data structure
-      if (!state.income[nextYear]) {
-        state.income[nextYear] = [];
+      if (!state.income[year]) {
+        state.income[year] = [];
       }
       
+      // Create new year tab
       const newYearTab = document.createElement('button');
       newYearTab.className = 'year-tab';
-      newYearTab.setAttribute('data-year', nextYear);
-      newYearTab.textContent = nextYear;
-      newYearTab.addEventListener('click', () => switchYear(nextYear.toString()));
+      newYearTab.setAttribute('data-year', year);
+      newYearTab.textContent = year;
+      newYearTab.addEventListener('click', () => switchYear(year.toString()));
       
-      // Insert before the add button
+      // Insert in chronological order (newest first)
+      const existingTabs = Array.from(yearTabsContainer.querySelectorAll('.year-tab'));
       const addBtn = $('#addYearBtn');
-      yearTabsContainer.insertBefore(newYearTab, addBtn);
+      
+      // Find the right position to insert (maintain chronological order)
+      let insertBefore = addBtn;
+      for (const tab of existingTabs) {
+        const tabYear = parseInt(tab.getAttribute('data-year'));
+        if (year > tabYear) {
+          insertBefore = tab;
+          break;
+        }
+      }
+      
+      yearTabsContainer.insertBefore(newYearTab, insertBefore);
+      
+      // Switch to the new year
+      switchYear(year.toString());
+      
+      console.log(`Added year ${year} to income data`);
     }
     
     function updateIncomeForYear(year) {
@@ -140,13 +173,29 @@ window.supabaseClient = supabase;
     initPageNavigation();
     initYearTabs();
     
+    // Set initial year based on active tab
+    const activeYearTab = document.querySelector('.year-tab.active');
+    if (activeYearTab) {
+      currentYear = activeYearTab.getAttribute('data-year');
+      console.log('Initial year set to:', currentYear);
+    }
+    
     // Add row function
     function addRow(group){
+      // Ensure we have the correct current year from the active tab
+      const activeYearTab = document.querySelector('.year-tab.active');
+      if (activeYearTab) {
+        currentYear = activeYearTab.getAttribute('data-year');
+      }
+      
+      console.log('Adding row for group:', group, 'currentYear:', currentYear);
+      
       if(group==='biz') state.biz.push({name:'', cost:0, status:'Active', billing:'Monthly', next:''});
       else if(group==='income') {
         // Ensure the current year exists in the income data structure
         if (!state.income[currentYear]) {
           state.income[currentYear] = [];
+          console.log('Created new year array for:', currentYear);
         }
         
         // Set default date with current year
@@ -156,14 +205,17 @@ window.supabaseClient = supabase;
         const day = String(today.getDate()).padStart(2, '0');
         const defaultDate = `${year}-${month}-${day}`;
         
-        state.income[currentYear].push({
+        const newIncome = {
           name:'', 
           tags:'', 
           date: defaultDate, 
           allPayment:0, 
           paidUsd:0, 
           method:'Bank Transfer'
-        });
+        };
+        
+        state.income[currentYear].push(newIncome);
+        console.log('Added income row to year:', currentYear, 'Total rows:', state.income[currentYear].length);
       }
       else state.personal.push({name:'', cost:0, status:'Active', billing:'Monthly'});
       save(); renderAll();
@@ -415,10 +467,12 @@ window.supabaseClient = supabase;
       const dropdownUserName = $('#dropdownUserName');
       const dropdownUserEmail = $('#dropdownUserEmail');
       const dropdownUserPhoto = $('#dropdownUserPhoto');
+      const accountMenuBtn = $('#accountMenuBtn');
       
       if (currentUser) {
         loginBtn.style.display = 'none';
         if (signInBtn) signInBtn.style.display = 'none';
+        if (accountMenuBtn) accountMenuBtn.style.display = 'flex';
         userInfo.style.display = 'block';
         
         // Handle Supabase user object
@@ -453,6 +507,7 @@ window.supabaseClient = supabase;
       } else {
         loginBtn.style.display = 'flex';
         if (signInBtn) signInBtn.style.display = 'flex';
+        if (accountMenuBtn) accountMenuBtn.style.display = 'none';
         userInfo.style.display = 'none';
         console.log('Auth UI updated - no user');
       }
@@ -1091,6 +1146,34 @@ window.supabaseClient = supabase;
             id: expense.id
           }));
         }
+        
+        // Load income data
+        const { data: incomeData, error: incomeError } = await window.supabaseClient
+          .from('income')
+          .select('*')
+          .eq('user_id', currentUser.id)
+          .order('year', { ascending: true })
+          .order('created_at', { ascending: true });
+        
+        if (incomeData && !incomeError) {
+          // Group income data by year
+          state.income = {};
+          incomeData.forEach(income => {
+            const year = income.year.toString();
+            if (!state.income[year]) {
+              state.income[year] = [];
+            }
+            state.income[year].push({
+              name: income.name,
+              tags: income.tags,
+              date: income.date,
+              allPayment: income.all_payment,
+              paidUsd: income.paid_usd,
+              method: income.method,
+              id: income.id
+            });
+          });
+        }
           
           renderAll();
           showNotification('Data loaded from cloud!', 'success');
@@ -1270,6 +1353,47 @@ window.supabaseClient = supabase;
             
             if (newExpense) {
               expense.id = newExpense.id;
+            }
+          }
+        }
+        
+        // Save income data for all years
+        for (const [year, incomeData] of Object.entries(state.income)) {
+          for (const income of incomeData) {
+            if (income.id) {
+              // Update existing income
+              await window.supabaseClient
+                .from('income')
+                .update({
+                  name: income.name,
+                  tags: income.tags,
+                  date: income.date,
+                  all_payment: income.allPayment,
+                  paid_usd: income.paidUsd,
+                  method: income.method,
+                  year: parseInt(year)
+                })
+                .eq('id', income.id);
+            } else {
+              // Create new income
+              const { data: newIncome, error } = await window.supabaseClient
+                .from('income')
+                .insert({
+                  user_id: currentUser.id,
+                  name: income.name,
+                  tags: income.tags,
+                  date: income.date,
+                  all_payment: income.allPayment,
+                  paid_usd: income.paidUsd,
+                  method: income.method,
+                  year: parseInt(year)
+                })
+                .select()
+                .single();
+              
+              if (newIncome) {
+                income.id = newIncome.id;
+              }
             }
           }
         }
@@ -2896,8 +3020,9 @@ window.supabaseClient = supabase;
         div.append(dragHandleDiv,iconDiv,nameDiv,costDiv,statusDiv,billingDiv);
         if(isBiz){ 
           const dateDiv=document.createElement('div'); 
+          dateDiv.style.position = 'relative';
           const dateInput = document.createElement('input');
-          dateInput.className = 'input';
+          dateInput.className = 'input date-input-minimal';
           dateInput.type = 'date';
           dateInput.value = row.next || '';
           dateInput.addEventListener('change', function() {
@@ -3026,6 +3151,7 @@ window.supabaseClient = supabase;
       div.className = 'row row-income row-draggable row-drop-zone';
       div.setAttribute('data-row-index', idx);
       div.setAttribute('draggable', 'true');
+      div.__rowData = row; // Store row data for tag system
       
       // Drag handle
       const dragHandleDiv = document.createElement('div');
@@ -3070,142 +3196,40 @@ window.supabaseClient = supabase;
       addAutocompleteToInput(nameInput, 'projectName');
       nameDiv.appendChild(nameInput);
       
-      // Multi-tags input
+      // Modern Tags input with selection system
       const tagsDiv = document.createElement('div');
-      tagsDiv.className = 'tags-container';
-      tagsDiv.style.position = 'relative';
+      const tagsWrapper = document.createElement('div');
+      tagsWrapper.className = 'tag-input-wrapper';
       
-      // Create tags display area
-      const tagsDisplay = document.createElement('div');
-      tagsDisplay.className = 'tags-display';
-      tagsDisplay.style.display = 'flex';
-      tagsDisplay.style.flexWrap = 'wrap';
-      tagsDisplay.style.gap = '4px';
-      tagsDisplay.style.minHeight = '32px';
-      tagsDisplay.style.padding = '4px 8px';
-      tagsDisplay.style.border = '1px solid var(--stroke)';
-      tagsDisplay.style.borderRadius = '8px';
-      tagsDisplay.style.backgroundColor = 'transparent';
-      tagsDisplay.style.cursor = 'text';
-      tagsDisplay.style.fontSize = '0.75rem';
-      
-      // Create hidden input for actual value storage
-      const tagsInput = document.createElement('input');
-      tagsInput.type = 'text';
-      tagsInput.className = 'tags-input-hidden';
-      tagsInput.style.position = 'absolute';
-      tagsInput.style.opacity = '0';
-      tagsInput.style.pointerEvents = 'none';
-      tagsInput.value = row.tags || '';
-      
-      // Parse existing tags
+      // Create chips for existing tags
       const existingTags = (row.tags || '').split(',').filter(tag => tag.trim());
+      existingTags.forEach(tag => {
+        const chip = createTagChip(tag.trim());
+        tagsWrapper.appendChild(chip);
+      });
       
-      // Render existing tags
-      function renderTags() {
-        tagsDisplay.innerHTML = '';
-        existingTags.forEach((tag, index) => {
-          const tagElement = document.createElement('span');
-          tagElement.className = 'tag-item';
-          tagElement.style.display = 'inline-flex';
-          tagElement.style.alignItems = 'center';
-          tagElement.style.gap = '4px';
-          tagElement.style.padding = '2px 6px';
-          tagElement.style.backgroundColor = 'var(--glass)';
-          tagElement.style.border = '1px solid var(--stroke)';
-          tagElement.style.borderRadius = '12px';
-          tagElement.style.fontSize = '0.65rem';
-          tagElement.style.color = 'var(--fg)';
-          tagElement.style.cursor = 'default';
-          
-          tagElement.innerHTML = `
-            <span>${tag.trim()}</span>
-            <button type="button" class="tag-remove" data-index="${index}" style="
-              background: none;
-              border: none;
-              color: var(--muted);
-              cursor: pointer;
-              padding: 0;
-              margin: 0;
-              font-size: 10px;
-              width: 14px;
-              height: 14px;
-              border-radius: 50%;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              transition: all 0.2s ease;
-            ">×</button>
-          `;
-          
-          // Add remove functionality
-          const removeBtn = tagElement.querySelector('.tag-remove');
-          removeBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            existingTags.splice(index, 1);
-            updateTagsValue();
-            renderTags();
-          });
-          
-          tagsDisplay.appendChild(tagElement);
-        });
-        
-        // Add input for new tags
-        const newTagInput = document.createElement('input');
-        newTagInput.type = 'text';
-        newTagInput.placeholder = existingTags.length === 0 ? 'Add tags...' : '';
-        newTagInput.style.border = 'none';
-        newTagInput.style.outline = 'none';
-        newTagInput.style.background = 'transparent';
-        newTagInput.style.color = 'var(--fg)';
-        newTagInput.style.fontSize = '0.75rem';
-        newTagInput.style.padding = '2px 4px';
-        newTagInput.style.minWidth = '80px';
-        newTagInput.style.flex = '1';
-        
-        newTagInput.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter' || e.key === ',') {
-            e.preventDefault();
-            addTag(newTagInput.value.trim());
-            newTagInput.value = '';
-          } else if (e.key === 'Backspace' && newTagInput.value === '' && existingTags.length > 0) {
-            existingTags.pop();
-            updateTagsValue();
-            renderTags();
-          }
-        });
-        
-        newTagInput.addEventListener('blur', () => {
-          if (newTagInput.value.trim()) {
-            addTag(newTagInput.value.trim());
-            newTagInput.value = '';
-          }
-        });
-        
-        tagsDisplay.appendChild(newTagInput);
-      }
+      const tagsInput = document.createElement('input');
+      tagsInput.className = 'tag-input';
+      tagsInput.type = 'text';
+      tagsInput.placeholder = existingTags.length > 0 ? 'Add+' : 'Add+';
+      tagsInput.addEventListener('input', function() {
+        handleTagInput(this, tagsWrapper, row);
+      });
+      tagsInput.addEventListener('keydown', function(e) {
+        handleTagKeydown(e, this, tagsWrapper, row);
+      });
+      tagsInput.addEventListener('focus', function() {
+        showTagSuggestions(this, tagsWrapper);
+      });
+      tagsInput.addEventListener('blur', function() {
+        setTimeout(() => hideTagSuggestions(tagsWrapper), 150);
+      });
       
-      function addTag(tagText) {
-        if (tagText && !existingTags.includes(tagText)) {
-          existingTags.push(tagText);
-          updateTagsValue();
-          renderTags();
-        }
-      }
+      // Store row reference for tag system
+      tagsWrapper.__rowData = row;
       
-      function updateTagsValue() {
-        const tagsValue = existingTags.join(',');
-        tagsInput.value = tagsValue;
-        row.tags = tagsValue;
-        saveInputValue('tags', tagsValue);
-        save();
-      }
-      
-      // Initialize tags display
-      renderTags();
-      
-      tagsDiv.appendChild(tagsDisplay);
-      tagsDiv.appendChild(tagsInput);
+      tagsWrapper.appendChild(tagsInput);
+      tagsDiv.appendChild(tagsWrapper);
       
       // Date input (month and day only, with current year)
       const dateDiv = document.createElement('div');
@@ -3302,62 +3326,43 @@ window.supabaseClient = supabase;
       paidEgpDiv.className = 'paid-egp-cell';
       paidEgpDiv.textContent = 'EGP ' + nfINT.format(Math.round((row.paidUsd || 0) * state.fx));
       
-      // Method select - ultra modern design
+      // Method select - minimal modern design
       const methodDiv = document.createElement('div');
       const methodDropdown = document.createElement('div');
-      methodDropdown.className = 'method-dropdown-modern';
+      methodDropdown.className = 'method-dropdown-minimal';
       
       const methodTrigger = document.createElement('button');
-      methodTrigger.className = 'method-trigger-modern';
+      methodTrigger.className = 'method-trigger-minimal';
       methodTrigger.innerHTML = `
-        <div class="method-content">
-          <span class="method-text">${row.method || 'Bank Transfer'}</span>
-          <div class="method-arrow-container">
-            <svg class="method-arrow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M6 9l6 6 6-6"/>
-            </svg>
-          </div>
-        </div>
+        <span class="method-text">${row.method || 'Bank Transfer'}</span>
+        <svg class="method-arrow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M6 9l6 6 6-6"/>
+        </svg>
       `;
       
       const methodMenu = document.createElement('div');
-      methodMenu.className = 'method-menu-modern';
+      methodMenu.className = 'method-menu-minimal';
       
-      const options = [
-        { value: 'Bank Transfer', icon: '🏦', color: '#3b82f6' },
-        { value: 'Paypal', icon: '💳', color: '#0070ba' },
-        { value: 'Cash', icon: '💵', color: '#10b981' },
-        { value: 'Crypto', icon: '₿', color: '#f59e0b' },
-        { value: 'Check', icon: '📝', color: '#8b5cf6' },
-        { value: 'InstaPay', icon: '⚡', color: '#ef4444' }
-      ];
-      
+      const options = ['Bank Transfer', 'Paypal', 'Cash', 'Crypto', 'Check', 'InstaPay'];
       options.forEach(option => {
         const item = document.createElement('div');
-        item.className = 'method-item-modern';
-        if (option.value === (row.method || 'Bank Transfer')) {
+        item.className = 'method-item-minimal';
+        if (option === (row.method || 'Bank Transfer')) {
           item.classList.add('selected');
         }
-        item.innerHTML = `
-          <div class="method-item-content">
-            <span class="method-item-icon" style="color: ${option.color}">${option.icon}</span>
-            <span class="method-item-text">${option.value}</span>
-          </div>
-        `;
-        
+        item.textContent = option;
         item.addEventListener('click', function(e) {
           e.preventDefault();
           e.stopPropagation();
           
-          row.method = option.value;
-          methodTrigger.querySelector('.method-text').textContent = option.value;
-          methodMenu.querySelectorAll('.method-item-modern').forEach(i => i.classList.remove('selected'));
+          row.method = option;
+          methodTrigger.querySelector('.method-text').textContent = option;
+          methodMenu.querySelectorAll('.method-item-minimal').forEach(i => i.classList.remove('selected'));
           this.classList.add('selected');
           methodDropdown.classList.remove('open');
           methodMenu.classList.remove('show');
           save();
         });
-        
         methodMenu.appendChild(item);
       });
       
@@ -3366,10 +3371,10 @@ window.supabaseClient = supabase;
         e.stopPropagation();
         
         // Close other dropdowns first
-        document.querySelectorAll('.method-dropdown-modern.open').forEach(dd => {
+        document.querySelectorAll('.method-dropdown-minimal.open').forEach(dd => {
           if (dd !== methodDropdown) {
             dd.classList.remove('open');
-            dd.querySelector('.method-menu-modern').classList.remove('show');
+            dd.querySelector('.method-menu-minimal').classList.remove('show');
           }
         });
         
@@ -4011,14 +4016,6 @@ window.supabaseClient = supabase;
         dropdown.querySelector('.method-menu-minimal').classList.remove('show');
       }
     });
-    
-    // Close all modern method dropdowns (income table)
-    document.querySelectorAll('.method-dropdown-modern.open').forEach(dropdown => {
-      if (!dropdown.contains(e.target)) {
-        dropdown.classList.remove('open');
-        dropdown.querySelector('.method-menu-modern').classList.remove('show');
-      }
-    });
   });
 
      // KPI Card Analytics - Click to expand
@@ -4273,6 +4270,298 @@ window.supabaseClient = supabase;
         }
       }
     });
+
+    // Tag system helper functions
+    function createTagChip(tagText) {
+      const chip = document.createElement('span');
+      chip.className = 'tag-chip';
+      
+      // Create text span
+      const textSpan = document.createElement('span');
+      textSpan.textContent = tagText;
+      textSpan.style.flex = '1';
+      textSpan.style.whiteSpace = 'nowrap';
+      
+      // Create remove button
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'tag-chip-remove';
+      removeBtn.innerHTML = '×';
+      removeBtn.style.flexShrink = '0';
+      removeBtn.style.marginLeft = '4px';
+      
+      // Add event listener for remove button
+      removeBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        chip.remove();
+        // Update the row data if we have access to it
+        const wrapper = chip.closest('.tag-input-wrapper');
+        if (wrapper) {
+          const rowElement = wrapper.closest('.row-income');
+          if (rowElement && rowElement.__rowData) {
+            updateRowTags(wrapper, rowElement.__rowData);
+          }
+        }
+      });
+      
+      chip.appendChild(textSpan);
+      chip.appendChild(removeBtn);
+      
+      return chip;
+    }
+    
+    function handleTagInput(input, wrapper, row) {
+      const value = input.value.trim();
+      if (value.includes(',')) {
+        const tags = value.split(',').map(tag => tag.trim()).filter(tag => tag);
+        const currentTagCount = wrapper.querySelectorAll('.tag-chip').length;
+        const maxTags = 5; // Maximum number of tags allowed
+        
+        tags.forEach(tag => {
+          if (!isTagAlreadyAdded(wrapper, tag) && currentTagCount < maxTags) {
+            const chip = createTagChip(tag);
+            wrapper.insertBefore(chip, input);
+            currentTagCount++;
+          }
+        });
+        input.value = '';
+        
+        // Use stored row data or fallback to parameter
+        const rowData = wrapper.__rowData || row;
+        if (rowData) {
+          updateRowTags(wrapper, rowData);
+        }
+        
+        // Update placeholder if max tags reached
+        if (wrapper.querySelectorAll('.tag-chip').length >= maxTags) {
+          input.placeholder = 'Max tags reached';
+          input.disabled = true;
+        }
+      } else if (value.length > 0) {
+        // Show suggestions as user types
+        console.log('handleTagInput: Showing suggestions for value:', value);
+        showTagSuggestions(input, wrapper);
+      } else {
+        // Hide suggestions when input is empty
+        console.log('handleTagInput: Hiding suggestions - empty input');
+        hideTagSuggestions(wrapper);
+      }
+    }
+    
+    function handleTagKeydown(e, input, wrapper, row) {
+      if (e.key === 'Enter' || e.key === ',') {
+        e.preventDefault();
+        const value = input.value.trim();
+        const currentTagCount = wrapper.querySelectorAll('.tag-chip').length;
+        const maxTags = 5;
+        
+        if (value && !isTagAlreadyAdded(wrapper, value) && currentTagCount < maxTags) {
+          const chip = createTagChip(value);
+          wrapper.insertBefore(chip, input);
+          input.value = '';
+          
+          // Use stored row data or fallback to parameter
+          const rowData = wrapper.__rowData || row;
+          if (rowData) {
+            updateRowTags(wrapper, rowData);
+          }
+          
+          // Update placeholder if max tags reached
+          if (wrapper.querySelectorAll('.tag-chip').length >= maxTags) {
+            input.placeholder = 'Max tags reached';
+            input.disabled = true;
+          }
+        }
+      } else if (e.key === 'Backspace' && input.value === '') {
+        const chips = wrapper.querySelectorAll('.tag-chip');
+        if (chips.length > 0) {
+          const lastChip = chips[chips.length - 1];
+          lastChip.remove();
+          
+          // Use stored row data or fallback to parameter
+          const rowData = wrapper.__rowData || row;
+          if (rowData) {
+            updateRowTags(wrapper, rowData);
+          }
+          
+          // Re-enable input if under max tags
+          if (wrapper.querySelectorAll('.tag-chip').length < 5) {
+            input.placeholder = 'Add+';
+            input.disabled = false;
+          }
+        }
+      }
+    }
+    
+    function isTagAlreadyAdded(wrapper, tag) {
+      const chips = wrapper.querySelectorAll('.tag-chip');
+      return Array.from(chips).some(chip => {
+        const textSpan = chip.querySelector('span:first-child');
+        return textSpan && textSpan.textContent.trim() === tag;
+      });
+    }
+    
+    function updateRowTags(wrapper, row) {
+      const chips = wrapper.querySelectorAll('.tag-chip');
+      const tags = Array.from(chips).map(chip => {
+        const textSpan = chip.querySelector('span:first-child');
+        return textSpan ? textSpan.textContent.trim() : '';
+      }).filter(tag => tag);
+      row.tags = tags.join(',');
+      save();
+    }
+    
+    function showTagSuggestions(input, wrapper) {
+      hideTagSuggestions(wrapper); // Remove existing dropdown
+      
+      const dropdown = document.createElement('div');
+      dropdown.className = 'tag-dropdown';
+      dropdown.style.display = 'block'; // Force display for debugging
+      wrapper.appendChild(dropdown);
+      
+      // Get all existing tags from all income rows
+      const allTags = getAllExistingTags();
+      
+      const inputValue = input.value.toLowerCase().trim();
+      
+      // Filter and show suggestions
+      const filteredTags = allTags.filter(tag => 
+        tag.toLowerCase().includes(inputValue) && 
+        !isTagAlreadyAdded(wrapper, tag)
+      ).slice(0, 8); // Limit to 8 suggestions
+      
+      console.log('All tags:', allTags);
+      console.log('Filtered tags:', filteredTags);
+      console.log('Input value:', inputValue);
+      
+      if (filteredTags.length === 0) {
+        dropdown.style.display = 'none';
+        return;
+      }
+      
+      filteredTags.forEach(tag => {
+        const suggestion = document.createElement('div');
+        suggestion.className = 'tag-suggestion';
+        suggestion.innerHTML = `
+          <span>${tag}</span>
+          <span class="tag-suggestion-count">${getTagCount(tag)}</span>
+        `;
+        suggestion.addEventListener('click', () => {
+          if (!isTagAlreadyAdded(wrapper, tag)) {
+            const chip = createTagChip(tag);
+            wrapper.insertBefore(chip, input);
+            
+            // Use stored row data or find from DOM
+            let rowData = wrapper.__rowData;
+            if (!rowData) {
+              const rowElement = input.closest('.row-income');
+              if (rowElement && rowElement.__rowData) {
+                rowData = rowElement.__rowData;
+              }
+            }
+            
+            if (rowData) {
+              updateRowTags(wrapper, rowData);
+            }
+            input.value = '';
+          }
+          hideTagSuggestions(wrapper);
+        });
+        dropdown.appendChild(suggestion);
+      });
+      
+      // Show dropdown
+      console.log('Dropdown created with', filteredTags.length, 'suggestions');
+      setTimeout(() => {
+        dropdown.classList.add('show');
+        console.log('Dropdown show class added');
+      }, 10);
+    }
+    
+    function hideTagSuggestions(wrapper) {
+      const dropdown = wrapper.querySelector('.tag-dropdown');
+      if (dropdown) {
+        dropdown.remove();
+      }
+    }
+    
+    function getAllExistingTags() {
+      const allTags = [];
+      
+      // Get tags from all income years
+      Object.values(state.income).forEach(yearData => {
+        yearData.forEach(row => {
+          if (row.tags) {
+            const tags = row.tags.split(',').map(tag => tag.trim()).filter(tag => tag);
+            allTags.push(...tags);
+          }
+        });
+      });
+      
+      // Get tags from personal expenses
+      if (state.personal) {
+        state.personal.forEach(row => {
+          if (row.tags) {
+            const tags = row.tags.split(',').map(tag => tag.trim()).filter(tag => tag);
+            allTags.push(...tags);
+          }
+        });
+      }
+      
+      // Get tags from business expenses
+      if (state.biz) {
+        state.biz.forEach(row => {
+          if (row.tags) {
+            const tags = row.tags.split(',').map(tag => tag.trim()).filter(tag => tag);
+            allTags.push(...tags);
+          }
+        });
+      }
+      
+      // Count occurrences and return unique tags sorted by frequency
+      const tagCounts = {};
+      allTags.forEach(tag => {
+        tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+      });
+      
+      return Object.keys(tagCounts).sort((a, b) => tagCounts[b] - tagCounts[a]);
+    }
+    
+    function getTagCount(tag) {
+      let count = 0;
+      
+      // Count from income
+      Object.values(state.income).forEach(yearData => {
+        yearData.forEach(row => {
+          if (row.tags) {
+            const tags = row.tags.split(',').map(t => t.trim());
+            if (tags.includes(tag)) count++;
+          }
+        });
+      });
+      
+      // Count from personal expenses
+      if (state.personal) {
+        state.personal.forEach(row => {
+          if (row.tags) {
+            const tags = row.tags.split(',').map(t => t.trim());
+            if (tags.includes(tag)) count++;
+          }
+        });
+      }
+      
+      // Count from business expenses
+      if (state.biz) {
+        state.biz.forEach(row => {
+          if (row.tags) {
+            const tags = row.tags.split(',').map(t => t.trim());
+            if (tags.includes(tag)) count++;
+          }
+        });
+      }
+      
+      return count;
+    }
 
     // tiny tests
     (function(){

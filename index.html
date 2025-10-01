@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>MY FINANCIALS â€” USD Â· EGP</title>
+  <title>MY FINANCIALS — USD · EGP</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css">
@@ -27,8 +27,8 @@
       <div class="flex items-center gap-3">
         <div>
            <h1 class="text-2xl font-semibold tracking-tight">MY FINANCIALS</h1>
-          <p class="text-xs" style="color:var(--muted)">Track Personal & Biz â€” USD with mirrored EGP</p>
-          <div id="autosaveStatus" class="autosave-status enabled">â— Auto-save enabled</div>
+          <p class="text-xs" style="color:var(--muted)">Track Personal & Biz — USD with mirrored EGP</p>
+          <div id="autosaveStatus" class="autosave-status enabled">● Auto-save enabled</div>
         </div>
       </div>
       
@@ -58,6 +58,11 @@
             <path d="M3 21v-5h5"/>
           </svg>
         </button>
+        <button id="btnTheme" class="icon-btn size-8 rounded-xl border hover:bg-white/5 transition" title="Toggle theme" style="border-color:var(--stroke)">
+          <svg id="iconTheme" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4">
+            <path d="M12 3v1m0 16v1m9-9h1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+          </svg>
+        </button>
         <button id="btnSettings" class="icon-btn size-8 rounded-xl border hover:bg-white/5 transition" title="Settings" style="border-color:var(--stroke)">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4">
             <circle cx="12" cy="12" r="3"/>
@@ -77,8 +82,8 @@
         
         <!-- Account Dropdown -->
         <div class="relative">
-          <button id="accountMenuBtn" class="icon-btn size-8 rounded-xl border hover:bg-white/5 transition" title="Account" style="border-color:var(--stroke)">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4">
+          <button id="accountMenuBtn" class="icon-btn size-8 rounded-xl border hover:bg-white/5 transition" title="Account" style="border-color:var(--stroke); display: none;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4" style="display: block; margin: 0 auto;">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
               <circle cx="12" cy="7" r="4"/>
             </svg>
@@ -134,12 +139,6 @@
           </div>
         </div>
         
-        <button id="btnTheme" class="icon-btn size-8 rounded-xl border hover:bg-white/5 transition" title="Toggle theme" style="border-color:var(--stroke)">
-          <svg id="iconTheme" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4">
-            <path d="M12 3v1m0 16v1m9-9h1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
-          </svg>
-        </button>
-        
         <!-- Modern Notification Center -->
         <div id="notificationCenter" class="notification-center" style="opacity:0; transform:translate(-50%, -50%) translateX(20px);">
           <div class="notification-content">
@@ -169,8 +168,8 @@
           </div>
         </div>
         <div class="mt-2 flex items-center justify-between text-xs">
-          <span style="color:var(--muted)">FX (USDâ†’EGP)</span>
-          <span class="font-semibold" id="kpiFxSmall">â€”</span>
+          <span style="color:var(--muted)">FX (USD→EGP)</span>
+          <span class="font-semibold" id="kpiFxSmall">—</span>
         </div>
         <div class="mt-2 grid grid-cols-2 gap-4 text-xs">
           <div><div class="flex items-center justify-between"><span style="color:var(--muted)">Personal share</span><span id="sharePersonalVal">0%</span></div><div class="bar mt-1 h-2"><span id="sharePersonalBar" style="width:0%"></span></div></div>
@@ -181,7 +180,7 @@
         <div class="kpi-expanded">
           <div class="analytics-header">
             <h4 class="analytics-title">Complete Financial Overview</h4>
-            <button class="analytics-close" data-close-analytics>Ã—</button>
+            <button class="analytics-close" data-close-analytics>×</button>
       </div>
           <div class="analytics-content" id="analyticsAll"></div>
         </div>
@@ -198,7 +197,7 @@
         <div class="kpi-expanded">
           <div class="analytics-header">
             <h4 class="analytics-title">Personal Expenses Analytics</h4>
-            <button class="analytics-close" data-close-analytics>Ã—</button>
+            <button class="analytics-close" data-close-analytics>×</button>
       </div>
           <div class="analytics-content" id="analyticsPersonal"></div>
         </div>
@@ -215,7 +214,7 @@
         <div class="kpi-expanded">
           <div class="analytics-header">
             <h4 class="analytics-title">Business Expenses Analytics</h4>
-            <button class="analytics-close" data-close-analytics>Ã—</button>
+            <button class="analytics-close" data-close-analytics>×</button>
       </div>
           <div class="analytics-content" id="analyticsBiz"></div>
       </div>
@@ -276,7 +275,7 @@
             </div>
           </div>
           <div id="list-personal"></div>
-          <button class="btn w-full justify-start text-xs py-3 mx-0 my-3" data-add-row="personal" style="font-size:.65rem; border:1px dashed var(--stroke); background:var(--glass); color:var(--muted); transition:all .2s ease; border-radius:8px; margin-top:8px;">ï¼‹ Add a row</button>
+          <button class="btn w-full justify-start text-xs py-3 mx-0 my-3" data-add-row="personal" style="font-size:.65rem; border:1px dashed var(--stroke); background:var(--glass); color:var(--muted); transition:all .2s ease; border-radius:8px; margin-top:8px;">+ Add a row</button>
           <div id="sum-personal" class="row row-sum"></div>
         </div>
       </div>
@@ -338,7 +337,7 @@
             </div>
           </div>
           <div id="list-biz"></div>
-          <button class="btn w-full justify-start text-xs py-3 mx-0 my-3" data-add-row="biz" style="font-size:.65rem; border:1px dashed var(--stroke); background:var(--glass); color:var(--muted); transition:all .2s ease; border-radius:8px; margin-top:8px;">ï¼‹ Add a row</button>
+          <button class="btn w-full justify-start text-xs py-3 mx-0 my-3" data-add-row="biz" style="font-size:.65rem; border:1px dashed var(--stroke); background:var(--glass); color:var(--muted); transition:all .2s ease; border-radius:8px; margin-top:8px;">+ Add a row</button>
           <div id="sum-biz" class="row row-sum row-biz"></div>
         </div>
       </div>
@@ -364,7 +363,7 @@
             </div>
           </div>
           <div class="mt-2 flex items-center justify-between text-xs">
-            <span style="color:var(--muted)">FX (USDâ†’EGP)</span>
+            <span style="color:var(--muted)">FX (USD→EGP)</span>
             <span class="font-semibold" id="kpiIncomeFxSmall">â€”</span>
           </div>
           <div class="mt-2 grid grid-cols-2 gap-4 text-xs">
@@ -376,7 +375,7 @@
           <div class="kpi-expanded">
             <div class="analytics-header">
               <h4 class="analytics-title">Complete Income Overview</h4>
-              <button class="analytics-close" data-close-analytics>Ã—</button>
+              <button class="analytics-close" data-close-analytics>×</button>
             </div>
             <div class="analytics-content" id="analyticsIncomeAll"></div>
           </div>
@@ -401,7 +400,7 @@
           <div class="kpi-expanded">
             <div class="analytics-header">
               <h4 class="analytics-title">Monthly Income Analytics</h4>
-              <button class="analytics-close" data-close-analytics>Ã—</button>
+              <button class="analytics-close" data-close-analytics>×</button>
             </div>
             <div class="analytics-content" id="analyticsIncomeMonthly"></div>
           </div>
@@ -426,7 +425,7 @@
           <div class="kpi-expanded">
             <div class="analytics-header">
               <h4 class="analytics-title">Yearly Income Analytics</h4>
-              <button class="analytics-close" data-close-analytics>Ã—</button>
+              <button class="analytics-close" data-close-analytics>×</button>
             </div>
             <div class="analytics-content" id="analyticsIncomeYearly"></div>
           </div>
@@ -456,7 +455,7 @@
               <div></div><div></div><div>Project Name</div><div>Tags</div><div>Date</div><div>All Payment</div><div>Paid USD</div><div>Paid EGP</div><div>Method</div><div></div>
             </div>
             <div id="list-income"></div>
-            <button class="btn w-full justify-start text-xs py-3 mx-0 my-3" data-add-row="income" style="font-size:.65rem; border:1px dashed var(--stroke); background:var(--glass); color:var(--muted); transition:all .2s ease; border-radius:8px; margin-top:8px;">ï¼‹ Add a row</button>
+            <button class="btn w-full justify-start text-xs py-3 mx-0 my-3" data-add-row="income" style="font-size:.65rem; border:1px dashed var(--stroke); background:var(--glass); color:var(--muted); transition:all .2s ease; border-radius:8px; margin-top:8px;">+ Add a row</button>
             <div id="sum-income" class="row row-sum row-income"></div>
           </div>
         </div>
@@ -547,7 +546,7 @@
     <form method="dialog" class="card p-6 space-y-4" style="background:var(--card); border:1px solid var(--stroke);">
       <header class="flex items-center justify-between">
         <h3 class="text-xl font-semibold">Choose Icon</h3>
-        <button class="btn btn-ghost" value="cancel">Ã—</button>
+        <button class="btn btn-ghost" value="cancel">×</button>
       </header>
       
       <div class="space-y-3">

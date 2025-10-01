@@ -438,12 +438,189 @@
     
     .tag {
       display: inline-block;
-      padding: 2px 8px;
-      border-radius: 12px;
-      font-size: 0.7rem;
-      font-weight: 500;
+      padding: 4px 10px;
+      border-radius: 16px;
+      font-size: 0.65rem;
+      font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.05em;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(56, 189, 248, 0.1));
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      color: var(--fg);
+      margin: 2px 4px 2px 0;
+      transition: all 0.2s ease;
+    }
+    
+    .tag:hover {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(56, 189, 248, 0.15));
+      border-color: rgba(99, 102, 241, 0.3);
+      transform: translateY(-1px);
+    }
+    
+    /* Modern Tag Selection System */
+    .tag-input-wrapper {
+      position: relative;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      min-height: 32px;
+      max-height: 64px;
+      max-width: 200px;
+      padding: 4px 8px;
+      background: transparent;
+      border: none;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+      gap: 2px;
+      overflow: visible;
+      z-index: 1;
+    }
+    
+    .tag-input-wrapper:focus-within {
+      background: var(--glass);
+      transform: scale(1.01);
+    }
+    
+    .tag-input-wrapper:hover {
+      background: var(--card);
+      transform: translateY(-1px);
+    }
+    
+    .tag-input-wrapper::-webkit-scrollbar {
+      height: 0px;
+      background: transparent;
+    }
+    
+    .tag-input-wrapper {
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    
+    .tag-input {
+      background: transparent;
+      border: none;
+      outline: none;
+      font-size: 0.6rem;
+      color: var(--fg);
+      flex: 1;
+      min-width: 60px;
+      padding: 1px 2px;
+      height: 24px;
+    }
+    
+    .tag-input::placeholder {
+      color: var(--muted);
+    }
+    
+    .tag-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: var(--card);
+      border: 1px solid var(--stroke);
+      border-radius: 8px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+      backdrop-filter: blur(10px);
+      z-index: 999999;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-8px);
+      transition: all 0.2s ease;
+      margin-top: 4px;
+      max-height: 200px;
+      overflow-y: auto;
+      min-width: 150px;
+    }
+    
+    .tag-dropdown.show {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+    
+    .tag-suggestion {
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-size: 0.7rem;
+      font-weight: 500;
+      color: var(--fg);
+      border-bottom: 1px solid var(--stroke);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .tag-suggestion:last-child {
+      border-bottom: none;
+    }
+    
+    .tag-suggestion:hover {
+      background: var(--glass);
+      color: var(--fg);
+    }
+    
+    .tag-suggestion.selected {
+      background: rgba(99, 102, 241, 0.1);
+      color: var(--fg);
+      font-weight: 600;
+    }
+    
+    .tag-suggestion-count {
+      font-size: 0.6rem;
+      color: var(--muted);
+      background: var(--glass);
+      padding: 2px 6px;
+      border-radius: 10px;
+    }
+    
+    .tag-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      padding: 1px 6px;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(56, 189, 248, 0.1));
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      border-radius: 10px;
+      font-size: 0.6rem;
+      font-weight: 600;
+      color: var(--fg);
+      margin: 1px 2px 1px 0;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+    
+    .tag-chip:hover {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(56, 189, 248, 0.15));
+      border-color: rgba(99, 102, 241, 0.3);
+      transform: translateY(-1px);
+    }
+    
+    .tag-chip-remove {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 0;
+      margin-left: 4px;
+      font-size: 0.7rem;
+      line-height: 1;
+      transition: color 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 12px;
+      height: 12px;
+      min-width: 12px;
+      min-height: 12px;
+    }
+    
+    .tag-chip-remove:hover {
+      color: var(--fg);
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
     }
     
     .progress-cell span {
@@ -655,11 +832,10 @@
     /* Minimal Date Input for Income Rows */
     .date-input-minimal {
       font-size: 0.75rem;
-      padding: 0.5rem 0.75rem;
+      padding: 0.5rem 2rem 0.5rem 0.75rem;
       min-width: 100px;
       width: 100%;
-      text-align: center;
-      padding-right: 2.5rem;
+      text-align: left;
       border-radius: 8px;
     }
     
@@ -669,7 +845,7 @@
       width: 16px;
       height: 16px;
       position: absolute;
-      right: 0.75rem;
+      right: 0.5rem;
       top: 50%;
       transform: translateY(-50%);
     }
@@ -683,6 +859,7 @@
       position: relative;
       display: inline-block;
       width: 100%;
+      z-index: 1;
     }
     
     .method-trigger-minimal {
@@ -736,18 +913,19 @@
       left: 0;
       right: 0;
       background: var(--card);
-      border: none;
-      border-radius: 6px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      border: 1px solid var(--stroke);
+      border-radius: 8px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
       backdrop-filter: blur(10px);
-      z-index: 1000;
+      z-index: 999999;
       opacity: 0;
       visibility: hidden;
       transform: translateY(-8px);
       transition: all 0.2s ease;
-      margin-top: 2px;
-      max-height: 120px;
+      margin-top: 4px;
+      max-height: 200px;
       overflow-y: auto;
+      min-width: 150px;
     }
     
     .method-menu-minimal.show {
@@ -757,16 +935,16 @@
     }
     
     .method-item-minimal {
-      padding: 0.4rem 0.5rem;
+      padding: 8px 12px;
       cursor: pointer;
       transition: all 0.15s ease;
       font-size: 0.7rem;
       font-weight: 500;
       color: var(--fg);
       border-bottom: 1px solid var(--stroke);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
     
     .method-item-minimal:last-child {
@@ -1163,15 +1341,23 @@
     .row-income{ 
       display:grid; 
       grid-template-columns:20px 28px 1fr 1.2fr 100px 100px 100px 120px 1fr 28px; 
-      gap:0.8rem; 
+      gap:0.6rem; 
       align-items:center; 
-      padding:0.6rem 0.8rem; 
+      padding:.5rem .75rem; 
       border-bottom:1px solid var(--stroke); 
       transition:background-color .2s ease;
-      min-height: 48px;
+      min-height: 44px;
+      position: relative;
+      z-index: 1;
     }
     .row-income:hover{ background:var(--glass); }
     .row-income:last-child{ border-bottom:none; }
+    
+    /* Increase z-index when dropdown is open */
+    .row-income:has(.tag-dropdown.show),
+    .row-income:has(.method-menu-minimal.show) {
+      z-index: 10;
+    }
     
     /* Responsive Table Container */
     .table-container {
@@ -1452,9 +1638,9 @@
       .row{ gap:.2rem; padding:.3rem; }
       .row-biz{ gap:.2rem; padding:.3rem; }
       .row-income{ 
-        gap:.75rem; 
-        padding:.6rem .5rem; 
-        min-height: 48px;
+        gap:.5rem; 
+        padding:.4rem .4rem; 
+        min-height: 40px;
         grid-template-columns: 18px 24px 1fr 1.2fr 100px 85px 85px 100px 1fr 24px;
       }
       
@@ -1474,9 +1660,9 @@
     
     @media (max-width: 480px) {
       .row-income{ 
-        gap:.6rem; 
-        padding:.5rem .4rem; 
-        min-height: 44px;
+        gap:.4rem; 
+        padding:.35rem .3rem; 
+        min-height: 36px;
         grid-template-columns: 16px 20px 1fr 1.2fr 80px 70px 70px 80px 1fr 20px;
       }
       
@@ -2418,4 +2604,3 @@
         padding: 12px 20px 20px;
       }
     }
-  <!-- CSS_END -->
