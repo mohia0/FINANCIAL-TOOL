@@ -3070,22 +3070,141 @@ window.supabaseClient = supabase;
       addAutocompleteToInput(nameInput, 'projectName');
       nameDiv.appendChild(nameInput);
       
-      // Tags input
+      // Multi-tags input
       const tagsDiv = document.createElement('div');
+      tagsDiv.className = 'tags-container';
+      tagsDiv.style.position = 'relative';
+      
+      // Create tags display area
+      const tagsDisplay = document.createElement('div');
+      tagsDisplay.className = 'tags-display';
+      tagsDisplay.style.display = 'flex';
+      tagsDisplay.style.flexWrap = 'wrap';
+      tagsDisplay.style.gap = '4px';
+      tagsDisplay.style.minHeight = '32px';
+      tagsDisplay.style.padding = '4px 8px';
+      tagsDisplay.style.border = '1px solid var(--stroke)';
+      tagsDisplay.style.borderRadius = '8px';
+      tagsDisplay.style.backgroundColor = 'transparent';
+      tagsDisplay.style.cursor = 'text';
+      tagsDisplay.style.fontSize = '0.75rem';
+      
+      // Create hidden input for actual value storage
       const tagsInput = document.createElement('input');
-      tagsInput.className = 'input';
       tagsInput.type = 'text';
+      tagsInput.className = 'tags-input-hidden';
+      tagsInput.style.position = 'absolute';
+      tagsInput.style.opacity = '0';
+      tagsInput.style.pointerEvents = 'none';
       tagsInput.value = row.tags || '';
-      tagsInput.placeholder = 'Tags';
-      tagsInput.style.fontSize = '0.8rem';
-      tagsInput.style.padding = '0.6rem 0.8rem';
-      tagsInput.style.borderRadius = '8px';
-      tagsInput.addEventListener('input', function() {
-        row.tags = this.value;
-        saveInputValue('tags', this.value);
+      
+      // Parse existing tags
+      const existingTags = (row.tags || '').split(',').filter(tag => tag.trim());
+      
+      // Render existing tags
+      function renderTags() {
+        tagsDisplay.innerHTML = '';
+        existingTags.forEach((tag, index) => {
+          const tagElement = document.createElement('span');
+          tagElement.className = 'tag-item';
+          tagElement.style.display = 'inline-flex';
+          tagElement.style.alignItems = 'center';
+          tagElement.style.gap = '4px';
+          tagElement.style.padding = '2px 6px';
+          tagElement.style.backgroundColor = 'var(--glass)';
+          tagElement.style.border = '1px solid var(--stroke)';
+          tagElement.style.borderRadius = '12px';
+          tagElement.style.fontSize = '0.65rem';
+          tagElement.style.color = 'var(--fg)';
+          tagElement.style.cursor = 'default';
+          
+          tagElement.innerHTML = `
+            <span>${tag.trim()}</span>
+            <button type="button" class="tag-remove" data-index="${index}" style="
+              background: none;
+              border: none;
+              color: var(--muted);
+              cursor: pointer;
+              padding: 0;
+              margin: 0;
+              font-size: 10px;
+              width: 14px;
+              height: 14px;
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              transition: all 0.2s ease;
+            ">×</button>
+          `;
+          
+          // Add remove functionality
+          const removeBtn = tagElement.querySelector('.tag-remove');
+          removeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            existingTags.splice(index, 1);
+            updateTagsValue();
+            renderTags();
+          });
+          
+          tagsDisplay.appendChild(tagElement);
+        });
+        
+        // Add input for new tags
+        const newTagInput = document.createElement('input');
+        newTagInput.type = 'text';
+        newTagInput.placeholder = existingTags.length === 0 ? 'Add tags...' : '';
+        newTagInput.style.border = 'none';
+        newTagInput.style.outline = 'none';
+        newTagInput.style.background = 'transparent';
+        newTagInput.style.color = 'var(--fg)';
+        newTagInput.style.fontSize = '0.75rem';
+        newTagInput.style.padding = '2px 4px';
+        newTagInput.style.minWidth = '80px';
+        newTagInput.style.flex = '1';
+        
+        newTagInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ',') {
+            e.preventDefault();
+            addTag(newTagInput.value.trim());
+            newTagInput.value = '';
+          } else if (e.key === 'Backspace' && newTagInput.value === '' && existingTags.length > 0) {
+            existingTags.pop();
+            updateTagsValue();
+            renderTags();
+          }
+        });
+        
+        newTagInput.addEventListener('blur', () => {
+          if (newTagInput.value.trim()) {
+            addTag(newTagInput.value.trim());
+            newTagInput.value = '';
+          }
+        });
+        
+        tagsDisplay.appendChild(newTagInput);
+      }
+      
+      function addTag(tagText) {
+        if (tagText && !existingTags.includes(tagText)) {
+          existingTags.push(tagText);
+          updateTagsValue();
+          renderTags();
+        }
+      }
+      
+      function updateTagsValue() {
+        const tagsValue = existingTags.join(',');
+        tagsInput.value = tagsValue;
+        row.tags = tagsValue;
+        saveInputValue('tags', tagsValue);
         save();
-      });
-      addAutocompleteToInput(tagsInput, 'tags');
+      }
+      
+      // Initialize tags display
+      renderTags();
+      
+      tagsDiv.appendChild(tagsDisplay);
       tagsDiv.appendChild(tagsInput);
       
       // Date input (month and day only, with current year)
@@ -3183,43 +3302,62 @@ window.supabaseClient = supabase;
       paidEgpDiv.className = 'paid-egp-cell';
       paidEgpDiv.textContent = 'EGP ' + nfINT.format(Math.round((row.paidUsd || 0) * state.fx));
       
-      // Method select - minimal modern design
+      // Method select - ultra modern design
       const methodDiv = document.createElement('div');
       const methodDropdown = document.createElement('div');
-      methodDropdown.className = 'method-dropdown-minimal';
+      methodDropdown.className = 'method-dropdown-modern';
       
       const methodTrigger = document.createElement('button');
-      methodTrigger.className = 'method-trigger-minimal';
+      methodTrigger.className = 'method-trigger-modern';
       methodTrigger.innerHTML = `
-        <span class="method-text">${row.method || 'Bank Transfer'}</span>
-        <svg class="method-arrow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M6 9l6 6 6-6"/>
-        </svg>
+        <div class="method-content">
+          <span class="method-text">${row.method || 'Bank Transfer'}</span>
+          <div class="method-arrow-container">
+            <svg class="method-arrow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M6 9l6 6 6-6"/>
+            </svg>
+          </div>
+        </div>
       `;
       
       const methodMenu = document.createElement('div');
-      methodMenu.className = 'method-menu-minimal';
+      methodMenu.className = 'method-menu-modern';
       
-      const options = ['Bank Transfer', 'Paypal', 'Cash', 'Crypto', 'Check', 'InstaPay'];
+      const options = [
+        { value: 'Bank Transfer', icon: '🏦', color: '#3b82f6' },
+        { value: 'Paypal', icon: '💳', color: '#0070ba' },
+        { value: 'Cash', icon: '💵', color: '#10b981' },
+        { value: 'Crypto', icon: '₿', color: '#f59e0b' },
+        { value: 'Check', icon: '📝', color: '#8b5cf6' },
+        { value: 'InstaPay', icon: '⚡', color: '#ef4444' }
+      ];
+      
       options.forEach(option => {
         const item = document.createElement('div');
-        item.className = 'method-item-minimal';
-        if (option === (row.method || 'Bank Transfer')) {
+        item.className = 'method-item-modern';
+        if (option.value === (row.method || 'Bank Transfer')) {
           item.classList.add('selected');
         }
-        item.textContent = option;
+        item.innerHTML = `
+          <div class="method-item-content">
+            <span class="method-item-icon" style="color: ${option.color}">${option.icon}</span>
+            <span class="method-item-text">${option.value}</span>
+          </div>
+        `;
+        
         item.addEventListener('click', function(e) {
           e.preventDefault();
           e.stopPropagation();
           
-          row.method = option;
-          methodTrigger.querySelector('.method-text').textContent = option;
-          methodMenu.querySelectorAll('.method-item-minimal').forEach(i => i.classList.remove('selected'));
+          row.method = option.value;
+          methodTrigger.querySelector('.method-text').textContent = option.value;
+          methodMenu.querySelectorAll('.method-item-modern').forEach(i => i.classList.remove('selected'));
           this.classList.add('selected');
           methodDropdown.classList.remove('open');
           methodMenu.classList.remove('show');
           save();
         });
+        
         methodMenu.appendChild(item);
       });
       
@@ -3228,10 +3366,10 @@ window.supabaseClient = supabase;
         e.stopPropagation();
         
         // Close other dropdowns first
-        document.querySelectorAll('.method-dropdown-minimal.open').forEach(dd => {
+        document.querySelectorAll('.method-dropdown-modern.open').forEach(dd => {
           if (dd !== methodDropdown) {
             dd.classList.remove('open');
-            dd.querySelector('.method-menu-minimal').classList.remove('show');
+            dd.querySelector('.method-menu-modern').classList.remove('show');
           }
         });
         
@@ -3873,6 +4011,14 @@ window.supabaseClient = supabase;
         dropdown.querySelector('.method-menu-minimal').classList.remove('show');
       }
     });
+    
+    // Close all modern method dropdowns (income table)
+    document.querySelectorAll('.method-dropdown-modern.open').forEach(dropdown => {
+      if (!dropdown.contains(e.target)) {
+        dropdown.classList.remove('open');
+        dropdown.querySelector('.method-menu-modern').classList.remove('show');
+      }
+    });
   });
 
      // KPI Card Analytics - Click to expand
@@ -4138,3 +4284,5 @@ window.supabaseClient = supabase;
       eq(rowYearlyUSD(sample[1]),1200,'yUSD annual');
     })();
   });
+
+
