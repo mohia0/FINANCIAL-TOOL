@@ -64,7 +64,7 @@ window.supabaseClient = supabase;
     // Year Tab Navigation
     function initYearTabs() {
       const yearTabs = document.querySelectorAll('.year-tab');
-      const addYearBtn = $('#addYearBtn');
+      const manageYearsBtn = $('#manageYearsBtn');
       
       yearTabs.forEach(tab => {
         tab.addEventListener('click', () => {
@@ -73,8 +73,8 @@ window.supabaseClient = supabase;
         });
       });
       
-      if (addYearBtn) {
-        addYearBtn.addEventListener('click', addNewYear);
+      if (manageYearsBtn) {
+        manageYearsBtn.addEventListener('click', showYearManagementPanel);
       }
     }
     
@@ -100,60 +100,272 @@ window.supabaseClient = supabase;
       }
     }
     
-    function addNewYear() {
-      // Show a simple prompt to enter the year
-      const yearInput = prompt('Enter the year to add (e.g., 2021, 2020, etc.):');
+    
+    function removeYear(year) {
+      showYearConfirmDialog(year);
+    }
+    
+    function showYearConfirmDialog(year) {
+      // Create overlay
+      const overlay = document.createElement('div');
+      overlay.className = 'year-confirm-overlay';
       
-      if (!yearInput) return; // User cancelled
+      // Create dialog
+      const dialog = document.createElement('div');
+      dialog.className = 'year-confirm-dialog';
+      dialog.innerHTML = `
+        <div class="year-confirm-message">Remove year ${year}?</div>
+        <div class="year-confirm-buttons">
+          <button class="year-confirm-btn year-confirm-yes" onclick="confirmRemoveYear(${year})">Sure!</button>
+          <button class="year-confirm-btn year-confirm-no" onclick="closeYearConfirmDialog()">Cancel</button>
+        </div>
+      `;
       
-      const year = parseInt(yearInput);
-      if (isNaN(year) || year < 1900 || year > 2100) {
-        alert('Please enter a valid year between 1900 and 2100');
+      overlay.appendChild(dialog);
+      document.body.appendChild(overlay);
+      
+      // Close on overlay click
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+          closeYearConfirmDialog();
+        }
+      });
+    }
+    
+    function confirmRemoveYear(year) {
+      // Remove from state
+      delete state.income[year];
+      
+      // Remove from DOM
+      const yearTab = document.querySelector(`[data-year="${year}"]`);
+      if (yearTab) {
+        yearTab.remove();
+      }
+      
+      // Switch to current year if we removed the active year
+      if (currentYear === year.toString()) {
+        const remainingTabs = document.querySelectorAll('.year-tab');
+        if (remainingTabs.length > 0) {
+          const firstTab = remainingTabs[0];
+          switchYear(firstTab.getAttribute('data-year'));
+        }
+      }
+      
+      // Refresh year management panel
+      refreshYearManagementPanel();
+      
+      // Save changes
+      save();
+      
+      // Close dialog
+      closeYearConfirmDialog();
+      
+      console.log(`Removed year ${year} from income data`);
+    }
+    
+    function closeYearConfirmDialog() {
+      const overlay = document.querySelector('.year-confirm-overlay');
+      if (overlay) {
+        overlay.remove();
+      }
+    }
+    
+    function showYearManagementPanel() {
+      const manageBtn = $('#manageYearsBtn');
+      if (!manageBtn) return;
+      
+      // Remove existing panel if any
+      const existingPanel = document.querySelector('.year-management-panel');
+      if (existingPanel) {
+        existingPanel.remove();
+      }
+      
+      // Create year management panel
+      const panel = document.createElement('div');
+      panel.className = 'year-management-panel show';
+      
+      // Get all existing years and sort them (smallest to largest for display)
+      const existingYears = Array.from(document.querySelectorAll('.year-tab'))
+        .map(tab => parseInt(tab.getAttribute('data-year')))
+        .sort((a, b) => a - b);
+      
+      // Get min and max years for add buttons
+      const minYear = Math.min(...existingYears);
+      const maxYear = Math.max(...existingYears);
+      
+      // Create year list with separators
+      let yearListHTML = '';
+      for (let i = 0; i < existingYears.length; i++) {
+        const year = existingYears[i];
+        const isActive = currentYear === year.toString();
+        
+        // Add year item
+        yearListHTML += `
+          <div class="year-item ${isActive ? 'active' : ''}">
+            <span>${year}</span>
+            <div class="year-item-controls">
+              <button class="year-btn year-btn-remove" onclick="removeYear(${year})" title="Remove ${year}">-</button>
+            </div>
+          </div>
+        `;
+        
+        // Add separator between years only if there's a missing year
+        if (i < existingYears.length - 1) {
+          const nextYear = existingYears[i + 1];
+          const middleYear = year + 1;
+          const canAddBetween = middleYear < nextYear && !existingYears.includes(middleYear);
+          
+          // Only show separator if there's actually a missing year
+          if (canAddBetween) {
+            yearListHTML += `
+              <div class="year-separator">
+                <div class="year-separator-line"></div>
+                <button class="year-add-between" 
+                        onclick="addYearBetween(${year}, ${nextYear})" 
+                        title="Add ${middleYear}">+</button>
+                <div class="year-separator-line"></div>
+              </div>
+            `;
+          }
+        }
+      }
+      
+      panel.innerHTML = `
+        <div class="year-management-header">Manage Years</div>
+        
+        <div class="year-add-buttons">
+          <button class="year-add-btn" onclick="addYearBefore(${minYear})" title="Add year before ${minYear}">
+            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 5v14M5 12h14"/>
+            </svg>
+            Add before ${minYear}
+          </button>
+        </div>
+        
+        <div class="year-list">
+          ${yearListHTML}
+        </div>
+        
+        <div class="year-add-buttons">
+          <button class="year-add-btn" onclick="addYearAfter(${maxYear})" title="Add year after ${maxYear}">
+            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 5v14M5 12h14"/>
+            </svg>
+            Add after ${maxYear}
+          </button>
+        </div>
+      `;
+      
+      // Position panel
+      manageBtn.style.position = 'relative';
+      manageBtn.appendChild(panel);
+      
+      // Close panel when clicking outside
+      setTimeout(() => {
+        document.addEventListener('click', function closePanel(e) {
+          if (!panel.contains(e.target) && e.target !== manageBtn) {
+            panel.remove();
+            document.removeEventListener('click', closePanel);
+          }
+        });
+      }, 100);
+    }
+    
+    function refreshYearManagementPanel() {
+      const panel = document.querySelector('.year-management-panel');
+      if (panel) {
+        showYearManagementPanel();
+      }
+    }
+    
+    function addYearBefore(year) {
+      const newYear = year - 1;
+      if (newYear < 1900) {
+        alert('Cannot add years before 1900');
         return;
       }
       
       // Check if year already exists
-      const existingYearTab = document.querySelector(`[data-year="${year}"]`);
+      const existingYearTab = document.querySelector(`[data-year="${newYear}"]`);
       if (existingYearTab) {
-        alert(`Year ${year} already exists!`);
+        alert(`Year ${newYear} already exists!`);
         return;
       }
       
+      addYearToTabs(newYear);
+      refreshYearManagementPanel();
+      console.log(`Added year ${newYear} before ${year}`);
+    }
+    
+    function addYearAfter(year) {
+      const newYear = year + 1;
+      if (newYear > 2100) {
+        alert('Cannot add years after 2100');
+        return;
+      }
+      
+      // Check if year already exists
+      const existingYearTab = document.querySelector(`[data-year="${newYear}"]`);
+      if (existingYearTab) {
+        alert(`Year ${newYear} already exists!`);
+        return;
+      }
+      
+      addYearToTabs(newYear);
+      refreshYearManagementPanel();
+      console.log(`Added year ${newYear} after ${year}`);
+    }
+    
+    function addYearBetween(year1, year2) {
+      const newYear = year1 + 1;
+      if (newYear >= year2) {
+        alert('No year available between these years');
+        return;
+      }
+      
+      // Check if year already exists
+      const existingYearTab = document.querySelector(`[data-year="${newYear}"]`);
+      if (existingYearTab) {
+        alert(`Year ${newYear} already exists!`);
+        return;
+      }
+      
+      addYearToTabs(newYear);
+      refreshYearManagementPanel();
+      console.log(`Added year ${newYear} between ${year1} and ${year2}`);
+    }
+    
+    function addYearToTabs(newYear) {
       const yearTabsContainer = $('#yearTabsContainer');
       if (!yearTabsContainer) return;
       
       // Initialize the year in the income data structure
-      if (!state.income[year]) {
-        state.income[year] = [];
+      if (!state.income[newYear]) {
+        state.income[newYear] = [];
       }
       
       // Create new year tab
       const newYearTab = document.createElement('button');
       newYearTab.className = 'year-tab';
-      newYearTab.setAttribute('data-year', year);
-      newYearTab.textContent = year;
-      newYearTab.addEventListener('click', () => switchYear(year.toString()));
+      newYearTab.setAttribute('data-year', newYear);
+      newYearTab.textContent = newYear;
+      newYearTab.addEventListener('click', () => switchYear(newYear.toString()));
       
-      // Insert in chronological order (newest first)
+      // Insert in chronological order (smallest to largest)
       const existingTabs = Array.from(yearTabsContainer.querySelectorAll('.year-tab'));
-      const addBtn = $('#addYearBtn');
+      const manageBtn = $('#manageYearsBtn');
       
       // Find the right position to insert (maintain chronological order)
-      let insertBefore = addBtn;
+      let insertBefore = manageBtn;
       for (const tab of existingTabs) {
         const tabYear = parseInt(tab.getAttribute('data-year'));
-        if (year > tabYear) {
+        if (newYear < tabYear) {
           insertBefore = tab;
           break;
         }
       }
       
       yearTabsContainer.insertBefore(newYearTab, insertBefore);
-      
-      // Switch to the new year
-      switchYear(year.toString());
-      
-      console.log(`Added year ${year} to income data`);
     }
     
     function updateIncomeForYear(year) {
@@ -221,8 +433,14 @@ window.supabaseClient = supabase;
       save(); renderAll();
     }
     
-    // Make addRow globally accessible
+    // Make functions globally accessible
     window.addRow = addRow;
+    window.removeYear = removeYear;
+    window.addYearBefore = addYearBefore;
+    window.addYearAfter = addYearAfter;
+    window.addYearBetween = addYearBetween;
+    window.confirmRemoveYear = confirmRemoveYear;
+    window.closeYearConfirmDialog = closeYearConfirmDialog;
     
     // Supabase integration
     let currentUser = null;
@@ -3914,9 +4132,100 @@ window.supabaseClient = supabase;
       }
     });
     
-    // Export/Import functionality
-    $('#btnExportData').addEventListener('click', ()=>{
-      const dataStr = JSON.stringify(state, null, 2);
+    // Enhanced Export/Import functionality - moved inside DOMContentLoaded
+    setTimeout(() => {
+      const exportBtn = $('#btnExportData');
+      const importBtn = $('#btnImportData');
+      
+      if (exportBtn) {
+        exportBtn.addEventListener('click', ()=>{
+          console.log('Export button clicked');
+          showExportOptions();
+        });
+        console.log('Export button event listener added');
+      } else {
+        console.error('Export button not found!');
+      }
+      
+      if (importBtn) {
+        importBtn.addEventListener('click', ()=>{
+          console.log('Import button clicked');
+          showImportOptions();
+        });
+        console.log('Import button event listener added');
+      } else {
+        console.error('Import button not found!');
+      }
+    }, 100);
+    
+    function showExportOptions() {
+      const modal = document.createElement('div');
+      modal.className = 'modal-overlay';
+      modal.innerHTML = `
+        <div class="modal-content" style="max-width: 400px;">
+          <h3 style="color: var(--fg); margin-bottom: 1rem;">Export Data</h3>
+          <p style="color: var(--muted); margin-bottom: 1rem; font-size: 0.8rem;">Choose which data to export:</p>
+          
+          <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem;">
+            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+              <input type="checkbox" id="exportPersonal" checked style="accent-color: var(--primary);">
+              <span style="color: var(--fg); font-size: 0.8rem;">Personal Expenses</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+              <input type="checkbox" id="exportBiz" checked style="accent-color: var(--primary);">
+              <span style="color: var(--fg); font-size: 0.8rem;">Business Expenses</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+              <input type="checkbox" id="exportIncome" checked style="accent-color: var(--primary);">
+              <span style="color: var(--fg); font-size: 0.8rem;">Income Data (All Years)</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+              <input type="checkbox" id="exportSettings" checked style="accent-color: var(--primary);">
+              <span style="color: var(--fg); font-size: 0.8rem;">Settings & Preferences</span>
+            </label>
+          </div>
+          
+          <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+            <button id="cancelExport" class="btn btn-ghost" style="padding: 0.5rem 1rem; font-size: 0.8rem;">Cancel</button>
+            <button id="confirmExport" class="btn" style="padding: 0.5rem 1rem; font-size: 0.8rem;">Export</button>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(modal);
+      
+      // Event listeners
+      $('#cancelExport').addEventListener('click', () => {
+        document.body.removeChild(modal);
+      });
+      
+      // Close modal when clicking outside
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          document.body.removeChild(modal);
+        }
+      });
+      
+      $('#confirmExport').addEventListener('click', () => {
+        const exportData = {};
+        
+        if (document.getElementById('exportPersonal').checked) {
+          exportData.personal = state.personal;
+        }
+        if (document.getElementById('exportBiz').checked) {
+          exportData.biz = state.biz;
+        }
+        if (document.getElementById('exportIncome').checked) {
+          exportData.income = state.income;
+        }
+        if (document.getElementById('exportSettings').checked) {
+          exportData.fx = state.fx;
+          exportData.theme = state.theme;
+          exportData.autosave = state.autosave;
+          exportData.includeAnnualInMonthly = state.includeAnnualInMonthly;
+        }
+        
+        const dataStr = JSON.stringify(exportData, null, 2);
       const dataBlob = new Blob([dataStr], {type: 'application/json'});
       const url = URL.createObjectURL(dataBlob);
       const link = document.createElement('a');
@@ -3924,13 +4233,146 @@ window.supabaseClient = supabase;
       link.download = 'financial-data.json';
       link.click();
       URL.revokeObjectURL(url);
-      showNotification('Data exported', 'success', 2000);
-    });
+        
+        document.body.removeChild(modal);
+        showNotification('Data exported successfully', 'success', 2000);
+      });
+    }
     
-    $('#btnImportData').addEventListener('click', ()=>{
-      $('#fileInput').click();
-    });
+    function showImportOptions() {
+      const modal = document.createElement('div');
+      modal.className = 'modal-overlay';
+      modal.innerHTML = `
+        <div class="modal-content" style="max-width: 400px;">
+          <h3 style="color: var(--fg); margin-bottom: 1rem;">Import Data</h3>
+          <p style="color: var(--muted); margin-bottom: 1rem; font-size: 0.8rem;">Choose which data to import:</p>
+          
+          <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem;">
+            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+              <input type="checkbox" id="importPersonal" style="accent-color: var(--primary);">
+              <span style="color: var(--fg); font-size: 0.8rem;">Personal Expenses</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+              <input type="checkbox" id="importBiz" style="accent-color: var(--primary);">
+              <span style="color: var(--fg); font-size: 0.8rem;">Business Expenses</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+              <input type="checkbox" id="importIncome" style="accent-color: var(--primary);">
+              <span style="color: var(--fg); font-size: 0.8rem;">Income Data (All Years)</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+              <input type="checkbox" id="importSettings" style="accent-color: var(--primary);">
+              <span style="color: var(--fg); font-size: 0.8rem;">Settings & Preferences</span>
+            </label>
+          </div>
+          
+          <div style="margin-bottom: 1rem;">
+            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+              <input type="checkbox" id="replaceExisting" style="accent-color: var(--primary);">
+              <span style="color: var(--fg); font-size: 0.8rem;">Replace existing data (otherwise merge)</span>
+            </label>
+          </div>
+          
+          <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+            <button id="cancelImport" class="btn btn-ghost" style="padding: 0.5rem 1rem; font-size: 0.8rem;">Cancel</button>
+            <button id="selectFile" class="btn" style="padding: 0.5rem 1rem; font-size: 0.8rem;">Select File</button>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(modal);
+      
+      // Event listeners
+      $('#cancelImport').addEventListener('click', () => {
+        document.body.removeChild(modal);
+      });
+      
+      // Close modal when clicking outside
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          document.body.removeChild(modal);
+        }
+      });
+      
+      $('#selectFile').addEventListener('click', () => {
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = '.json';
+        fileInput.style.display = 'none';
+        
+        fileInput.addEventListener('change', (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+          
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            try {
+              const importedData = JSON.parse(e.target.result);
+              const replaceExisting = document.getElementById('replaceExisting').checked;
+              
+              // Import selected data
+              if (document.getElementById('importPersonal').checked && importedData.personal) {
+                if (replaceExisting) {
+                  state.personal = importedData.personal;
+                } else {
+                  state.personal = [...state.personal, ...importedData.personal];
+                }
+                // Clear IDs for new data
+                state.personal.forEach(item => delete item.id);
+              }
+              
+              if (document.getElementById('importBiz').checked && importedData.biz) {
+                if (replaceExisting) {
+                  state.biz = importedData.biz;
+                } else {
+                  state.biz = [...state.biz, ...importedData.biz];
+                }
+                // Clear IDs for new data
+                state.biz.forEach(item => delete item.id);
+              }
+              
+              if (document.getElementById('importIncome').checked && importedData.income) {
+                if (replaceExisting) {
+                  state.income = importedData.income;
+                } else {
+                  // Merge income data by year
+                  Object.keys(importedData.income).forEach(year => {
+                    if (!state.income[year]) {
+                      state.income[year] = [];
+                    }
+                    state.income[year] = [...state.income[year], ...importedData.income[year]];
+                    // Clear IDs for new data
+                    state.income[year].forEach(item => delete item.id);
+                  });
+                }
+              }
+              
+              if (document.getElementById('importSettings').checked) {
+                if (importedData.fx) state.fx = importedData.fx;
+                if (importedData.theme) state.theme = importedData.theme;
+                if (importedData.autosave) state.autosave = importedData.autosave;
+                if (importedData.includeAnnualInMonthly !== undefined) state.includeAnnualInMonthly = importedData.includeAnnualInMonthly;
+              }
+              
+              save();
+              renderAll();
+              document.body.removeChild(modal);
+              showNotification('Data imported successfully', 'success', 2000);
+              
+            } catch (error) {
+              showNotification('Invalid file format', 'error', 3000);
+            }
+          };
+          reader.readAsText(file);
+        });
+        
+        document.body.appendChild(fileInput);
+        fileInput.click();
+        document.body.removeChild(fileInput);
+      });
+    }
     
+    // Keep the old file input for backward compatibility
     $('#fileInput').addEventListener('change', (e)=>{
       const file = e.target.files[0];
       if (!file) return;

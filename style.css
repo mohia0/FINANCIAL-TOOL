@@ -82,7 +82,7 @@
       font-weight: 600;
     }
     
-    .year-tab-add {
+    .year-tab-manage {
       padding: 0.25rem;
       border-radius: 0.375rem;
       border: 1px solid transparent;
@@ -93,10 +93,271 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      position: relative;
     }
     
-    .year-tab-add:hover {
+    .year-tab-manage:hover {
       background: rgba(99, 102, 241, 0.08);
+      color: var(--fg);
+    }
+    
+    /* Year Management Panel */
+    .year-management-panel {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      background: var(--card);
+      border: 1px solid var(--stroke);
+      border-radius: 6px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+      backdrop-filter: blur(10px);
+      z-index: 1000;
+      min-width: 160px;
+      padding: 6px;
+      margin-top: 4px;
+    }
+    
+    .year-management-panel.show {
+      display: block;
+    }
+    
+    .year-management-panel.hide {
+      display: none;
+    }
+    
+    .year-management-header {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--fg);
+      margin-bottom: 4px;
+      text-align: center;
+    }
+    
+    .year-list {
+      max-height: 140px;
+      overflow-y: auto;
+      margin: 4px 0;
+    }
+    
+    .year-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px 6px;
+      border-radius: 3px;
+      margin-bottom: 1px;
+      font-size: 0.65rem;
+      transition: background 0.2s ease;
+    }
+    
+    .year-item:hover {
+      background: var(--glass);
+    }
+    
+    .year-item.active {
+      background: var(--primary);
+      color: white;
+    }
+    
+    .year-item-controls {
+      display: flex;
+      gap: 3px;
+    }
+    
+    .year-btn {
+      width: 12px;
+      height: 12px;
+      border: none;
+      border-radius: 2px;
+      font-size: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+    
+    .year-btn-remove {
+      background: #ef4444;
+      color: white;
+    }
+    
+    .year-btn-remove:hover {
+      background: #dc2626;
+      transform: scale(1.1);
+    }
+    
+    .year-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .year-separator {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2px 0;
+      position: relative;
+    }
+    
+    .year-separator-line {
+      flex: 1;
+      height: 1px;
+      background: var(--stroke);
+      margin: 0 6px;
+    }
+    
+    .year-add-between {
+      width: 14px;
+      height: 14px;
+      border: 1px solid var(--stroke);
+      border-radius: 50%;
+      background: var(--card);
+      color: var(--muted);
+      font-size: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      position: relative;
+      z-index: 1;
+    }
+    
+    .year-add-between:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: var(--primary);
+      color: white;
+      transform: scale(1.1);
+    }
+    
+    .year-add-between:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .year-add-between:disabled:hover {
+      border-color: var(--stroke);
+      color: var(--muted);
+      background: var(--card);
+    }
+    
+    .year-add-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    
+    .year-add-btn {
+      width: 100%;
+      padding: 4px 6px;
+      border: 1px dashed var(--stroke);
+      border-radius: 3px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 0.6rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+    }
+    
+    .year-add-btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: rgba(99, 102, 241, 0.05);
+    }
+    
+    .year-add-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    /* Custom Confirmation Dialog */
+    .year-confirm-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .year-confirm-dialog {
+      background: var(--card);
+      border: 1px solid var(--stroke);
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      min-width: 200px;
+      animation: confirmSlideIn 0.2s ease-out;
+    }
+    
+    @keyframes confirmSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px) scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+    
+    .year-confirm-message {
+      font-size: 0.8rem;
+      color: var(--fg);
+      margin-bottom: 12px;
+    }
+    
+    .year-confirm-buttons {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+    }
+    
+    .year-confirm-btn {
+      padding: 6px 16px;
+      border: none;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .year-confirm-yes {
+      background: #ef4444;
+      color: white;
+    }
+    
+    .year-confirm-yes:hover {
+      background: #dc2626;
+      transform: scale(1.05);
+    }
+    
+    .year-confirm-no {
+      background: var(--glass);
+      color: var(--muted);
+      border: 1px solid var(--stroke);
+    }
+    
+    .year-confirm-no:hover {
+      background: var(--card);
       color: var(--fg);
     }
 
@@ -2275,6 +2536,41 @@
       height: 100%;
       background: rgba(0, 0, 0, 0.8);
       backdrop-filter: blur(8px);
+    }
+    
+    /* General Modal Overlay */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(8px);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .modal-content {
+      background: var(--card);
+      border: 1px solid var(--stroke);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      animation: modalSlideIn 0.3s ease-out;
+    }
+    
+    @keyframes modalSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
     }
 
     .auth-modal-content {
