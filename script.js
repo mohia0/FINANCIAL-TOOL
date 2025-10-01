@@ -1,0 +1,4140 @@
+// Supabase configuration
+const SUPABASE_URL = 'https://mvusbchsponczexuhfuw.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im12dXNiY2hzcG9uY3pleHVoZnV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5MDM2NzQsImV4cCI6MjA3NDQ3OTY3NH0.sv1fpNNbakCNwN_spcDR31QddU4qTFyS-X0ZQ_omV08';
+
+// Initialize Supabase
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Make Supabase available globally
+window.supabaseClient = supabase;
+
+  document.addEventListener('DOMContentLoaded', function(){
+    const $ = (s, el)=> (el||document).querySelector(s);
+    
+    // Page Navigation
+    let currentPage = 'expenses';
+    let currentYear = '2025';
+    
+    // Add resize listener for responsive grid updates
+    window.addEventListener('resize', function() {
+      updateGridTemplate();
+    });
+    
+    // Initialize page navigation
+    function initPageNavigation() {
+      const tabExpenses = $('#tabExpenses');
+      const tabIncome = $('#tabIncome');
+      const pageExpenses = $('#pageExpenses');
+      const pageIncome = $('#pageIncome');
+      
+      if (tabExpenses && tabIncome && pageExpenses && pageIncome) {
+        // Set initial state
+        showPage('expenses');
+        
+        // Add click listeners
+        tabExpenses.addEventListener('click', () => showPage('expenses'));
+        tabIncome.addEventListener('click', () => showPage('income'));
+      }
+    }
+    
+    function showPage(page) {
+      const tabExpenses = $('#tabExpenses');
+      const tabIncome = $('#tabIncome');
+      const pageExpenses = $('#pageExpenses');
+      const pageIncome = $('#pageIncome');
+      const yearTabsContainer = $('#yearTabsContainer');
+      
+      if (page === 'expenses') {
+        tabExpenses?.classList.add('active');
+        tabIncome?.classList.remove('active');
+        pageExpenses?.style.setProperty('display', 'block');
+        pageIncome?.style.setProperty('display', 'none');
+        yearTabsContainer?.style.setProperty('display', 'none');
+        currentPage = 'expenses';
+      } else if (page === 'income') {
+        tabExpenses?.classList.remove('active');
+        tabIncome?.classList.add('active');
+        pageExpenses?.style.setProperty('display', 'none');
+        pageIncome?.style.setProperty('display', 'block');
+        yearTabsContainer?.style.setProperty('display', 'flex');
+        currentPage = 'income';
+      }
+    }
+    
+    // Year Tab Navigation
+    function initYearTabs() {
+      const yearTabs = document.querySelectorAll('.year-tab');
+      const addYearBtn = $('#addYearBtn');
+      
+      yearTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          const year = tab.getAttribute('data-year');
+          switchYear(year);
+        });
+      });
+      
+      if (addYearBtn) {
+        addYearBtn.addEventListener('click', addNewYear);
+      }
+    }
+    
+    function switchYear(year) {
+      // Remove active class from all year tabs
+      document.querySelectorAll('.year-tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      
+      // Add active class to selected year tab
+      const selectedTab = document.querySelector(`[data-year="${year}"]`);
+      if (selectedTab) {
+        selectedTab.classList.add('active');
+        currentYear = year;
+        
+        // Update income data for selected year
+        if (currentPage === 'income') {
+          updateIncomeForYear(year);
+        }
+      }
+    }
+    
+    function addNewYear() {
+      const yearTabsContainer = $('#yearTabsContainer');
+      if (!yearTabsContainer) return;
+      
+      const existingYears = Array.from(document.querySelectorAll('.year-tab'))
+        .map(tab => parseInt(tab.getAttribute('data-year')))
+        .sort((a, b) => b - a);
+      
+      const nextYear = existingYears[0] + 1;
+      
+      // Initialize the year in the income data structure
+      if (!state.income[nextYear]) {
+        state.income[nextYear] = [];
+      }
+      
+      const newYearTab = document.createElement('button');
+      newYearTab.className = 'year-tab';
+      newYearTab.setAttribute('data-year', nextYear);
+      newYearTab.textContent = nextYear;
+      newYearTab.addEventListener('click', () => switchYear(nextYear.toString()));
+      
+      // Insert before the add button
+      const addBtn = $('#addYearBtn');
+      yearTabsContainer.insertBefore(newYearTab, addBtn);
+    }
+    
+    function updateIncomeForYear(year) {
+      // Ensure the year exists in the income data structure
+      if (!state.income[year]) {
+        state.income[year] = [];
+      }
+      
+      // Re-render the income list with year-specific data
+      renderIncomeList('list-income', state.income[year]);
+      
+      // Update KPIs for the selected year
+      renderKPIs();
+    }
+    
+    // Initialize navigation
+    initPageNavigation();
+    initYearTabs();
+    
+    // Add row function
+    function addRow(group){
+      if(group==='biz') state.biz.push({name:'', cost:0, status:'Active', billing:'Monthly', next:''});
+      else if(group==='income') {
+        // Ensure the current year exists in the income data structure
+        if (!state.income[currentYear]) {
+          state.income[currentYear] = [];
+        }
+        
+        // Set default date with current year
+        const today = new Date();
+        const year = parseInt(currentYear) || today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        const defaultDate = `${year}-${month}-${day}`;
+        
+        state.income[currentYear].push({
+          name:'', 
+          tags:'', 
+          date: defaultDate, 
+          allPayment:0, 
+          paidUsd:0, 
+          method:'Bank Transfer'
+        });
+      }
+      else state.personal.push({name:'', cost:0, status:'Active', billing:'Monthly'});
+      save(); renderAll();
+    }
+    
+    // Make addRow globally accessible
+    window.addRow = addRow;
+    
+    // Supabase integration
+    let currentUser = null;
+    let supabaseReady = false;
+    
+    // Wait for Supabase to be ready
+    const checkSupabase = setInterval(() => {
+      if (window.supabaseClient) {
+        supabaseReady = true;
+        clearInterval(checkSupabase);
+        console.log('Supabase is ready!');
+        initializeAuth();
+      }
+    }, 100);
+    
+    // Timeout after 10 seconds
+    setTimeout(() => {
+      if (!supabaseReady) {
+        console.error('Supabase failed to load after 10 seconds');
+        showNotification('Supabase connection failed. Using local storage only.', 'error');
+        loadLocalData();
+      }
+    }, 10000);
+    
+    function initializeAuth() {
+      console.log('Initializing Supabase Auth...');
+      
+      // Check if user came from password reset link
+      checkPasswordResetToken();
+      
+      // Set up Supabase authentication state listener
+      window.supabaseClient.auth.onAuthStateChange((event, session) => {
+        console.log('Supabase auth state changed:', event, session ? 'User signed in' : 'User signed out');
+        if (session?.user) {
+          currentUser = session.user;
+        updateAuthUI();
+          loadUserData();
+        } else if (event === 'SIGNED_OUT') {
+          currentUser = null;
+          updateAuthUI();
+          
+          // Clear all data when signed out
+          state.personal = [];
+          state.biz = [];
+          state.income = {
+            2022: [],
+            2023: [],
+            2024: [],
+            2025: []
+          };
+          state.fx = 48.1843;
+          state.theme = 'dark';
+          state.autosave = 'on';
+          state.includeAnnualInMonthly = false;
+          columnOrder = ['monthly', 'yearly', 'monthly-egp', 'yearly-egp'];
+          
+          // Clear local storage
+          localStorage.removeItem('finance-notion-v6');
+          localStorage.removeItem('columnOrder');
+          
+          // Render empty tables
+          renderAll();
+        }
+      });
+      
+      // Set up authentication event listeners
+      const loginBtn = $('#btnLogin');
+      const signInBtn = $('#btnSignIn');
+      const logoutBtn = $('#btnLogout');
+      const userMenuBtn = $('#userMenuBtn');
+      const accountMenuBtn = $('#accountMenuBtn');
+      
+      if (loginBtn) {
+        loginBtn.addEventListener('click', openAuthModal);
+        console.log('Login button event listener added');
+      }
+      
+      if (signInBtn) {
+        signInBtn.addEventListener('click', openAuthModal);
+        console.log('Sign In button event listener added');
+      }
+      
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', signOut);
+        console.log('Logout button event listener added');
+      }
+      
+      if (userMenuBtn) {
+        userMenuBtn.addEventListener('click', toggleUserDropdown);
+        console.log('User menu button event listener added');
+      }
+      
+      if (accountMenuBtn) {
+        accountMenuBtn.addEventListener('click', toggleAccountDropdown);
+        console.log('Account menu button event listener added');
+      }
+      
+      // Modal event listeners
+      const emailSignInBtn = $('#emailSignInBtn');
+      const emailSignUpBtn = $('#emailSignUpBtn');
+      const forgotPasswordBtn = $('#forgotPasswordBtn');
+      const sendResetBtn = $('#sendResetBtn');
+      const backToSignInBtn = $('#backToSignInBtn');
+      
+      if (emailSignInBtn) {
+        emailSignInBtn.addEventListener('click', signInWithEmail);
+        console.log('Email sign-in button event listener added');
+      }
+      
+      if (emailSignUpBtn) {
+        emailSignUpBtn.addEventListener('click', signUpWithEmail);
+        console.log('Email sign-up button event listener added');
+      }
+      
+      if (forgotPasswordBtn) {
+        forgotPasswordBtn.addEventListener('click', showForgotPasswordForm);
+        console.log('Forgot password button event listener added');
+      }
+      
+      if (sendResetBtn) {
+        sendResetBtn.addEventListener('click', sendPasswordReset);
+        console.log('Send reset button event listener added');
+      }
+      
+      if (backToSignInBtn) {
+        backToSignInBtn.addEventListener('click', showSignInForm);
+        console.log('Back to sign-in button event listener added');
+      }
+      
+      const updatePasswordBtn = $('#updatePasswordBtn');
+      const cancelResetBtn = $('#cancelResetBtn');
+      const changePasswordBtn = $('#changePasswordBtn');
+      const savePasswordBtn = $('#savePasswordBtn');
+      const cancelChangeBtn = $('#cancelChangeBtn');
+      
+      if (updatePasswordBtn) {
+        updatePasswordBtn.addEventListener('click', updatePassword);
+        console.log('Update password button event listener added');
+      }
+      
+      if (cancelResetBtn) {
+        cancelResetBtn.addEventListener('click', showSignInForm);
+        console.log('Cancel reset button event listener added');
+      }
+      
+      if (changePasswordBtn) {
+        changePasswordBtn.addEventListener('click', () => {
+          closeUserDropdown();
+          openAuthModal();
+          showChangePasswordForm();
+        });
+        console.log('Change password button event listener added');
+      }
+      
+      if (savePasswordBtn) {
+        savePasswordBtn.addEventListener('click', changePassword);
+        console.log('Save password button event listener added');
+      }
+      
+      if (cancelChangeBtn) {
+        cancelChangeBtn.addEventListener('click', closeAuthModal);
+        console.log('Cancel change button event listener added');
+      }
+      
+      // Close modal when clicking overlay
+      const authModal = $('#authModal');
+      if (authModal) {
+        authModal.addEventListener('click', (e) => {
+          if (e.target === authModal || e.target.classList.contains('auth-modal-overlay')) {
+            closeAuthModal();
+          }
+        });
+      }
+      
+      // Close dropdown when clicking outside
+      document.addEventListener('click', (e) => {
+        const userInfo = $('#userInfo');
+        const userDropdown = $('#userDropdown');
+        const accountDropdown = $('#accountDropdown');
+        const accountMenuBtn = $('#accountMenuBtn');
+        
+        if (userInfo && userDropdown && !userInfo.contains(e.target)) {
+          closeUserDropdown();
+        }
+        
+        if (accountDropdown && accountMenuBtn && !accountMenuBtn.contains(e.target) && !accountDropdown.contains(e.target)) {
+          closeAccountDropdown();
+        }
+      });
+      
+      // Handle Enter key in email form
+      const authEmail = $('#authEmail');
+      const authPassword = $('#authPassword');
+      
+      if (authEmail) {
+        authEmail.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            signInWithEmail();
+          }
+        });
+      }
+      
+      if (authPassword) {
+        authPassword.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            signInWithEmail();
+          }
+        });
+      }
+      
+      // Show login button immediately
+      updateAuthUI();
+      
+      // Test Supabase connection
+      testSupabaseConnection();
+    }
+    
+    async function testSupabaseConnection() {
+      try {
+        console.log('Testing Supabase connection...');
+        // Try to get current user
+        const { data: { user } } = await window.supabaseClient.auth.getUser();
+        console.log('Current user:', user);
+        
+        // Test database connection
+        const { data, error } = await window.supabaseClient.from('backups').select('count').limit(1);
+        console.log('Database connection test:', data, error);
+        
+        console.log('Supabase connection test successful!');
+      } catch (error) {
+        console.error('Supabase connection test failed:', error);
+      }
+    }
+    
+    function updateAuthUI() {
+      const loginBtn = $('#btnLogin');
+      const signInBtn = $('#btnSignIn');
+      const userInfo = $('#userInfo');
+      const userName = $('#userName');
+      const userEmail = $('#userEmail');
+      const userPhoto = $('#userPhoto');
+      const dropdownUserName = $('#dropdownUserName');
+      const dropdownUserEmail = $('#dropdownUserEmail');
+      const dropdownUserPhoto = $('#dropdownUserPhoto');
+      
+      if (currentUser) {
+        loginBtn.style.display = 'none';
+        if (signInBtn) signInBtn.style.display = 'none';
+        userInfo.style.display = 'block';
+        
+        // Handle Supabase user object
+        const displayName = currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || 'User';
+        const email = currentUser.email || '';
+        const photoURL = currentUser.user_metadata?.avatar_url;
+        
+        // Update main user info
+        userName.textContent = displayName;
+        userEmail.textContent = email;
+        
+        // Update dropdown user info
+        if (dropdownUserName) dropdownUserName.textContent = displayName;
+        if (dropdownUserEmail) dropdownUserEmail.textContent = email;
+        
+        // Handle profile photos
+        if (photoURL) {
+          userPhoto.src = photoURL;
+          userPhoto.style.display = 'block';
+          if (dropdownUserPhoto) {
+            dropdownUserPhoto.src = photoURL;
+            dropdownUserPhoto.style.display = 'block';
+          }
+        } else {
+          userPhoto.style.display = 'none';
+          if (dropdownUserPhoto) {
+            dropdownUserPhoto.style.display = 'none';
+          }
+        }
+        
+        console.log('Auth UI updated for user:', { displayName, email, photoURL });
+      } else {
+        loginBtn.style.display = 'flex';
+        if (signInBtn) signInBtn.style.display = 'flex';
+        userInfo.style.display = 'none';
+        console.log('Auth UI updated - no user');
+      }
+    }
+    
+    // User Dropdown Functions
+    function toggleUserDropdown() {
+      const dropdown = $('#userDropdown');
+      if (dropdown) {
+        const isVisible = dropdown.classList.contains('show');
+        if (isVisible) {
+          closeUserDropdown();
+        } else {
+          openUserDropdown();
+        }
+      }
+    }
+    
+    function openUserDropdown() {
+      const dropdown = $('#userDropdown');
+      if (dropdown) {
+        dropdown.style.display = 'block';
+        // Small delay for smooth animation
+        setTimeout(() => {
+          dropdown.classList.add('show');
+        }, 10);
+      }
+    }
+    
+    function closeUserDropdown() {
+      const dropdown = $('#userDropdown');
+      if (dropdown) {
+        dropdown.classList.remove('show');
+        // Hide after animation completes
+        setTimeout(() => {
+          dropdown.style.display = 'none';
+        }, 200);
+      }
+    }
+    
+    // Account Dropdown Functions
+    function toggleAccountDropdown() {
+      const dropdown = $('#accountDropdown');
+      if (dropdown) {
+        const isVisible = dropdown.classList.contains('show');
+        if (isVisible) {
+          closeAccountDropdown();
+        } else {
+          openAccountDropdown();
+        }
+      }
+    }
+    
+    function openAccountDropdown() {
+      const dropdown = $('#accountDropdown');
+      if (dropdown) {
+        dropdown.style.display = 'block';
+        // Small delay for smooth animation
+        setTimeout(() => {
+          dropdown.classList.add('show');
+        }, 10);
+      }
+    }
+    
+    function closeAccountDropdown() {
+      const dropdown = $('#accountDropdown');
+      if (dropdown) {
+        dropdown.classList.remove('show');
+        // Hide after animation completes
+        setTimeout(() => {
+          dropdown.style.display = 'none';
+        }, 200);
+      }
+    }
+    
+    // Modal Functions
+    function openAuthModal() {
+      const modal = $('#authModal');
+      if (modal) {
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+        
+        // Ensure sign-in form is shown by default
+        showSignInForm();
+        
+        console.log('Auth modal opened');
+      }
+    }
+    
+    function closeAuthModal() {
+      const modal = $('#authModal');
+      if (modal) {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+        clearAuthStatus();
+      }
+    }
+    
+    // Make functions globally available
+    window.openAuthModal = openAuthModal;
+    window.closeAuthModal = closeAuthModal;
+    
+    function showAuthStatus(message, type = 'success') {
+      const status = $('#authStatus');
+      if (status) {
+        status.textContent = message;
+        status.className = `auth-status ${type}`;
+        status.style.display = 'block';
+      }
+    }
+    
+    function clearAuthStatus() {
+      const status = $('#authStatus');
+      if (status) {
+        status.style.display = 'none';
+      }
+    }
+    
+    function showAuthLoading(show = true) {
+      const loading = $('#authLoading');
+      const emailForm = $('#emailAuthForm');
+      const forgotForm = $('#forgotPasswordForm');
+      const resetForm = $('#passwordResetForm');
+      
+      if (loading) loading.style.display = show ? 'flex' : 'none';
+      
+      // Only hide the currently visible form when loading
+      if (show) {
+        if (emailForm && emailForm.style.display === 'flex') emailForm.style.display = 'none';
+        if (forgotForm && forgotForm.style.display === 'flex') forgotForm.style.display = 'none';
+        if (resetForm && resetForm.style.display === 'flex') resetForm.style.display = 'none';
+      } else {
+        // When loading stops, show the appropriate form
+        if (emailForm && emailForm.style.display !== 'none') emailForm.style.display = 'flex';
+      }
+    }
+    
+    function showForgotPasswordForm() {
+      const emailForm = $('#emailAuthForm');
+      const forgotForm = $('#forgotPasswordForm');
+      const resetForm = $('#passwordResetForm');
+      const changeForm = $('#changePasswordForm');
+      
+      // Hide all forms first
+      if (emailForm) {
+        emailForm.style.display = 'none';
+        emailForm.classList.remove('hidden');
+      }
+      if (forgotForm) {
+        forgotForm.style.display = 'none';
+        forgotForm.classList.remove('hidden');
+      }
+      if (resetForm) {
+        resetForm.style.display = 'none';
+        resetForm.classList.remove('hidden');
+      }
+      if (changeForm) {
+        changeForm.style.display = 'none';
+        changeForm.classList.remove('hidden');
+      }
+      
+      // Show forgot password form
+      if (forgotForm) {
+        forgotForm.style.display = 'flex';
+        // Small delay for smooth transition
+        setTimeout(() => {
+          forgotForm.classList.remove('hidden');
+        }, 10);
+      }
+      
+      clearAuthStatus();
+    }
+    
+    function showSignInForm() {
+      const emailForm = $('#emailAuthForm');
+      const forgotForm = $('#forgotPasswordForm');
+      const resetForm = $('#passwordResetForm');
+      const changeForm = $('#changePasswordForm');
+      
+      // Hide all forms first
+      if (emailForm) {
+        emailForm.style.display = 'none';
+        emailForm.classList.remove('hidden');
+      }
+      if (forgotForm) {
+        forgotForm.style.display = 'none';
+        forgotForm.classList.remove('hidden');
+      }
+      if (resetForm) {
+        resetForm.style.display = 'none';
+        resetForm.classList.remove('hidden');
+      }
+      if (changeForm) {
+        changeForm.style.display = 'none';
+        changeForm.classList.remove('hidden');
+      }
+      
+      // Show sign-in form
+      if (emailForm) {
+        emailForm.style.display = 'flex';
+        // Small delay for smooth transition
+        setTimeout(() => {
+          emailForm.classList.remove('hidden');
+        }, 10);
+      }
+      
+      clearAuthStatus();
+    }
+    
+    function showPasswordResetForm() {
+      const emailForm = $('#emailAuthForm');
+      const forgotForm = $('#forgotPasswordForm');
+      const resetForm = $('#passwordResetForm');
+      const changeForm = $('#changePasswordForm');
+      
+      // Hide all forms first
+      if (emailForm) {
+        emailForm.style.display = 'none';
+        emailForm.classList.remove('hidden');
+      }
+      if (forgotForm) {
+        forgotForm.style.display = 'none';
+        forgotForm.classList.remove('hidden');
+      }
+      if (resetForm) {
+        resetForm.style.display = 'none';
+        resetForm.classList.remove('hidden');
+      }
+      if (changeForm) {
+        changeForm.style.display = 'none';
+        changeForm.classList.remove('hidden');
+      }
+      
+      // Show password reset form
+      if (resetForm) {
+        resetForm.style.display = 'flex';
+        // Small delay for smooth transition
+        setTimeout(() => {
+          resetForm.classList.remove('hidden');
+        }, 10);
+      }
+      
+      clearAuthStatus();
+    }
+    
+    function showChangePasswordForm() {
+      const emailForm = $('#emailAuthForm');
+      const forgotForm = $('#forgotPasswordForm');
+      const resetForm = $('#passwordResetForm');
+      const changeForm = $('#changePasswordForm');
+      
+      // Hide all forms first
+      if (emailForm) {
+        emailForm.style.display = 'none';
+        emailForm.classList.remove('hidden');
+      }
+      if (forgotForm) {
+        forgotForm.style.display = 'none';
+        forgotForm.classList.remove('hidden');
+      }
+      if (resetForm) {
+        resetForm.style.display = 'none';
+        resetForm.classList.remove('hidden');
+      }
+      if (changeForm) {
+        changeForm.style.display = 'none';
+        changeForm.classList.remove('hidden');
+      }
+      
+      // Show change password form
+      if (changeForm) {
+        changeForm.style.display = 'flex';
+        // Small delay for smooth transition
+        setTimeout(() => {
+          changeForm.classList.remove('hidden');
+        }, 10);
+      }
+      
+      clearAuthStatus();
+    }
+    
+    function checkPasswordResetToken() {
+      // Check URL parameters for password reset tokens
+      const urlParams = new URLSearchParams(window.location.search);
+      const accessToken = urlParams.get('access_token');
+      const refreshToken = urlParams.get('refresh_token');
+      const type = urlParams.get('type');
+      
+      console.log('URL params:', { accessToken: !!accessToken, refreshToken: !!refreshToken, type });
+      
+      // If this is a password recovery flow
+      if (type === 'recovery' && accessToken && refreshToken) {
+        console.log('Password reset token detected, showing reset form');
+        
+        // Set the session with the tokens
+        window.supabaseClient.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken
+        }).then(({ data, error }) => {
+          if (error) {
+            console.error('Error setting session:', error);
+            showAuthStatus('Invalid or expired reset link. Please request a new one.', 'error');
+            return;
+          }
+          
+          if (data.session) {
+            // User is now authenticated, show password reset form
+            openAuthModal();
+            showPasswordResetForm();
+            showAuthStatus('Please enter your new password', 'success');
+          }
+        });
+        
+        // Clean up URL parameters
+        const newUrl = window.location.origin + window.location.pathname;
+        window.history.replaceState({}, document.title, newUrl);
+      }
+    }
+    
+    async function sendPasswordReset() {
+      const email = $('#forgotEmail').value;
+      
+      if (!email) {
+        showAuthStatus('Please enter your email address', 'error');
+        return;
+      }
+      
+      try {
+        showAuthLoading(true);
+        clearAuthStatus();
+        
+        const { error } = await window.supabaseClient.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.origin + window.location.pathname
+        });
+        
+        if (error) throw error;
+        
+        showAuthStatus('Password reset link sent! Check your email.', 'success');
+        showAuthLoading(false);
+        
+        // Auto-close modal after 3 seconds
+        setTimeout(() => {
+          closeAuthModal();
+        }, 3000);
+        
+      } catch (error) {
+        console.error('Password reset error:', error);
+        showAuthLoading(false);
+        showAuthStatus('Failed to send reset link: ' + error.message, 'error');
+      }
+    }
+    
+    async function updatePassword() {
+      const newPassword = $('#newPassword').value;
+      const confirmPassword = $('#confirmPassword').value;
+      
+      if (!newPassword || !confirmPassword) {
+        showAuthStatus('Please fill in all fields', 'error');
+        return;
+      }
+      
+      if (newPassword.length < 6) {
+        showAuthStatus('Password must be at least 6 characters', 'error');
+        return;
+      }
+      
+      if (newPassword !== confirmPassword) {
+        showAuthStatus('Passwords do not match', 'error');
+        return;
+      }
+      
+      try {
+        showAuthLoading(true);
+        clearAuthStatus();
+        
+        const { error } = await window.supabaseClient.auth.updateUser({
+          password: newPassword
+        });
+        
+        if (error) throw error;
+        
+        showAuthStatus('Password updated successfully! You can now sign in.', 'success');
+        showAuthLoading(false);
+        
+        // Clear password fields
+        $('#newPassword').value = '';
+        $('#confirmPassword').value = '';
+        
+        // Auto-close modal after 3 seconds
+        setTimeout(() => {
+          closeAuthModal();
+        }, 3000);
+        
+      } catch (error) {
+        console.error('Password update error:', error);
+        showAuthLoading(false);
+        showAuthStatus('Failed to update password: ' + error.message, 'error');
+      }
+    }
+    
+    async function changePassword() {
+      const currentPassword = $('#currentPassword').value;
+      const newPassword = $('#changeNewPassword').value;
+      const confirmPassword = $('#changeConfirmPassword').value;
+      
+      if (!currentPassword || !newPassword || !confirmPassword) {
+        showAuthStatus('Please fill in all fields', 'error');
+        return;
+      }
+      
+      if (newPassword.length < 6) {
+        showAuthStatus('New password must be at least 6 characters', 'error');
+        return;
+      }
+      
+      if (newPassword !== confirmPassword) {
+        showAuthStatus('New passwords do not match', 'error');
+        return;
+      }
+      
+      if (currentPassword === newPassword) {
+        showAuthStatus('New password must be different from current password', 'error');
+        return;
+      }
+      
+      try {
+        showAuthLoading(true);
+        clearAuthStatus();
+        
+        // First verify current password by attempting to sign in
+        const { error: signInError } = await window.supabaseClient.auth.signInWithPassword({
+          email: currentUser.email,
+          password: currentPassword
+        });
+        
+        if (signInError) {
+          throw new Error('Current password is incorrect');
+        }
+        
+        // If current password is correct, update to new password
+        const { error: updateError } = await window.supabaseClient.auth.updateUser({
+          password: newPassword
+        });
+        
+        if (updateError) throw updateError;
+        
+        showAuthStatus('Password changed successfully!', 'success');
+        showAuthLoading(false);
+        
+        // Clear password fields
+        $('#currentPassword').value = '';
+        $('#changeNewPassword').value = '';
+        $('#changeConfirmPassword').value = '';
+        
+        // Auto-close modal after 2 seconds
+        setTimeout(() => {
+          closeAuthModal();
+        }, 2000);
+        
+      } catch (error) {
+        console.error('Password change error:', error);
+        showAuthLoading(false);
+        showAuthStatus('Failed to change password: ' + error.message, 'error');
+      }
+    }
+    
+    async function signInWithEmail() {
+      const email = $('#authEmail').value;
+      const password = $('#authPassword').value;
+      
+      if (!email || !password) {
+        showAuthStatus('Please enter both email and password', 'error');
+        return;
+      }
+      
+      try {
+        showAuthLoading(true);
+        clearAuthStatus();
+        
+        // Try to sign in first
+        let { data, error } = await window.supabaseClient.auth.signInWithPassword({
+          email: email,
+          password: password
+        });
+        
+        // If sign in fails, check the error type
+        if (error) {
+          if (error.message.includes('email not confirmed') || error.message.includes('Email not confirmed')) {
+            showAuthStatus('Please check your email and click the confirmation link before signing in.', 'error');
+            showAuthLoading(false);
+            return;
+          } else if (error.message.includes('Invalid login credentials')) {
+            showAuthStatus('Invalid email or password. Please try again.', 'error');
+            showAuthLoading(false);
+            return;
+          } else {
+            throw error;
+          }
+        }
+        
+        // Sign in was successful
+        showAuthStatus('Sign in successful!', 'success');
+        showAuthLoading(false);
+        closeAuthModal();
+      } catch (error) {
+        console.error('Email sign in error:', error);
+        showAuthLoading(false);
+        showAuthStatus('Sign in failed: ' + error.message, 'error');
+      }
+    }
+    
+    async function signUpWithEmail() {
+      const email = $('#authEmail').value;
+      const password = $('#authPassword').value;
+      
+      if (!email || !password) {
+        showAuthStatus('Please enter both email and password', 'error');
+        return;
+      }
+      
+      if (password.length < 6) {
+        showAuthStatus('Password must be at least 6 characters', 'error');
+        return;
+      }
+      
+      try {
+        showAuthLoading(true);
+        clearAuthStatus();
+        
+        const { data, error } = await window.supabaseClient.auth.signUp({
+          email: email,
+          password: password
+        });
+        
+        if (error) throw error;
+        
+        showAuthStatus('Account created! Please check your email to confirm.', 'success');
+        showAuthLoading(false);
+      } catch (error) {
+        console.error('Email sign up error:', error);
+        showAuthLoading(false);
+        showAuthStatus('Sign up failed: ' + error.message, 'error');
+      }
+    }
+    
+    async function signOut() {
+      try {
+        await window.supabaseClient.auth.signOut();
+        showNotification('Signed out successfully!', 'success');
+        
+        // Clear all data immediately
+        clearAllData();
+        
+        // Refresh the page after a short delay to ensure clean state
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+        
+      } catch (error) {
+        console.error('Sign out error:', error);
+        showNotification('Sign out failed. Please try again.', 'error');
+      }
+    }
+    
+    async function createUserDocument(user) {
+      // Supabase automatically creates user profiles, no need to manually create
+      console.log('User document created automatically by Supabase:', user);
+    }
+    
+    async function loadUserData() {
+      if (!currentUser) return;
+      
+      try {
+        // Load user settings
+        const { data: settings, error: settingsError } = await window.supabaseClient
+          .from('user_settings')
+          .select('*')
+          .eq('user_id', currentUser.id)
+          .single();
+        
+        if (settings && !settingsError) {
+          console.log('Loaded settings from Supabase:', settings);
+          state.fx = settings.fx_rate || 48.1843;
+          state.theme = settings.theme || 'dark';
+          state.autosave = settings.autosave ? 'on' : 'off';
+          state.includeAnnualInMonthly = settings.include_annual_in_monthly === true || settings.include_annual_in_monthly === 'true' || false;
+          columnOrder = settings.column_order || ['monthly', 'yearly', 'monthly-egp', 'yearly-egp'];
+          
+          console.log('includeAnnualInMonthly loaded as:', state.includeAnnualInMonthly);
+          
+          // Update UI elements to reflect loaded settings
+          updateSettingsUI();
+        }
+        
+        // Load personal expenses
+        const { data: personalExpenses, error: personalError } = await window.supabaseClient
+          .from('personal_expenses')
+          .select('*')
+          .eq('user_id', currentUser.id)
+          .order('created_at', { ascending: true });
+        
+        if (personalExpenses && !personalError) {
+          state.personal = personalExpenses.map(expense => ({
+            name: expense.name,
+            cost: expense.cost,
+            status: expense.status,
+            billing: expense.billing,
+            monthlyUSD: expense.monthly_usd,
+            yearlyUSD: expense.yearly_usd,
+            monthlyEGP: expense.monthly_egp,
+            yearlyEGP: expense.yearly_egp,
+            icon: expense.icon,
+            id: expense.id
+          }));
+        }
+        
+        // Load business expenses
+        const { data: businessExpenses, error: businessError } = await window.supabaseClient
+          .from('business_expenses')
+          .select('*')
+          .eq('user_id', currentUser.id)
+          .order('created_at', { ascending: true });
+        
+        if (businessExpenses && !businessError) {
+          state.biz = businessExpenses.map(expense => ({
+            name: expense.name,
+            cost: expense.cost,
+            status: expense.status,
+            billing: expense.billing,
+            next: expense.next_payment ? new Date(expense.next_payment).toISOString().split('T')[0] : '',
+            monthlyUSD: expense.monthly_usd,
+            yearlyUSD: expense.yearly_usd,
+            monthlyEGP: expense.monthly_egp,
+            yearlyEGP: expense.yearly_egp,
+            icon: expense.icon,
+            id: expense.id
+          }));
+        }
+          
+          renderAll();
+          showNotification('Data loaded from cloud!', 'success');
+        
+      } catch (error) {
+        console.error('Error loading user data:', error);
+        showNotification('Failed to load cloud data. Using local data.', 'error');
+        loadLocalData();
+      }
+    }
+    
+    function loadLocalData() {
+      // Fallback to localStorage
+      const stored = localStorage.getItem('finance-notion-v6');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          state.personal = parsed.personal || [];
+          state.biz = parsed.biz || [];
+          state.fx = parsed.fx || 48.1843;
+          state.theme = parsed.theme || 'dark';
+          state.autosave = parsed.autosave || 'on';
+          state.includeAnnualInMonthly = parsed.includeAnnualInMonthly || true;
+          
+          // Handle migration from old income structure to new year-based structure
+          if (parsed.income) {
+            if (Array.isArray(parsed.income)) {
+              // Old structure - migrate to current year
+              state.income[currentYear] = parsed.income;
+            } else {
+              // New structure - use as is
+              state.income = parsed.income;
+            }
+          }
+        } catch (e) {
+          console.error('Error parsing local data:', e);
+        }
+      }
+      renderAll();
+    }
+    
+    function clearAllData() {
+      // Clear all data from state
+      state.personal = [];
+      state.biz = [];
+      state.income = {
+        2022: [],
+        2023: [],
+        2024: [],
+        2025: []
+      };
+      state.fx = 48.1843;
+      state.theme = 'dark';
+      state.autosave = 'on';
+      state.includeAnnualInMonthly = true;
+      columnOrder = ['monthly', 'yearly', 'monthly-egp', 'yearly-egp'];
+      
+      // Clear local storage
+      localStorage.removeItem('finance-notion-v6');
+      localStorage.removeItem('columnOrder');
+      
+      // Re-render with empty data
+      renderAll();
+      
+      console.log('All data cleared - showing empty tables');
+    }
+    
+    
+    async function saveToSupabase() {
+      if (!currentUser || !supabaseReady) return;
+      
+      try {
+        // Save user settings
+        console.log('Saving settings to Supabase:', {
+          user_id: currentUser.id,
+          fx_rate: state.fx,
+          theme: state.theme,
+          autosave: state.autosave === 'on',
+          include_annual_in_monthly: state.includeAnnualInMonthly,
+          column_order: columnOrder
+        });
+        
+        await window.supabaseClient
+          .from('user_settings')
+          .upsert({
+            user_id: currentUser.id,
+            fx_rate: state.fx,
+            theme: state.theme,
+            autosave: state.autosave === 'on',
+            include_annual_in_monthly: state.includeAnnualInMonthly,
+            column_order: columnOrder
+          }, {
+            onConflict: 'user_id'
+          });
+        
+        // Save personal expenses
+        for (const expense of state.personal) {
+          if (expense.id) {
+            // Update existing expense
+            await window.supabaseClient
+              .from('personal_expenses')
+              .update({
+                name: expense.name,
+                cost: expense.cost,
+                status: expense.status,
+                billing: expense.billing,
+                monthly_usd: expense.monthlyUSD || 0,
+                yearly_usd: expense.yearlyUSD || 0,
+                monthly_egp: expense.monthlyEGP || 0,
+                yearly_egp: expense.yearlyEGP || 0,
+                icon: expense.icon
+              })
+              .eq('id', expense.id);
+          } else {
+            // Create new expense
+            const { data: newExpense, error } = await window.supabaseClient
+              .from('personal_expenses')
+              .insert({
+                user_id: currentUser.id,
+                name: expense.name,
+                cost: expense.cost,
+                status: expense.status,
+                billing: expense.billing,
+                monthly_usd: expense.monthlyUSD || 0,
+                yearly_usd: expense.yearlyUSD || 0,
+                monthly_egp: expense.monthlyEGP || 0,
+                yearly_egp: expense.yearlyEGP || 0,
+                icon: expense.icon
+              })
+              .select()
+              .single();
+            
+            if (newExpense) {
+              expense.id = newExpense.id;
+            }
+          }
+        }
+        
+        // Save business expenses
+        for (const expense of state.biz) {
+          if (expense.id) {
+            // Update existing expense
+            await window.supabaseClient
+              .from('business_expenses')
+              .update({
+                name: expense.name,
+                cost: expense.cost,
+                status: expense.status,
+                billing: expense.billing,
+                next_payment: expense.next ? new Date(expense.next).toISOString().split('T')[0] : null,
+                monthly_usd: expense.monthlyUSD || 0,
+                yearly_usd: expense.yearlyUSD || 0,
+                monthly_egp: expense.monthlyEGP || 0,
+                yearly_egp: expense.yearlyEGP || 0,
+                icon: expense.icon
+              })
+              .eq('id', expense.id);
+          } else {
+            // Create new expense
+            const { data: newExpense, error } = await window.supabaseClient
+              .from('business_expenses')
+              .insert({
+                user_id: currentUser.id,
+                name: expense.name,
+                cost: expense.cost,
+                status: expense.status,
+                billing: expense.billing,
+                next_payment: expense.next ? new Date(expense.next).toISOString().split('T')[0] : null,
+                monthly_usd: expense.monthlyUSD || 0,
+                yearly_usd: expense.yearlyUSD || 0,
+                monthly_egp: expense.monthlyEGP || 0,
+                yearly_egp: expense.yearlyEGP || 0,
+                icon: expense.icon
+              })
+              .select()
+              .single();
+            
+            if (newExpense) {
+              expense.id = newExpense.id;
+            }
+          }
+        }
+        
+        showSaveIndicator();
+      } catch (error) {
+        console.error('Error saving to Supabase:', error);
+        showSaveError();
+      }
+    }
+    
+    function saveToLocal() {
+      try {
+        localStorage.setItem('finance-notion-v6', JSON.stringify(state));
+        localStorage.setItem('columnOrder', JSON.stringify(columnOrder));
+        showSaveIndicator();
+      } catch (error) {
+        console.error('Failed to save data locally:', error);
+        showSaveError();
+      }
+    }
+    
+    // Original localStorage key for fallback
+    const LS_KEY = 'finance-notion-v6';
+
+
+
+    const defaultState = {
+      fx: 48.1843,
+      autosave: 'on',
+      theme: 'dark',
+        includeAnnualInMonthly: false,
+      personal: [],
+      biz: [],
+      income: {
+        2022: [],
+        2023: [],
+        2024: [],
+        2025: []
+      }
+    };
+
+    function load(){ 
+      // This function is now handled by loadUserData() and loadLocalData()
+      return structuredClone(defaultState);
+    }
+    
+    function save(){ 
+      if(state.autosave==='on') {
+        if (currentUser && supabaseReady) {
+          saveToSupabase();
+        } else {
+          saveToLocal();
+        }
+      }
+    }
+    
+    // Autocomplete functionality
+    function saveInputValue(field, value) {
+      if (!value || value.trim() === '') return;
+      
+      if (!state.autocomplete) {
+        state.autocomplete = {};
+      }
+      
+      if (!state.autocomplete[field]) {
+        state.autocomplete[field] = [];
+      }
+      
+      // Add value if not already exists
+      if (!state.autocomplete[field].includes(value.trim())) {
+        state.autocomplete[field].unshift(value.trim());
+        // Keep only last 10 values
+        if (state.autocomplete[field].length > 10) {
+          state.autocomplete[field] = state.autocomplete[field].slice(0, 10);
+        }
+        save();
+      }
+    }
+    
+    function getAutocompleteValues(field) {
+      return state.autocomplete && state.autocomplete[field] ? state.autocomplete[field] : [];
+    }
+    
+    function addAutocompleteToInput(input, field) {
+      const autocompleteValues = getAutocompleteValues(field);
+      if (autocompleteValues.length > 0) {
+        input.setAttribute('list', `autocomplete-${field}`);
+        
+        // Create or update datalist
+        let datalist = document.getElementById(`autocomplete-${field}`);
+        if (!datalist) {
+          datalist = document.createElement('datalist');
+          datalist.id = `autocomplete-${field}`;
+          document.body.appendChild(datalist);
+        }
+        
+        // Clear existing options
+        datalist.innerHTML = '';
+        
+        // Add options
+        autocompleteValues.forEach(value => {
+          const option = document.createElement('option');
+          option.value = value;
+          datalist.appendChild(option);
+        });
+      }
+    }
+  
+  // Super Minimal Notification System
+  function showNotification(message, type = 'success', duration = 3000) {
+    const notificationCenter = document.getElementById('notificationCenter');
+    const text = notificationCenter.querySelector('.notification-text');
+    
+    // Set message
+    text.textContent = message;
+    
+    // Set type class for glow effect
+    notificationCenter.className = `notification-center ${type}`;
+    
+    // Show notification
+    notificationCenter.style.opacity = '1';
+    notificationCenter.style.transform = 'translate(-50%, 0) translateX(0)';
+    notificationCenter.classList.add('show');
+    
+    // Hide after duration
+    setTimeout(() => {
+      notificationCenter.classList.remove('show');
+      notificationCenter.classList.add('hide');
+      setTimeout(() => {
+        notificationCenter.style.opacity = '0';
+        notificationCenter.style.transform = 'translate(-50%, 0) translateX(20px)';
+        notificationCenter.classList.remove('hide');
+      }, 300);
+    }, duration);
+  }
+  
+  function showSaveIndicator() {
+    showNotification('Saved', 'save', 2000);
+  }
+  
+  function showSaveError() {
+    showNotification('Save failed', 'error', 3000);
+  }
+
+    let state = structuredClone(defaultState);
+    
+    // Initialize column order from localStorage or default
+    const defaultColumnOrder = ['monthly', 'yearly', 'monthly-egp', 'yearly-egp'];
+    let columnOrder = defaultColumnOrder;
+    
+    // Initialize autosave status
+    updateAutosaveStatus();
+    
+    
+    
+    // Simplified system - no trial/license restrictions
+    function hasFullAccess() { return true; }
+    function isTrialExpired() { return false; }
+    function isLicenseValid() { return true; }
+    function setLicense(license) { return true; }
+    function enableAllFunctions() { /* All functions enabled by default */ }
+    function disableAllFunctions() { /* No restrictions */ }
+    function getTrialDaysRemaining() { return 999; }
+
+    // Theme
+    function applyTheme(){ 
+      document.documentElement.setAttribute('data-theme', state.theme==='light' ? 'light':'dark'); 
+      const themeIcon = $('#iconTheme');
+      if (state.theme === 'light') {
+        // Show moon icon for light mode
+        themeIcon.innerHTML = '<path d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>';
+      } else {
+        // Show sun icon for dark mode
+        themeIcon.innerHTML = '<path d="M12 3v1m0 16v1m9-9h1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>';
+      }
+    }
+    applyTheme();
+    $('#btnTheme').addEventListener('click', ()=>{ state.theme = state.theme==='light'?'dark':'light'; save(); applyTheme(); });
+
+    // Refresh functionality
+    let refreshInterval = null;
+    let isRefreshing = false;
+
+    function refreshData() {
+      if (isRefreshing) return;
+      isRefreshing = true;
+      
+      const refreshIcon = document.getElementById('iconRefresh');
+      const originalTransform = refreshIcon.style.transform;
+      
+      // Add spinning animation
+      refreshIcon.style.transform = 'rotate(360deg)';
+      refreshIcon.style.transition = 'transform 0.5s ease';
+      
+      // Reload data from Supabase or localStorage
+      if (currentUser && supabaseReady) {
+        loadUserData().then(() => {
+          showNotification('Data refreshed from cloud', 'success', 2000);
+          resetRefreshIcon();
+        }).catch(() => {
+          showNotification('Failed to refresh from cloud', 'error', 2000);
+          resetRefreshIcon();
+        });
+      } else {
+        loadLocalData();
+        showNotification('Data refreshed locally', 'success', 2000);
+        resetRefreshIcon();
+      }
+      
+      function resetRefreshIcon() {
+        setTimeout(() => {
+          refreshIcon.style.transform = originalTransform;
+          isRefreshing = false;
+        }, 500);
+      }
+    }
+
+    function startAutoRefresh() {
+      if (refreshInterval) clearInterval(refreshInterval);
+      refreshInterval = setInterval(refreshData, 15000); // 15 seconds
+    }
+
+    function stopAutoRefresh() {
+      if (refreshInterval) {
+        clearInterval(refreshInterval);
+        refreshInterval = null;
+      }
+    }
+
+    // Manual refresh button
+    $('#btnRefresh').addEventListener('click', refreshData);
+
+    // Start auto-refresh
+    startAutoRefresh();
+
+    // Numbers
+    const nfUSD = new Intl.NumberFormat('en-US',{style:'currency', currency:'USD', maximumFractionDigits:2});
+    const nfINT = new Intl.NumberFormat('en-US');
+    const usdToEgp = (usd)=> usd * Number(state.fx || 0);
+    const rowMonthlyUSD = (r)=> {
+      if (r.status !== 'Active') return 0;
+      if (r.billing === 'Monthly') return Number(r.cost||0);
+      if (r.billing === 'Annually') {
+        return state.includeAnnualInMonthly ? Number(r.cost||0)/12 : 0;
+      }
+      return 0;
+    };
+    const rowYearlyUSD  = (r)=> r.status==='Active' ? (r.billing==='Monthly' ? Number(r.cost||0)*12 : Number(r.cost||0)) : 0;
+    function totals(arr){ const mUSD=arr.reduce((s,r)=>s+rowMonthlyUSD(r),0); const yUSD=arr.reduce((s,r)=>s+rowYearlyUSD(r),0); return { mUSD, yUSD, mEGP: usdToEgp(mUSD), yEGP: usdToEgp(yUSD) }; }
+    
+    // Income calculation functions
+    const rowIncomeMonthlyUSD = (r) => {
+      if (r.status !== 'Active') return 0;
+      if (r.billing === 'Monthly') return Number(r.cost || 0);
+      if (r.billing === 'Annually') {
+        return state.includeAnnualInMonthly ? Number(r.cost || 0) / 12 : 0;
+      }
+      return 0;
+    };
+    const rowIncomeYearlyUSD = (r) => r.status === 'Active' ? (r.billing === 'Monthly' ? Number(r.cost || 0) * 12 : Number(r.cost || 0)) : 0;
+    function incomeTotals(arr) { 
+      const mUSD = arr.reduce((s, r) => s + rowIncomeMonthlyUSD(r), 0); 
+      const yUSD = arr.reduce((s, r) => s + rowIncomeYearlyUSD(r), 0); 
+      return { mUSD, yUSD, mEGP: usdToEgp(mUSD), yEGP: usdToEgp(yUSD) }; 
+    }
+
+    function setText(id,val){ const el=document.getElementById(id); if(el) el.textContent=val; }
+
+  function renderKPIs(){
+    const p = totals(state.personal); const b = totals(state.biz);
+    const currentYearData = state.income[currentYear] || [];
+    const i = incomeTotals(currentYearData);
+      const all = { mUSD:p.mUSD + b.mUSD, yUSD:p.yUSD + b.yUSD };
+    all.mEGP = usdToEgp(all.mUSD); all.yEGP = usdToEgp(all.yUSD);
+      setText('kpiAllMonthlyUSD', nfUSD.format(all.mUSD));
+      setText('kpiAllMonthlyEGP', 'EGP ' + nfINT.format(Math.round(all.mEGP)));
+      setText('kpiAllYearlyUSD', nfUSD.format(all.yUSD));
+      setText('kpiAllYearlyEGP', 'EGP ' + nfINT.format(Math.round(all.yEGP)));
+      setText('kpiFxSmall', Number(state.fx||0).toFixed(4));
+      setText('kpiPersonalMonthly', nfUSD.format(p.mUSD));
+      setText('kpiPersonalMonthlyEGP', 'EGP ' + nfINT.format(Math.round(p.mEGP)));
+      setText('kpiPersonalYearly', nfUSD.format(p.yUSD));
+      setText('kpiPersonalYearlyEGP', 'EGP ' + nfINT.format(Math.round(p.yEGP)));
+      setText('kpiBizMonthly', nfUSD.format(b.mUSD));
+      setText('kpiBizMonthlyEGP', 'EGP ' + nfINT.format(Math.round(b.mEGP)));
+      setText('kpiBizYearly', nfUSD.format(b.yUSD));
+      setText('kpiBizYearlyEGP', 'EGP ' + nfINT.format(Math.round(b.yEGP)));
+    const total = all.mUSD; 
+    const sp = total > 0 ? Math.round((p.mUSD/total)*100) : 0; 
+    const sb = total > 0 ? Math.round((b.mUSD/total)*100) : 0;
+      setText('sharePersonalVal', sp + '%'); setText('shareBizVal', sb + '%');
+      const ps=$('#sharePersonalBar'); if(ps) ps.style.width=sp+'%'; const bs=$('#shareBizBar'); if(bs) bs.style.width=sb+'%';
+    
+    // Update Income KPIs
+    setText('kpiIncomeAllMonthlyUSD', nfUSD.format(i.mUSD));
+    setText('kpiIncomeAllMonthlyEGP', 'EGP ' + nfINT.format(Math.round(i.mEGP)));
+    setText('kpiIncomeAllYearlyUSD', nfUSD.format(i.yUSD));
+    setText('kpiIncomeAllYearlyEGP', 'EGP ' + nfINT.format(Math.round(i.yEGP)));
+    setText('kpiIncomeFxSmall', Number(state.fx||0).toFixed(4));
+    setText('kpiIncomeMonthlyCurrent', nfUSD.format(i.mUSD));
+    setText('kpiIncomeMonthlyCurrentEGP', 'EGP ' + nfINT.format(Math.round(i.mEGP)));
+    setText('kpiIncomeMonthlyAvg', nfUSD.format(currentYearData.length > 0 ? i.mUSD / currentYearData.length : 0));
+    setText('kpiIncomeMonthlyAvgEGP', 'EGP ' + nfINT.format(Math.round(currentYearData.length > 0 ? i.mEGP / currentYearData.length : 0)));
+    setText('kpiIncomeYearlyCurrent', nfUSD.format(i.yUSD));
+    setText('kpiIncomeYearlyCurrentEGP', 'EGP ' + nfINT.format(Math.round(i.yEGP)));
+    setText('kpiIncomeYearlyTarget', nfUSD.format(i.yUSD * 1.2)); // 20% above current as target
+    setText('kpiIncomeYearlyTargetEGP', 'EGP ' + nfINT.format(Math.round(i.yEGP * 1.2)));
+    
+    // Income status bars
+    const activeIncome = currentYearData.filter(r => r.status === 'Active').length;
+    const totalIncome = currentYearData.length;
+    const completedPct = totalIncome > 0 ? Math.round((activeIncome / totalIncome) * 100) : 0;
+    const pendingPct = 100 - completedPct;
+    setText('shareIncomeCompletedVal', completedPct + '%');
+    setText('shareIncomePendingVal', pendingPct + '%');
+    const completedBar = $('#shareIncomeCompletedBar');
+    const pendingBar = $('#shareIncomePendingBar');
+    if (completedBar) completedBar.style.width = completedPct + '%';
+    if (pendingBar) pendingBar.style.width = pendingPct + '%';
+    
+    // Update analytics content
+    updateAnalytics();
+    updateIncomeAnalytics();
+    }
+    
+    // Income Analytics function
+    function updateIncomeAnalytics() {
+      const currentYearData = state.income[currentYear] || [];
+      const income = incomeTotals(currentYearData);
+      updateIncomeAllAnalytics(income);
+      updateIncomeMonthlyAnalytics(income);
+      updateIncomeYearlyAnalytics(income);
+    }
+    
+    function updateIncomeAllAnalytics(income) {
+      const container = document.getElementById('analyticsIncomeAll');
+      if (!container) return;
+
+      const currentYearData = state.income[currentYear] || [];
+      const activeItems = currentYearData.filter(r => r.status === 'Active');
+      const totalItems = currentYearData.length;
+      const cancelledItems = currentYearData.filter(r => r.status === 'Cancelled').length;
+      
+      // Calculate averages
+      const avgIncome = activeItems.length > 0 ? income.mUSD / activeItems.length : 0;
+      
+      // Calculate monthly vs annual distribution
+      const monthlyItems = activeItems.filter(r => r.billing === 'Monthly').length;
+      const annualItems = activeItems.filter(r => r.billing === 'Annually').length;
+      
+      // Calculate spending breakdowns
+      const dailyIncome = income.mUSD / 30;
+      const weeklyIncome = income.mUSD / 4.33;
+      
+      // Find highest income
+      const sortedByCost = activeItems.sort((a, b) => {
+        const aCost = a.billing === 'Monthly' ? Number(a.cost || 0) : Number(a.cost || 0) / 12;
+        const bCost = b.billing === 'Monthly' ? Number(b.cost || 0) : Number(b.cost || 0) / 12;
+        return bCost - aCost;
+      });
+      
+      const highestIncome = sortedByCost[0];
+
+      container.innerHTML = `
+        <div class="analytics-grid-4">
+          <div class="analytics-section">
+            <div class="section-title">Total Income</div>
+            <div class="metric-grid">
+              <div class="metric-item">
+                <div class="metric-value">${totalItems}</div>
+                <div class="metric-label">All Projects</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${activeItems.length}</div>
+                <div class="metric-label">Active</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="analytics-section">
+            <div class="section-title">Revenue Streams</div>
+            <div class="metric-grid">
+              <div class="metric-item">
+                <div class="metric-value">${monthlyItems}</div>
+                <div class="metric-label">Monthly</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${annualItems}</div>
+                <div class="metric-label">Annual</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="analytics-section">
+            <div class="section-title">Daily Revenue</div>
+            <div class="metric-grid">
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(dailyIncome)}</div>
+                <div class="metric-label">Per Day</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(weeklyIncome)}</div>
+                <div class="metric-label">Per Week</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="analytics-section">
+            <div class="section-title">Average Project</div>
+            <div class="metric-grid">
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(avgIncome)}</div>
+                <div class="metric-label">Monthly</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(avgIncome * 12)}</div>
+                <div class="metric-label">Yearly</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="analytics-section">
+          <div class="section-title">Insights</div>
+          <div class="insight-card">
+            <div class="insight-text">
+              <i class="fas fa-chart-line insight-icon"></i>
+              Total Revenue: <strong>${nfUSD.format(income.mUSD)}</strong>/month | 
+              Active Projects: <strong>${activeItems.length}</strong> | 
+              Daily Income: <strong>${nfUSD.format(dailyIncome)}</strong>
+              ${highestIncome ? ` | Top Project: <strong>${highestIncome.name || 'Unnamed'}</strong> (${nfUSD.format(highestIncome.billing === 'Monthly' ? Number(highestIncome.cost || 0) : Number(highestIncome.cost || 0) / 12)})` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    
+    function updateIncomeMonthlyAnalytics(income) {
+      const container = document.getElementById('analyticsIncomeMonthly');
+      if (!container) return;
+
+      const currentYearData = state.income[currentYear] || [];
+      const activeItems = currentYearData.filter(r => r.status === 'Active');
+      const monthlyItems = activeItems.filter(r => r.billing === 'Monthly');
+      const annualItems = activeItems.filter(r => r.billing === 'Annually');
+      
+      const avgMonthly = monthlyItems.length > 0 ? monthlyItems.reduce((sum, r) => sum + Number(r.cost || 0), 0) / monthlyItems.length : 0;
+      const avgAnnual = annualItems.length > 0 ? annualItems.reduce((sum, r) => sum + Number(r.cost || 0), 0) / annualItems.length : 0;
+      
+      const dailyIncome = income.mUSD / 30;
+      const hourlyIncome = income.mUSD / 720;
+
+      container.innerHTML = `
+        <div class="analytics-grid-4">
+          <div class="analytics-section">
+            <div class="section-title">Current Month</div>
+            <div class="metric-grid">
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(income.mUSD)}</div>
+                <div class="metric-label">Total</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${activeItems.length}</div>
+                <div class="metric-label">Projects</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="analytics-section">
+            <div class="section-title">Averages</div>
+            <div class="metric-grid">
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(avgMonthly)}</div>
+                <div class="metric-label">Monthly</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(avgAnnual)}</div>
+                <div class="metric-label">Annual</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="analytics-section">
+            <div class="section-title">Time Breakdown</div>
+            <div class="metric-grid">
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(dailyIncome)}</div>
+                <div class="metric-label">Daily</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(hourlyIncome)}</div>
+                <div class="metric-label">Hourly</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="analytics-section">
+            <div class="section-title">Distribution</div>
+            <div class="metric-grid">
+              <div class="metric-item">
+                <div class="metric-value">${monthlyItems.length}</div>
+                <div class="metric-label">Monthly</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${annualItems.length}</div>
+                <div class="metric-label">Annual</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    
+    function updateIncomeYearlyAnalytics(income) {
+      const container = document.getElementById('analyticsIncomeYearly');
+      if (!container) return;
+
+      const currentYearData = state.income[currentYear] || [];
+      const activeItems = currentYearData.filter(r => r.status === 'Active');
+      const targetIncome = income.yUSD * 1.2;
+      const progressToTarget = targetIncome > 0 ? Math.round((income.yUSD / targetIncome) * 100) : 0;
+      
+      const monthlyTarget = targetIncome / 12;
+      const remainingMonths = 12 - new Date().getMonth();
+      const projectedYearly = income.yUSD + (income.mUSD * remainingMonths);
+
+      container.innerHTML = `
+        <div class="analytics-grid-4">
+          <div class="analytics-section">
+            <div class="section-title">This Year</div>
+            <div class="metric-grid">
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(income.yUSD)}</div>
+                <div class="metric-label">Current</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(targetIncome)}</div>
+                <div class="metric-label">Target</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="analytics-section">
+            <div class="section-title">Progress</div>
+            <div class="metric-grid">
+              <div class="metric-item">
+                <div class="metric-value">${progressToTarget}%</div>
+                <div class="metric-label">To Target</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(targetIncome - income.yUSD)}</div>
+                <div class="metric-label">Remaining</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="analytics-section">
+            <div class="section-title">Projection</div>
+            <div class="metric-grid">
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(projectedYearly)}</div>
+                <div class="metric-label">Projected</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(monthlyTarget)}</div>
+                <div class="metric-label">Monthly Target</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="analytics-section">
+            <div class="section-title">Performance</div>
+            <div class="metric-grid">
+              <div class="metric-item">
+                <div class="metric-value">${activeItems.length}</div>
+                <div class="metric-label">Active</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(income.yUSD / 12)}</div>
+                <div class="metric-label">Monthly Avg</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Analytics functionality
+    function updateAnalytics() {
+      const p = totals(state.personal);
+      const b = totals(state.biz);
+      const all = { mUSD: p.mUSD + b.mUSD, yUSD: p.yUSD + b.yUSD };
+      all.mEGP = usdToEgp(all.mUSD);
+      all.yEGP = usdToEgp(all.yUSD);
+
+      // Update All analytics
+      updateAllAnalytics(all, p, b);
+      
+      // Update Personal analytics
+      updatePersonalAnalytics(p);
+      
+      // Update Biz analytics
+      updateBizAnalytics(b);
+    }
+
+    function updateAllAnalytics(all, personal, biz) {
+      const container = document.getElementById('analyticsAll');
+      if (!container) return;
+
+      const personalActive = state.personal.filter(r => r.status === 'Active');
+      const bizActive = state.biz.filter(r => r.status === 'Active');
+      const totalActive = personalActive.length + bizActive.length;
+      const totalCancelled = state.personal.filter(r => r.status === 'Cancelled').length + state.biz.filter(r => r.status === 'Cancelled').length;
+      
+      // Calculate averages
+      const avgPersonal = personalActive.length > 0 ? personal.mUSD / personalActive.length : 0;
+      const avgBiz = bizActive.length > 0 ? biz.mUSD / bizActive.length : 0;
+      const avgAll = totalActive > 0 ? all.mUSD / totalActive : 0;
+      
+      // Calculate monthly vs annual distribution
+      const personalMonthly = personalActive.filter(r => r.billing === 'Monthly').length;
+      const personalAnnual = personalActive.filter(r => r.billing === 'Annually').length;
+      const bizMonthly = bizActive.filter(r => r.billing === 'Monthly').length;
+      const bizAnnual = bizActive.filter(r => r.billing === 'Annually').length;
+      
+      // Calculate savings potential
+      const personalAnnualSavings = personalActive
+        .filter(r => r.billing === 'Annually')
+        .reduce((sum, r) => sum + (Number(r.cost || 0) * 0.1), 0);
+      const bizAnnualSavings = bizActive
+        .filter(r => r.billing === 'Annually')
+        .reduce((sum, r) => sum + (Number(r.cost || 0) * 0.1), 0);
+      
+      // Calculate spending breakdowns
+      const dailySpending = all.mUSD / 30;
+      const weeklySpending = all.mUSD / 4.33;
+      const hourlySpending = all.mUSD / 720; // 30 days * 24 hours
+      
+      // Find highest expenses across all categories
+      const allActiveItems = [...personalActive, ...bizActive];
+      const sortedByCost = allActiveItems.sort((a, b) => {
+        const aCost = a.billing === 'Monthly' ? Number(a.cost || 0) : Number(a.cost || 0) / 12;
+        const bCost = b.billing === 'Monthly' ? Number(b.cost || 0) : Number(b.cost || 0) / 12;
+        return bCost - aCost;
+      });
+      
+      const highestExpense = sortedByCost[0];
+      const totalMonthlyBills = personalMonthly + bizMonthly;
+      const totalAnnualBills = personalAnnual + bizAnnual;
+
+      container.innerHTML = `
+        <div class="analytics-grid-4">
+          <div class="analytics-section">
+            <div class="section-title">Total Subscriptions</div>
+            <div class="metric-grid">
+              <div class="metric-item">
+                <div class="metric-value">${totalActive + totalCancelled}</div>
+                <div class="metric-label">All Time</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${Math.round(((totalActive / (totalActive + totalCancelled)) * 100) || 0)}%</div>
+                <div class="metric-label">Active Rate</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="analytics-section">
+            <div class="section-title">Cost Efficiency</div>
+            <div class="metric-grid">
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(avgAll)}</div>
+                <div class="metric-label">Avg/Service</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(Math.max(...[personal.mUSD, biz.mUSD]))}</div>
+                <div class="metric-label">Highest Category</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="analytics-section">
+            <div class="section-title">Spending Velocity</div>
+            <div class="metric-grid">
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(dailySpending)}</div>
+                <div class="metric-label">Per Day</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(weeklySpending)}</div>
+                <div class="metric-label">Per Week</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="analytics-section">
+            <div class="section-title">Currency Split</div>
+            <div class="metric-grid">
+              <div class="metric-item">
+                <div class="metric-value">${Math.round((all.mUSD / (all.mUSD + all.mEGP * 0.032) * 100) || 0)}%</div>
+                <div class="metric-label">USD Share</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${Math.round((all.mEGP * 0.032 / (all.mUSD + all.mEGP * 0.032) * 100) || 0)}%</div>
+                <div class="metric-label">EGP Share</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="analytics-grid-3">
+          <div class="analytics-section">
+            <div class="section-title">Category Distribution</div>
+            <ul class="breakdown-list">
+              <li class="breakdown-item">
+                <span class="breakdown-name">Personal (${personalActive.length})</span>
+                <div>
+                  <span class="breakdown-amount">${nfUSD.format(personal.mUSD)}</span>
+                  <span class="breakdown-percentage">${all.mUSD > 0 ? Math.round((personal.mUSD / all.mUSD) * 100) : 0}%</span>
+                </div>
+              </li>
+              <li class="breakdown-item">
+                <span class="breakdown-name">Business (${bizActive.length})</span>
+                <div>
+                  <span class="breakdown-amount">${nfUSD.format(biz.mUSD)}</span>
+                  <span class="breakdown-percentage">${all.mUSD > 0 ? Math.round((biz.mUSD / all.mUSD) * 100) : 0}%</span>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <div class="analytics-section">
+            <div class="section-title">Billing Distribution</div>
+            <ul class="breakdown-list">
+              <li class="breakdown-item">
+                <span class="breakdown-name">Monthly (${totalMonthlyBills})</span>
+                <div>
+                  <span class="breakdown-amount">${nfUSD.format(personalActive.filter(r => r.billing === 'Monthly').reduce((sum, r) => sum + Number(r.cost || 0), 0) + bizActive.filter(r => r.billing === 'Monthly').reduce((sum, r) => sum + Number(r.cost || 0), 0))}</span>
+                  <span class="breakdown-percentage">${totalActive > 0 ? Math.round((totalMonthlyBills / totalActive) * 100) : 0}%</span>
+                </div>
+              </li>
+              <li class="breakdown-item">
+                <span class="breakdown-name">Annual (${totalAnnualBills})</span>
+                <div>
+                  <span class="breakdown-amount">${nfUSD.format(personalActive.filter(r => r.billing === 'Annually').reduce((sum, r) => sum + Number(r.cost || 0) / 12, 0) + bizActive.filter(r => r.billing === 'Annually').reduce((sum, r) => sum + Number(r.cost || 0) / 12, 0))}</span>
+                  <span class="breakdown-percentage">${totalActive > 0 ? Math.round((totalAnnualBills / totalActive) * 100) : 0}%</span>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <div class="analytics-section">
+            <div class="section-title">Top Expenses</div>
+            <ul class="breakdown-list">
+              ${sortedByCost.slice(0, 3).map(item => {
+                const monthlyCost = item.billing === 'Monthly' ? Number(item.cost || 0) : Number(item.cost || 0) / 12;
+                const category = state.personal.includes(item) ? 'Personal' : 'Business';
+                return `
+                  <li class="breakdown-item">
+                    <span class="breakdown-name">${item.name || 'Unnamed'} (${category})</span>
+                    <div>
+                      <span class="breakdown-amount">${nfUSD.format(monthlyCost)}</span>
+                      <span class="breakdown-percentage">${item.billing}</span>
+                    </div>
+                  </li>
+                `;
+              }).join('')}
+            </ul>
+          </div>
+        </div>
+
+        <div class="analytics-section">
+          <div class="section-title">Insights</div>
+          <div class="insight-card">
+            <div class="insight-text">
+              <i class="fas fa-chart-line insight-icon"></i>
+              Total Portfolio: <strong>${totalActive + totalCancelled}</strong> services | Monthly Burn: <strong>${nfUSD.format(all.mUSD)}</strong> | 
+              Efficiency: <strong>${Math.round((totalActive / (totalActive + totalCancelled)) * 100) || 0}%</strong> active rate
+              ${highestExpense ? ` | Top Expense: <strong>${highestExpense.name || 'Unnamed'}</strong> (${nfUSD.format(highestExpense.billing === 'Monthly' ? Number(highestExpense.cost || 0) : Number(highestExpense.cost || 0) / 12)})` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function updatePersonalAnalytics(personal) {
+      const container = document.getElementById('analyticsPersonal');
+      if (!container) return;
+
+      const activeItems = state.personal.filter(r => r.status === 'Active');
+      const monthlyItems = activeItems.filter(r => r.billing === 'Monthly');
+      const annualItems = activeItems.filter(r => r.billing === 'Annually');
+      const cancelledItems = state.personal.filter(r => r.status === 'Cancelled');
+      
+      // Calculate detailed metrics
+      const avgMonthly = monthlyItems.length > 0 ? monthlyItems.reduce((sum, r) => sum + Number(r.cost || 0), 0) / monthlyItems.length : 0;
+      const avgAnnual = annualItems.length > 0 ? annualItems.reduce((sum, r) => sum + Number(r.cost || 0), 0) / annualItems.length : 0;
+      const avgAll = activeItems.length > 0 ? personal.mUSD / activeItems.length : 0;
+      
+      // Calculate spending breakdowns
+      const dailyPersonal = personal.mUSD / 30;
+      const weeklyPersonal = personal.mUSD / 4.33;
+      const hourlyPersonal = personal.mUSD / 720;
+      
+      // Calculate potential savings
+      const annualSavings = annualItems.reduce((sum, r) => sum + (Number(r.cost || 0) * 0.1), 0);
+      
+      // Find expense patterns
+      const sortedByCost = activeItems.sort((a, b) => {
+        const aCost = a.billing === 'Monthly' ? Number(a.cost || 0) : Number(a.cost || 0) / 12;
+        const bCost = b.billing === 'Monthly' ? Number(b.cost || 0) : Number(b.cost || 0) / 12;
+        return bCost - aCost;
+      });
+      
+      const highestExpense = sortedByCost[0];
+      const lowestExpense = sortedByCost[sortedByCost.length - 1];
+      
+      // Calculate cost distribution
+      const highCostItems = activeItems.filter(item => {
+        const monthlyCost = item.billing === 'Monthly' ? Number(item.cost || 0) : Number(item.cost || 0) / 12;
+        return monthlyCost > avgAll;
+      }).length;
+      
+      const lowCostItems = activeItems.filter(item => {
+        const monthlyCost = item.billing === 'Monthly' ? Number(item.cost || 0) : Number(item.cost || 0) / 12;
+        return monthlyCost <= avgAll;
+      }).length;
+
+      // Calculate monthly vs annual spending amounts
+      const monthlySpending = monthlyItems.reduce((sum, r) => sum + Number(r.cost || 0), 0);
+      const annualSpending = annualItems.reduce((sum, r) => sum + Number(r.cost || 0) / 12, 0);
+
+      container.innerHTML = `
+        <div class="analytics-grid-4">
+          <div class="analytics-section">
+            <div class="section-title">Personal Portfolio</div>
+            <div class="metric-grid">
+              <div class="metric-item">
+                <div class="metric-value">${activeItems.length}</div>
+                <div class="metric-label">Active Services</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${cancelledItems.length}</div>
+                <div class="metric-label">Discontinued</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="analytics-section">
+            <div class="section-title">Spending Patterns</div>
+            <div class="metric-grid">
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(avgMonthly)}</div>
+                <div class="metric-label">Avg Monthly</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(avgAnnual)}</div>
+                <div class="metric-label">Avg Annual</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="analytics-section">
+            <div class="section-title">Cost Distribution</div>
+            <div class="metric-grid">
+              <div class="metric-item">
+                <div class="metric-value">${highCostItems}</div>
+                <div class="metric-label">Premium Items</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${lowCostItems}</div>
+                <div class="metric-label">Budget Items</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="analytics-section">
+            <div class="section-title">Time Analysis</div>
+            <div class="metric-grid">
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(dailyPersonal)}</div>
+                <div class="metric-label">Per Day</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(hourlyPersonal)}</div>
+                <div class="metric-label">Per Hour</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="analytics-grid-3">
+          <div class="analytics-section">
+            <div class="section-title">Billing Distribution</div>
+            <ul class="breakdown-list">
+              <li class="breakdown-item">
+                <span class="breakdown-name">Monthly (${monthlyItems.length})</span>
+                <div>
+                  <span class="breakdown-amount">${nfUSD.format(monthlySpending)}</span>
+                  <span class="breakdown-percentage">${personal.mUSD > 0 ? Math.round((monthlySpending / personal.mUSD) * 100) : 0}%</span>
+                </div>
+              </li>
+              <li class="breakdown-item">
+                <span class="breakdown-name">Annual (${annualItems.length})</span>
+                <div>
+                  <span class="breakdown-amount">${nfUSD.format(annualSpending)}</span>
+                  <span class="breakdown-percentage">${personal.mUSD > 0 ? Math.round((annualSpending / personal.mUSD) * 100) : 0}%</span>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <div class="analytics-section">
+            <div class="section-title">Expense Analysis</div>
+            <ul class="breakdown-list">
+              <li class="breakdown-item">
+                <span class="breakdown-name">High-Cost (>${nfUSD.format(avgAll)})</span>
+                <div>
+                  <span class="breakdown-amount">${highCostItems}</span>
+                  <span class="breakdown-percentage">items</span>
+                </div>
+              </li>
+              <li class="breakdown-item">
+                <span class="breakdown-name">Low-Cost (≤${nfUSD.format(avgAll)})</span>
+                <div>
+                  <span class="breakdown-amount">${lowCostItems}</span>
+                  <span class="breakdown-percentage">items</span>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <div class="analytics-section">
+            <div class="section-title">Top Expenses</div>
+            <ul class="breakdown-list">
+              ${sortedByCost.slice(0, 3).map(item => {
+                const monthlyCost = item.billing === 'Monthly' ? Number(item.cost || 0) : Number(item.cost || 0) / 12;
+                return `
+                  <li class="breakdown-item">
+                    <span class="breakdown-name">${item.name || 'Unnamed'}</span>
+                    <div>
+                      <span class="breakdown-amount">${nfUSD.format(monthlyCost)}</span>
+                      <span class="breakdown-percentage">${item.billing}</span>
+                    </div>
+                  </li>
+                `;
+              }).join('')}
+            </ul>
+          </div>
+        </div>
+
+        <div class="analytics-section">
+          <div class="section-title">Insights</div>
+          <div class="insight-card">
+            <div class="insight-text">
+              <i class="fas fa-home insight-icon"></i>
+              Personal Budget: <strong>${nfUSD.format(personal.mUSD)}</strong>/month | 
+              Cost Efficiency: <strong>${Math.round((highCostItems / activeItems.length) * 100) || 0}%</strong> premium services | 
+              Daily Impact: <strong>${nfUSD.format(dailyPersonal)}</strong>/day
+              ${highestExpense ? ` | Biggest Expense: <strong>${highestExpense.name || 'Unnamed'}</strong> (${nfUSD.format(highestExpense.billing === 'Monthly' ? Number(highestExpense.cost || 0) : Number(highestExpense.cost || 0) / 12)})` : ''}
+              ${annualSavings > 0 ? ` | Annual Savings Potential: <strong>${nfUSD.format(annualSavings)}</strong>` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function updateBizAnalytics(biz) {
+      const container = document.getElementById('analyticsBiz');
+      if (!container) return;
+
+      const activeItems = state.biz.filter(r => r.status === 'Active');
+      const monthlyItems = activeItems.filter(r => r.billing === 'Monthly');
+      const annualItems = activeItems.filter(r => r.billing === 'Annually');
+      const cancelledItems = state.biz.filter(r => r.status === 'Cancelled');
+      
+      // Calculate detailed metrics
+      const avgMonthly = monthlyItems.length > 0 ? monthlyItems.reduce((sum, r) => sum + Number(r.cost || 0), 0) / monthlyItems.length : 0;
+      const avgAnnual = annualItems.length > 0 ? annualItems.reduce((sum, r) => sum + Number(r.cost || 0), 0) / annualItems.length : 0;
+      const avgAll = activeItems.length > 0 ? biz.mUSD / activeItems.length : 0;
+      
+      // Calculate daily and weekly business spending
+      const dailyBiz = biz.mUSD / 30;
+      const weeklyBiz = biz.mUSD / 4.33;
+      
+      // Calculate potential savings from annual discounts
+      const annualSavings = annualItems.reduce((sum, r) => sum + (Number(r.cost || 0) * 0.1), 0);
+      
+      // Find upcoming renewals (within 30 days)
+      const upcomingRenewals = activeItems.filter(item => {
+        if (!item.next) return false;
+        const nextDate = new Date(item.next);
+        const today = new Date();
+        const diffTime = nextDate - today;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays >= 0 && diffDays <= 30;
+      });
+      
+      // Find renewals due in next 7 days (urgent)
+      const urgentRenewals = activeItems.filter(item => {
+        if (!item.next) return false;
+        const nextDate = new Date(item.next);
+        const today = new Date();
+        const diffTime = nextDate - today;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays >= 0 && diffDays <= 7;
+      });
+      
+      // Find highest and lowest expenses
+      const sortedByCost = activeItems.sort((a, b) => {
+        const aCost = a.billing === 'Monthly' ? Number(a.cost || 0) : Number(a.cost || 0) / 12;
+        const bCost = b.billing === 'Monthly' ? Number(b.cost || 0) : Number(b.cost || 0) / 12;
+        return bCost - aCost;
+      });
+      
+      const highestExpense = sortedByCost[0];
+      
+      // Calculate cost distribution
+      const highCostItems = activeItems.filter(item => {
+        const monthlyCost = item.billing === 'Monthly' ? Number(item.cost || 0) : Number(item.cost || 0) / 12;
+        return monthlyCost > avgAll;
+      }).length;
+      
+      const lowCostItems = activeItems.filter(item => {
+        const monthlyCost = item.billing === 'Monthly' ? Number(item.cost || 0) : Number(item.cost || 0) / 12;
+        return monthlyCost <= avgAll;
+      }).length;
+      
+      // Calculate total upcoming renewal costs
+      const upcomingRenewalCosts = upcomingRenewals.reduce((sum, item) => {
+        return sum + Number(item.cost || 0);
+      }, 0);
+
+      container.innerHTML = `
+        <div class="analytics-grid-4">
+          <div class="analytics-section">
+            <div class="section-title">Business Portfolio</div>
+            <div class="metric-grid">
+              <div class="metric-item">
+                <div class="metric-value">${activeItems.length}</div>
+                <div class="metric-label">Active Tools</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${cancelledItems.length}</div>
+                <div class="metric-label">Discontinued</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="analytics-section">
+            <div class="section-title">Renewal Status</div>
+            <div class="metric-grid">
+              <div class="metric-item">
+                <div class="metric-value">${upcomingRenewals.length}</div>
+                <div class="metric-label">Due Soon</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${urgentRenewals.length}</div>
+                <div class="metric-label">Urgent (7d)</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="analytics-section">
+            <div class="section-title">Investment Analysis</div>
+            <div class="metric-grid">
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(avgMonthly)}</div>
+                <div class="metric-label">Avg Monthly</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${nfUSD.format(avgAnnual)}</div>
+                <div class="metric-label">Avg Annual</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="analytics-section">
+            <div class="section-title">Cost Efficiency</div>
+            <div class="metric-grid">
+              <div class="metric-item">
+                <div class="metric-value">${highCostItems}</div>
+                <div class="metric-label">High-Value</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-value">${lowCostItems}</div>
+                <div class="metric-label">Essential</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="analytics-grid-3">
+          <div class="analytics-section">
+            <div class="section-title">Billing Distribution</div>
+            <ul class="breakdown-list">
+              <li class="breakdown-item">
+                <span class="breakdown-name">Monthly (${monthlyItems.length})</span>
+                <div>
+                  <span class="breakdown-amount">${nfUSD.format(monthlyItems.reduce((sum, r) => sum + Number(r.cost || 0), 0))}</span>
+                  <span class="breakdown-percentage">${biz.mUSD > 0 ? Math.round((monthlyItems.reduce((sum, r) => sum + Number(r.cost || 0), 0) / biz.mUSD) * 100) : 0}%</span>
+                </div>
+              </li>
+              <li class="breakdown-item">
+                <span class="breakdown-name">Annual (${annualItems.length})</span>
+                <div>
+                  <span class="breakdown-amount">${nfUSD.format(annualItems.reduce((sum, r) => sum + Number(r.cost || 0) / 12, 0))}</span>
+                  <span class="breakdown-percentage">${biz.mUSD > 0 ? Math.round((annualItems.reduce((sum, r) => sum + Number(r.cost || 0) / 12, 0) / biz.mUSD) * 100) : 0}%</span>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <div class="analytics-section">
+            <div class="section-title">Expense Analysis</div>
+            <ul class="breakdown-list">
+              <li class="breakdown-item">
+                <span class="breakdown-name">High-Cost (>${nfUSD.format(avgAll)})</span>
+                <div>
+                  <span class="breakdown-amount">${highCostItems}</span>
+                  <span class="breakdown-percentage">items</span>
+                </div>
+              </li>
+              <li class="breakdown-item">
+                <span class="breakdown-name">Low-Cost (≤${nfUSD.format(avgAll)})</span>
+                <div>
+                  <span class="breakdown-amount">${lowCostItems}</span>
+                  <span class="breakdown-percentage">items</span>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <div class="analytics-section">
+            <div class="section-title">Top Expenses</div>
+            <ul class="breakdown-list">
+              ${sortedByCost.slice(0, 3).map(item => {
+                const monthlyCost = item.billing === 'Monthly' ? Number(item.cost || 0) : Number(item.cost || 0) / 12;
+                return `
+                  <li class="breakdown-item">
+                    <span class="breakdown-name">${item.name || 'Unnamed'}</span>
+                    <div>
+                      <span class="breakdown-amount">${nfUSD.format(monthlyCost)}</span>
+                      <span class="breakdown-percentage">${item.billing}</span>
+                    </div>
+                  </li>
+                `;
+              }).join('')}
+            </ul>
+          </div>
+        </div>
+
+        ${upcomingRenewals.length > 0 ? `
+        <div class="analytics-section">
+          <div class="section-title">Upcoming Renewals</div>
+          <ul class="breakdown-list">
+            ${upcomingRenewals.slice(0, 3).map(item => {
+              const nextDate = new Date(item.next);
+              const today = new Date();
+              const diffTime = nextDate - today;
+              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+              return `
+                <li class="breakdown-item">
+                  <span class="breakdown-name">${item.name || 'Unnamed'}</span>
+                  <div>
+                    <span class="breakdown-amount">${nfUSD.format(Number(item.cost || 0))}</span>
+                    <span class="breakdown-percentage">${diffDays} days</span>
+                  </div>
+                </li>
+              `;
+            }).join('')}
+          </ul>
+        </div>
+        ` : ''}
+
+        <div class="analytics-section">
+          <div class="section-title">Insights</div>
+          <div class="insight-card">
+            <div class="insight-text">
+              <i class="fas fa-briefcase insight-icon"></i>
+              Business Investment: <strong>${nfUSD.format(biz.mUSD)}</strong>/month | 
+              Tool Efficiency: <strong>${Math.round((highCostItems / activeItems.length) * 100) || 0}%</strong> high-value tools | 
+              Renewal Alert: <strong>${upcomingRenewals.length}</strong> due soon
+              ${highestExpense ? ` | Top Investment: <strong>${highestExpense.name || 'Unnamed'}</strong> (${nfUSD.format(highestExpense.billing === 'Monthly' ? Number(highestExpense.cost || 0) : Number(highestExpense.cost || 0) / 12)})` : ''}
+              ${upcomingRenewalCosts > 0 ? ` | Upcoming Costs: <strong>${nfUSD.format(upcomingRenewalCosts)}</strong>` : ''}
+              ${annualSavings > 0 ? ` | Annual Savings: <strong>${nfUSD.format(annualSavings)}</strong>` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Icon Picker
+    const iconPickerEl = document.getElementById('iconPicker');
+    const iconSearchEl = document.getElementById('iconSearch');
+    const iconGridEl = document.getElementById('iconPickerGrid');
+    let iconPickCtx = null; // { arr, idx }
+
+    let FONTAWESOME_ICONS = [];
+    let faLoaded = false;
+    const ICON_CACHE_KEY = 'finance-icon-cache-fontawesome-v3';
+    const CUSTOM_ICONS_KEY = 'finance-custom-icons-v1';
+    let customIcons = [];
+    let currentStyle = 'solid'; // 'solid' or 'regular'
+
+    // Load custom icons from localStorage
+    function loadCustomIcons() {
+      try {
+        const stored = localStorage.getItem(CUSTOM_ICONS_KEY);
+        if (stored) {
+          customIcons = JSON.parse(stored);
+        }
+      } catch (e) {
+        customIcons = [];
+      }
+    }
+
+    // Save custom icons to localStorage
+    function saveCustomIcons() {
+      try {
+        localStorage.setItem(CUSTOM_ICONS_KEY, JSON.stringify(customIcons));
+      } catch (e) {
+        console.error('Failed to save custom icons:', e);
+      }
+    }
+
+    // Add custom icon
+    function addCustomIcon(iconData, type, name) {
+      const customIcon = {
+        id: Date.now().toString(),
+        data: iconData,
+        type: type, // 'image' or 'glyph'
+        name: name || `Custom ${type}`,
+        dateAdded: new Date().toISOString()
+      };
+      customIcons.push(customIcon);
+      saveCustomIcons();
+    }
+
+    async function ensureFontAwesomeLoaded(){
+      if(faLoaded && FONTAWESOME_ICONS.length) return;
+      try{
+        // try cache first
+        const cached = localStorage.getItem(ICON_CACHE_KEY);
+        if(cached){
+          FONTAWESOME_ICONS = JSON.parse(cached);
+          faLoaded = true;
+          return;
+        }
+        
+        // Get only VERIFIED WORKING icons (tested and confirmed for Font Awesome 7.0.0)
+        const curatedIcons = [
+          // Personal icons (VERIFIED SOLID)
+          'home','user','heart','star','gift','coffee','book','music','camera','car','plane','bus','shopping-cart','wallet','credit-card','calendar','clock','phone','envelope','utensils','bed','laptop','headphones','gamepad','tree','sun','moon','cloud','fire','bolt','shield','lock','key','search','download','upload','share','edit','trash','plus','minus','check','times','arrow-right','arrow-left','arrow-up','arrow-down','eye','bookmark','flag','thumbs-up','smile','comment','bell','cog','wrench','image','video','play','pause','stop','save','folder','file',
+          
+          // Business icons (VERIFIED SOLID)
+          'briefcase','building','chart-line','chart-bar','chart-pie','calculator','coins','university','store','truck','box','clipboard','list','calendar-check','server','database','sync','users','handshake','target','trophy','award','graduation-cap','archive','inbox','paper-plane','print','expand','compress','check-circle','exclamation-circle','question-circle','info-circle','ban','unlock','sort','th-list','th','table','square','circle','equals','divide','percentage','compass','triangle',
+          
+          // Brand icons (VERIFIED BRANDS for FA 7.0.0)
+          'amazon','apple','google','microsoft','facebook','twitter','instagram','linkedin','youtube','github','reddit','discord','slack','telegram','whatsapp','dropbox','stripe','paypal','visa','mastercard','bitcoin','dribbble','behance','figma','trello','wordpress','medium','chrome','firefox','android','spotify','netflix','adobe','shopify','wix','zoom','skype','docker','aws','gitlab','bitbucket','stackoverflow','codepen','npm','node-js','react','vue','angular','html5','css3','js','python','java','git','webflow'
+        ];
+        
+        FONTAWESOME_ICONS = curatedIcons.map(name => `fa:${name}`);
+        localStorage.setItem(ICON_CACHE_KEY, JSON.stringify(FONTAWESOME_ICONS));
+        faLoaded = true;
+      }catch(err){
+        // Fallback minimal set
+        FONTAWESOME_ICONS = ['fa:home','fa:user','fa:heart','fa:star','fa:briefcase','fa:building','fa:chart-line','fa:calculator','fa:wallet','fa:shopping-cart','fa:car','fa:plane','fa:laptop','fa:phone','fa:envelope','fa:calendar','fa:clock','fa:search','fa:settings','fa:trash','fa:edit','fa:plus','fa:minus','fa:check','fa:times'];
+        faLoaded = true;
+      }
+    }
+
+    function renderIconPicker(filter, category = 'all'){
+      const q = (filter||'').trim().toLowerCase();
+      iconGridEl.innerHTML = '';
+      
+      let items = [];
+      
+      // Filter by category
+      if(category === 'custom'){
+        items = customIcons.map(icon => `custom:${icon.id}`);
+      } else if(category === 'personal'){
+        items = FONTAWESOME_ICONS.filter(n => ['home','user','heart','star','gift','coffee','book','music','camera','tv','car','plane','train','bus','shopping','wallet','calendar','phone','envelope','utensils','bed','laptop','mobile','headphones','gamepad','football','tree','leaf','sun','moon','cloud','umbrella','fire','bolt','shield','lock','key','search','filter','download','upload','share','copy','edit','trash','plus','minus','check','times','arrow','eye','bookmark','flag','thumbs','smile','comment','bell','cog','tools','paint','image','video','film','microphone','volume','play','pause','stop','forward','backward','random','repeat','refresh','sync','undo','redo','save','folder','file'].some(keyword => n.includes(keyword)));
+      } else if(category === 'business'){
+        items = FONTAWESOME_ICONS.filter(n => ['briefcase','building','chart','calculator','file','receipt','money','coins','credit','university','store','warehouse','factory','truck','shipping','box','package','clipboard','list','check','calendar','clock','network','server','database','cloud','sync','cogs','wrench','hammer','tools','project','users','handshake','bullhorn','target','flag','trophy','medal','award','certificate','diploma','graduation','folder','archive','inbox','mail','phone','print','save','undo','redo','expand','compress','window','times','exclamation','question','info','ban','unlock','eye','sort','table','border','square','circle','ellipsis','equal','divide','percentage','trending','line','bar','pie','area','scatter','bubble','radar','polar','doughnut','gauge','speedometer','thermometer','compass','ruler','protractor','triangle','pentagon','hexagon','octagon','diamond','rhombus','trapezoid','parallelogram','kite'].some(keyword => n.includes(keyword)));
+      } else if(category === 'brands'){
+        items = FONTAWESOME_ICONS.filter(n => ['amazon','apple','google','microsoft','facebook','twitter','instagram','linkedin','youtube','github','reddit','discord','slack','telegram','whatsapp','dropbox','stripe','paypal','visa','mastercard','bitcoin','dribbble','behance','figma','trello','wordpress','medium','chrome','firefox','android','spotify','netflix','adobe','shopify','wix','zoom','skype','docker','aws','gitlab','bitbucket','stackoverflow','codepen','npm','node-js','react','vue','angular','html5','css3','js','python','java','git','webflow'].some(keyword => n.includes(keyword)));
+      } else {
+        items = FONTAWESOME_ICONS;
+      }
+      
+      // Apply search filter
+      if(q){
+        items = items.filter(n => n.includes(q));
+      }
+      
+      items = items.slice(0, 500);
+      
+      if(!items.length){ 
+        iconGridEl.innerHTML = '<div class="text-sm" style="color:var(--muted)">No icons found</div>'; 
+        return; 
+      }
+      
+      const frag = document.createDocumentFragment();
+      items.forEach(name=>{
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'icon-tile';
+        btn.setAttribute('data-icon', name);
+        
+        // Handle custom icons
+        if(name.startsWith('custom:')){
+          const customId = name.replace('custom:', '');
+          const customIcon = customIcons.find(icon => icon.id === customId);
+          if(customIcon){
+            if(customIcon.type === 'image'){
+              btn.innerHTML = `<img src="${customIcon.data}" />`;
+            } else if(customIcon.type === 'glyph'){
+              btn.innerHTML = `<i class="fa-solid" style="font-family:'Font Awesome 7 Free'; color:inherit;">&#x${customIcon.data};</i>`;
+            }
+          }
+        } else {
+        // Use appropriate style - brands use fa-brands, others use fa-solid
+        const iconName = name.replace('fa:', '');
+          const isBrand = ['amazon','apple','google','microsoft','facebook','twitter','instagram','linkedin','youtube','github','reddit','discord','slack','telegram','whatsapp','dropbox','stripe','paypal','visa','mastercard','bitcoin','dribbble','behance','figma','trello','wordpress','medium','chrome','firefox','android','spotify','netflix','adobe','shopify','wix','zoom','skype','docker','aws','gitlab','bitbucket','stackoverflow','codepen','npm','node-js','react','vue','angular','html5','css3','js','python','java','git','webflow'].includes(iconName);
+        const iconClass = isBrand ? 'fa-brands' : 'fa-solid';
+        btn.innerHTML = `<i class="${iconClass} fa-${iconName}" style="color:inherit;"></i>`;
+        }
+        
+        btn.addEventListener('click', ()=>{
+          if(!iconPickCtx) return;
+          const { arr, idx } = iconPickCtx;
+          if(name.startsWith('custom:')){
+            const customId = name.replace('custom:', '');
+            const customIcon = customIcons.find(icon => icon.id === customId);
+            if(customIcon){
+              if(customIcon.type === 'image'){
+                arr[idx].icon = `custom-image:${customIcon.data}`;
+              } else if(customIcon.type === 'glyph'){
+                arr[idx].icon = `fa-glyph:${customIcon.data}`;
+              }
+            }
+          } else {
+          arr[idx].icon = name;
+          }
+          save();
+          iconPickerEl.close();
+          iconPickCtx = null;
+          renderAll();
+        });
+        frag.appendChild(btn);
+      });
+      iconGridEl.appendChild(frag);
+      
+      // Update count
+      document.getElementById('iconCount').textContent = `Showing ${items.length} icons`;
+    }
+
+    iconSearchEl.addEventListener('input', ()=>renderIconPicker(iconSearchEl.value, currentTab));
+
+    let currentTab = 'all';
+    document.getElementById('iconTabs').addEventListener('click', (e)=>{
+      if(e.target.classList.contains('tab-btn')){
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        e.target.classList.add('active');
+        currentTab = e.target.dataset.tab;
+        renderIconPicker(iconSearchEl.value, currentTab);
+      }
+    });
+
+    // Apply glyph button
+    document.getElementById('applyGlyph').addEventListener('click', ()=>{
+      const unicode = document.getElementById('glyphInput').value.trim();
+      if(unicode.length >= 4){
+        if(!iconPickCtx) return;
+        const { arr, idx } = iconPickCtx;
+        const cleanUnicode = unicode.replace(/^\\u/, '');
+        arr[idx].icon = `fa-glyph:${cleanUnicode}`;
+        
+        // Add to custom icons
+        addCustomIcon(cleanUnicode, 'glyph', `Glyph ${cleanUnicode}`);
+        
+        save();
+        iconPickerEl.close();
+        iconPickCtx = null;
+        renderAll();
+      }
+    });
+    
+    // Custom image upload functionality
+    let customImageData = null;
+    
+    document.getElementById('uploadCustomImage').addEventListener('click', ()=>{
+      document.getElementById('customImageInput').click();
+    });
+    
+    document.getElementById('customImageInput').addEventListener('change', (e)=>{
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = (e)=>{
+        customImageData = e.target.result;
+        const imagePreview = document.getElementById('imagePreview');
+        const applyBtn = document.getElementById('applyCustomImage');
+        
+        // Show preview
+        imagePreview.innerHTML = `<img src="${customImageData}" style="width:16px; height:16px; object-fit:contain; filter: invert(1);" />`;
+        
+        applyBtn.disabled = false;
+      };
+      reader.readAsDataURL(file);
+    });
+    
+    document.getElementById('applyCustomImage').addEventListener('click', ()=>{
+      if (customImageData && iconPickCtx) {
+        const { arr, idx } = iconPickCtx;
+        arr[idx].icon = `custom-image:${customImageData}`;
+        
+        // Add to custom icons
+        addCustomIcon(customImageData, 'image', 'Custom Image');
+        
+        save();
+        iconPickerEl.close();
+        iconPickCtx = null;
+        renderAll();
+      }
+    });
+
+    // Glyph input handler with preview
+    const glyphPreview = document.getElementById('glyphPreview');
+    document.getElementById('glyphInput').addEventListener('input', (e)=>{
+      const unicode = e.target.value.trim();
+      if(unicode.length >= 4){
+        // Show preview - try different unicode formats
+        const unicodeValue = unicode.startsWith('\\u') ? unicode : `\\u${unicode}`;
+        const unicodeDecoded = unicodeValue.replace('\\u', '');
+        glyphPreview.innerHTML = `<i class="fa-solid" style="font-family:'Font Awesome 7 Free'; font-size:16px;">&#x${unicodeDecoded};</i>`;
+      } else {
+        glyphPreview.innerHTML = '';
+      }
+    });
+
+    document.getElementById('glyphInput').addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter'){
+        const unicode = e.target.value.trim();
+        if(unicode.length >= 4){
+          if(!iconPickCtx) return;
+          const { arr, idx } = iconPickCtx;
+          const cleanUnicode = unicode.replace(/^\\u/, '');
+          arr[idx].icon = `fa-glyph:${cleanUnicode}`;
+          save();
+          iconPickerEl.close();
+          iconPickCtx = null;
+          renderAll();
+        }
+      }
+    });
+
+    function openIconPicker(arr, idx){
+      iconPickCtx = { arr, idx };
+      iconSearchEl.value = '';
+      currentTab = 'all';
+      currentStyle = 'solid';
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelector('[data-tab="all"]').classList.add('active');
+      document.getElementById('glyphInput').value = '';
+      document.getElementById('glyphPreview').innerHTML = '';
+      document.getElementById('customImageInput').value = '';
+      document.getElementById('imagePreview').innerHTML = '';
+      document.getElementById('applyCustomImage').disabled = true;
+      customImageData = null;
+      
+      // Load custom icons
+      loadCustomIcons();
+      
+      ensureFontAwesomeLoaded().then(()=>{ renderIconPicker('', 'all'); iconPickerEl.showModal(); });
+    }
+
+    function renderList(containerId, arr, isBiz){
+      const wrap=document.getElementById(containerId); wrap.innerHTML='';
+      arr.forEach((row,idx)=>{
+        const mUSD=rowMonthlyUSD(row), yUSD=rowYearlyUSD(row), mEGP=usdToEgp(mUSD), yEGP=usdToEgp(yUSD);
+        const div=document.createElement('div'); 
+        div.className=isBiz?'row row-biz row-draggable row-drop-zone':'row row-draggable row-drop-zone';
+        div.setAttribute('data-row-index', idx);
+        div.setAttribute('draggable', 'true');
+        
+        // drag handle cell
+        const dragHandleDiv=document.createElement('div'); 
+        dragHandleDiv.className='drag-handle';
+        dragHandleDiv.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4"><path d="M8 6h8M8 12h8M8 18h8"/></svg>';
+        dragHandleDiv.title='Drag to reorder';
+        
+        // icon cell
+        const iconName = row.icon || (isBiz ? 'fa:briefcase' : 'fa:shopping-cart');
+        let iconHTML = '';
+        if(iconName.startsWith('custom-image:')){
+          const imageData = iconName.replace('custom-image:', '');
+          iconHTML = `<img src="${imageData}" />`;
+        } else if(iconName.startsWith('fa-glyph:')){
+          const unicode = iconName.replace('fa-glyph:', '');
+          iconHTML = `<i class="fa-solid" style="font-family:'Font Awesome 7 Free'; color:inherit;">&#x${unicode};</i>`;
+        } else {
+          const cleanIconName = iconName.replace(/^(fa-solid|fa-regular|fa:)/, '');
+          const isBrand = ['amazon','apple','google','microsoft','facebook','twitter','instagram','linkedin','youtube','github','reddit','discord','slack','telegram','whatsapp','dropbox','stripe','paypal','visa','mastercard','bitcoin','dribbble','behance','figma','trello','wordpress','medium','chrome','firefox','android','spotify','netflix','adobe','shopify','wix','zoom','skype','docker','aws','gitlab','bitbucket','stackoverflow','codepen','npm','node-js','react','vue','angular','html5','css3','js','python','java','git','webflow'].includes(cleanIconName);
+          const iconClass = isBrand ? 'fa-brands' : 'fa-solid';
+          iconHTML = `<i class="${iconClass} fa-${cleanIconName}" style="color:inherit;"></i>`;
+        }
+        const iconDiv=document.createElement('div'); iconDiv.className='icon-cell';
+        iconDiv.innerHTML=`<button type="button" title="Change icon" data-choose-icon>\
+          ${iconHTML}\
+        </button>`;
+        // name & inputs
+         const nameDiv=document.createElement('div'); 
+         const nameInput = document.createElement('input');
+         nameInput.className = 'input';
+         nameInput.type = 'text';
+         nameInput.value = row.name || '';
+         nameInput.placeholder = 'Item name';
+         nameInput.addEventListener('input', function() {
+           row.name = this.value;
+           save();
+         });
+         nameDiv.appendChild(nameInput);
+         
+         const costDiv=document.createElement('div'); 
+         const costInput = document.createElement('input');
+         costInput.className = 'input cost-input';
+         costInput.type = 'number';
+         costInput.step = '0.01';
+         costInput.value = (row.cost || 0).toFixed(2);
+         costInput.addEventListener('input', function() {
+           row.cost = Number(this.value) || 0;
+           save();
+          // Live calculations as you type
+           updateRowCalculations(div, row, isBiz);
+           renderKPIs();
+         });
+         costDiv.innerHTML = '<div class="cost-input-wrapper"></div>';
+         const wrapper = costDiv.querySelector('.cost-input-wrapper');
+         
+         // Add dollar sign display BEFORE the input
+         const dollarDisplay = document.createElement('span');
+         dollarDisplay.className = 'cost-dollar-display';
+         dollarDisplay.textContent = '$';
+         wrapper.appendChild(dollarDisplay);
+         
+         wrapper.appendChild(costInput);
+         
+         const statusDiv=document.createElement('div'); 
+         const statusToggle = document.createElement('div');
+         statusToggle.className = 'toggle-switch status-' + (row.status === 'Active' ? 'active' : 'cancelled');
+         
+         const statusSlider = document.createElement('div');
+         statusSlider.className = 'toggle-slider';
+         
+         const statusText = document.createElement('div');
+         statusText.className = 'toggle-text';
+         statusText.textContent = row.status === 'Active' ? 'ON' : 'OFF';
+         
+        statusSlider.appendChild(statusText);
+        statusToggle.appendChild(statusSlider);
+         
+         statusToggle.addEventListener('click', function(e) {
+           e.preventDefault();
+           e.stopPropagation();
+           
+           // Toggle status
+           if (row.status === 'Active') {
+             row.status = 'Cancelled';
+             statusToggle.className = 'toggle-switch status-cancelled';
+             statusText.textContent = 'OFF';
+           } else {
+             row.status = 'Active';
+             statusToggle.className = 'toggle-switch status-active';
+             statusText.textContent = 'ON';
+           }
+           
+           save();
+           updateRowCalculations(div, row, isBiz);
+           renderKPIs();
+         });
+         
+         statusDiv.appendChild(statusToggle);
+         
+         const billingDiv=document.createElement('div'); 
+         const billingToggle = document.createElement('div');
+         billingToggle.className = 'toggle-switch billing-' + (row.billing === 'Monthly' ? 'monthly' : 'annually');
+         
+         const billingSlider = document.createElement('div');
+         billingSlider.className = 'toggle-slider';
+         
+         const billingText = document.createElement('div');
+         billingText.className = 'toggle-text';
+         billingText.textContent = row.billing === 'Monthly' ? 'M' : 'Y';
+         
+        billingSlider.appendChild(billingText);
+        billingToggle.appendChild(billingSlider);
+         
+         billingToggle.addEventListener('click', function(e) {
+           e.preventDefault();
+           e.stopPropagation();
+           
+          // Toggle billing
+          if (row.billing === 'Monthly') {
+            row.billing = 'Annually';
+            billingToggle.className = 'toggle-switch billing-annually';
+            billingText.textContent = 'Y';
+          } else {
+            row.billing = 'Monthly';
+            billingToggle.className = 'toggle-switch billing-monthly';
+            billingText.textContent = 'M';
+          }
+           
+           save();
+           updateRowCalculations(div, row, isBiz);
+           renderKPIs();
+         });
+         
+         billingDiv.appendChild(billingToggle);
+         
+         
+        div.append(dragHandleDiv,iconDiv,nameDiv,costDiv,statusDiv,billingDiv);
+        if(isBiz){ 
+          const dateDiv=document.createElement('div'); 
+          const dateInput = document.createElement('input');
+          dateInput.className = 'input';
+          dateInput.type = 'date';
+          dateInput.value = row.next || '';
+          dateInput.addEventListener('change', function() {
+            row.next = this.value;
+            save();
+            renderKPIs(); // Update KPIs for renewal analytics
+          });
+          dateDiv.appendChild(dateInput);
+          div.appendChild(dateDiv); 
+        }
+        // computed columns - all editable with clean formatting and always-visible symbols
+        const mUSDd=document.createElement('div'); 
+        mUSDd.className='financial-input-wrapper'; 
+        mUSDd.innerHTML='<span class="financial-symbol">$</span><span class="financial-value">' + Math.round(mUSD).toLocaleString() + '</span>';
+        mUSDd.setAttribute('data-field', 'monthlyUSD');
+        mUSDd.setAttribute('data-row-index', idx);
+        mUSDd.setAttribute('data-type', 'usd');
+        mUSDd.setAttribute('data-original', Math.round(mUSD));
+        mUSDd.addEventListener('click', function() { makeEditable(this, row, isBiz, div); });
+        
+        const yUSDd=document.createElement('div'); 
+        yUSDd.className='financial-input-wrapper'; 
+        yUSDd.innerHTML='<span class="financial-symbol">$</span><span class="financial-value">' + Math.round(yUSD).toLocaleString() + '</span>';
+        yUSDd.setAttribute('data-field', 'yearlyUSD');
+        yUSDd.setAttribute('data-row-index', idx);
+        yUSDd.setAttribute('data-type', 'usd');
+        yUSDd.setAttribute('data-original', Math.round(yUSD));
+        yUSDd.addEventListener('click', function() { makeEditable(this, row, isBiz, div); });
+        
+        const mEGPd=document.createElement('div'); 
+        mEGPd.className='financial-input-wrapper'; 
+        mEGPd.innerHTML='<span class="financial-symbol">EGP</span><span class="financial-value">' + Math.round(mEGP).toLocaleString() + '</span>';
+        mEGPd.setAttribute('data-field', 'monthlyEGP');
+        mEGPd.setAttribute('data-row-index', idx);
+        mEGPd.setAttribute('data-type', 'egp');
+        mEGPd.setAttribute('data-original', Math.round(mEGP));
+        mEGPd.addEventListener('click', function() { makeEditable(this, row, isBiz, div); });
+        
+        const yEGPd=document.createElement('div'); 
+        yEGPd.className='financial-input-wrapper'; 
+        yEGPd.innerHTML='<span class="financial-symbol">EGP</span><span class="financial-value">' + Math.round(yEGP).toLocaleString() + '</span>';
+        yEGPd.setAttribute('data-field', 'yearlyEGP');
+        yEGPd.setAttribute('data-row-index', idx);
+        yEGPd.setAttribute('data-type', 'egp');
+        yEGPd.setAttribute('data-original', Math.round(yEGP));
+        yEGPd.addEventListener('click', function() { makeEditable(this, row, isBiz, div); });
+        div.append(mUSDd,yUSDd,mEGPd,yEGPd);
+        // delete
+        const del=document.createElement('div'); 
+        del.innerHTML='<button class="delete-btn" data-del aria-label="Delete">\
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4"><path d="M7 9h10M9 9v8m6-8v8M5 6h14l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6Zm3-3h8l1 3H7l1-3Z"/></svg></button>';
+        div.appendChild(del);
+
+        // wire inputs
+        const nameInp=nameDiv.querySelector('input'); nameInp.addEventListener('input', ()=>{ row.name=nameInp.value; save(); });
+        const costInp=costDiv.querySelector('.cost-input');
+        costInp.addEventListener('input', ()=>{ 
+          row.cost=Number(costInp.value||0); 
+          save(); 
+        });
+        
+        // Update calculations when user finishes typing
+        costInp.addEventListener('blur', ()=>{ 
+          updateRowCalculations(div, row, isBiz);
+          renderKPIs();
+        });
+        if(isBiz){ const dateInp=div.querySelector('input[type="date"]'); if(dateInp){ dateInp.addEventListener('change', ()=>{ row.next=dateInp.value; save(); }); } }
+        const iconBtn=iconDiv.querySelector('[data-choose-icon]');
+        iconBtn.addEventListener('click', ()=> openIconPicker(arr, idx));
+        const delBtn=del.querySelector('[data-del]'); 
+        delBtn.addEventListener('click', ()=>{ 
+          if(delBtn.classList.contains('delete-confirm')){
+            arr.splice(idx,1); 
+            save(); 
+            renderAll();
+          } else {
+            delBtn.classList.add('delete-confirm');
+            delBtn.innerHTML = 'Sure?';
+            setTimeout(()=>{
+              delBtn.classList.remove('delete-confirm');
+              delBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4"><path d="M7 9h10M9 9v8m6-8v8M5 6h14l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6Zm3-3h8l1 3H7l1-3Z"/></svg>';
+            }, 3000);
+          }
+        });
+        costInp.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && idx===arr.length-1){ addRow(isBiz?'biz':'personal'); } });
+
+      wrap.appendChild(div);
+    });
+
+      // sums
+      const sumEl=document.getElementById(containerId==='list-personal'?'sum-personal':'sum-biz');
+      const t=totals(arr);
+      let sumHTML='';
+      // drag handle column
+      sumHTML += '<div></div>';
+      // icon column (present for both personal and biz)
+      sumHTML += '<div></div>';
+      // label
+      sumHTML += '<div class="font-medium" style="color:var(--muted)">Totals</div>';
+      // spacer columns before computed values
+      if(isBiz){ sumHTML += '<div></div><div></div><div></div><div></div>'; }
+      else { sumHTML += '<div></div><div></div><div></div>'; }
+      // computed sum cells
+      sumHTML += '<div class="font-semibold">$'+nfINT.format(t.mUSD)+'</div>';
+      sumHTML += '<div class="font-semibold">$'+nfINT.format(t.yUSD)+'</div>';
+      sumHTML += '<div class="font-semibold">EGP '+nfINT.format(Math.round(t.mEGP))+'</div>';
+      sumHTML += '<div class="font-semibold">EGP '+nfINT.format(Math.round(t.yEGP))+'</div>';
+      // delete column spacer
+      sumHTML += '<div></div>';
+      sumEl.innerHTML=sumHTML;
+    }
+
+
+  function renderIncomeList(containerId, arr) {
+    const wrap = document.getElementById(containerId);
+    if (!wrap) return;
+    wrap.innerHTML = '';
+    
+    arr.forEach((row, idx) => {
+      const mUSD = rowIncomeMonthlyUSD(row);
+      const yUSD = rowIncomeYearlyUSD(row);
+      const mEGP = usdToEgp(mUSD);
+      const yEGP = usdToEgp(yUSD);
+      
+      const div = document.createElement('div');
+      div.className = 'row row-income row-draggable row-drop-zone';
+      div.setAttribute('data-row-index', idx);
+      div.setAttribute('draggable', 'true');
+      
+      // Drag handle
+      const dragHandleDiv = document.createElement('div');
+      dragHandleDiv.className = 'drag-handle';
+      dragHandleDiv.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4"><path d="M8 6h8M8 12h8M8 18h8"/></svg>';
+      dragHandleDiv.title = 'Drag to reorder';
+      
+      // Icon cell
+      const iconName = row.icon || 'fa:dollar-sign';
+      let iconHTML = '';
+      if (iconName.startsWith('custom-image:')) {
+        const imageData = iconName.replace('custom-image:', '');
+        iconHTML = `<img src="${imageData}" />`;
+      } else if (iconName.startsWith('fa-glyph:')) {
+        const unicode = iconName.replace('fa-glyph:', '');
+        iconHTML = `<i class="fa-solid" style="font-family:'Font Awesome 7 Free'; color:inherit;">&#x${unicode};</i>`;
+      } else {
+        const cleanIconName = iconName.replace(/^(fa-solid|fa-regular|fa:)/, '');
+        const isBrand = ['amazon','apple','google','microsoft','facebook','twitter','instagram','linkedin','youtube','github','reddit','discord','slack','telegram','whatsapp','dropbox','stripe','paypal','visa','mastercard','bitcoin','dribbble','behance','figma','trello','wordpress','medium','chrome','firefox','android','spotify','netflix','adobe','shopify','wix','zoom','skype','docker','aws','gitlab','bitbucket','stackoverflow','codepen','npm','node-js','react','vue','angular','html5','css3','js','python','java','git','webflow'].includes(cleanIconName);
+        const iconClass = isBrand ? 'fa-brands' : 'fa-solid';
+        iconHTML = `<i class="${iconClass} fa-${cleanIconName}" style="color:inherit;"></i>`;
+      }
+      const iconDiv = document.createElement('div');
+      iconDiv.className = 'icon-cell';
+      iconDiv.innerHTML = `<button type="button" title="Change icon" data-choose-icon>${iconHTML}</button>`;
+      
+      // Name input
+      const nameDiv = document.createElement('div');
+      const nameInput = document.createElement('input');
+      nameInput.className = 'input';
+      nameInput.type = 'text';
+      nameInput.value = row.name || '';
+      nameInput.placeholder = 'Project name';
+      nameInput.style.fontSize = '0.7rem';
+      nameInput.style.padding = '0.4rem 0.6rem';
+      nameInput.style.borderRadius = '8px';
+      nameInput.addEventListener('input', function() {
+        row.name = this.value;
+        saveInputValue('projectName', this.value);
+        save();
+      });
+      addAutocompleteToInput(nameInput, 'projectName');
+      nameDiv.appendChild(nameInput);
+      
+      // Tags input
+      const tagsDiv = document.createElement('div');
+      const tagsInput = document.createElement('input');
+      tagsInput.className = 'input';
+      tagsInput.type = 'text';
+      tagsInput.value = row.tags || '';
+      tagsInput.placeholder = 'Tags';
+      tagsInput.style.fontSize = '0.8rem';
+      tagsInput.style.padding = '0.6rem 0.8rem';
+      tagsInput.style.borderRadius = '8px';
+      tagsInput.addEventListener('input', function() {
+        row.tags = this.value;
+        saveInputValue('tags', this.value);
+        save();
+      });
+      addAutocompleteToInput(tagsInput, 'tags');
+      tagsDiv.appendChild(tagsInput);
+      
+      // Date input (month and day only, with current year)
+      const dateDiv = document.createElement('div');
+      dateDiv.style.position = 'relative';
+      
+      const dateInput = document.createElement('input');
+      dateInput.className = 'input date-input-minimal';
+      dateInput.type = 'date';
+      dateInput.placeholder = 'MM-DD';
+      dateInput.style.fontSize = '0.75rem';
+      dateInput.style.padding = '0.5rem 0.75rem';
+      dateInput.style.borderRadius = '8px';
+      
+      // Set value with current year if no date exists
+      if (row.date) {
+        dateInput.value = row.date;
+      } else {
+        // Set to current year with today's month and day
+        const today = new Date();
+        const year = parseInt(currentYear) || today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        dateInput.value = `${year}-${month}-${day}`;
+        row.date = dateInput.value;
+      }
+      
+      dateInput.addEventListener('change', function() {
+        // Ensure the year is set to current year
+        const selectedDate = new Date(this.value);
+        const year = parseInt(currentYear) || new Date().getFullYear();
+        selectedDate.setFullYear(year);
+        const finalYear = selectedDate.getFullYear();
+        const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+        const day = String(selectedDate.getDate()).padStart(2, '0');
+        const fullDate = `${finalYear}-${month}-${day}`;
+        
+        row.date = fullDate;
+        this.value = fullDate;
+        save();
+      });
+      dateDiv.appendChild(dateInput);
+      
+      
+      // All Payment input
+      const allPaymentDiv = document.createElement('div');
+      const allPaymentInput = document.createElement('input');
+      allPaymentInput.className = 'input cost-input';
+      allPaymentInput.type = 'number';
+      allPaymentInput.step = '0.01';
+      allPaymentInput.value = (row.allPayment || 0).toFixed(2);
+      allPaymentInput.placeholder = 'Total $';
+      allPaymentInput.style.fontSize = '0.75rem';
+      allPaymentInput.style.padding = '0.5rem 0.75rem';
+      allPaymentInput.style.borderRadius = '8px';
+      allPaymentInput.addEventListener('input', function() {
+        row.allPayment = Number(this.value) || 0;
+        save();
+        updateIncomeRowCalculations(div, row);
+      });
+      allPaymentDiv.innerHTML = '<div class="cost-input-wrapper"></div>';
+      const allPaymentWrapper = allPaymentDiv.querySelector('.cost-input-wrapper');
+      const allPaymentDollarDisplay = document.createElement('span');
+      allPaymentDollarDisplay.className = 'cost-dollar-display';
+      allPaymentDollarDisplay.textContent = '$';
+      allPaymentWrapper.appendChild(allPaymentDollarDisplay);
+      allPaymentWrapper.appendChild(allPaymentInput);
+      
+      // Paid USD input
+      const paidUsdDiv = document.createElement('div');
+      const paidUsdInput = document.createElement('input');
+      paidUsdInput.className = 'input cost-input';
+      paidUsdInput.type = 'number';
+      paidUsdInput.step = '0.01';
+      paidUsdInput.value = (row.paidUsd || 0).toFixed(2);
+      paidUsdInput.placeholder = 'Paid $';
+      paidUsdInput.style.fontSize = '0.75rem';
+      paidUsdInput.style.padding = '0.5rem 0.75rem';
+      paidUsdInput.style.borderRadius = '8px';
+      paidUsdInput.addEventListener('input', function() {
+        row.paidUsd = Number(this.value) || 0;
+        save();
+        updateIncomeRowCalculations(div, row);
+      });
+      paidUsdDiv.innerHTML = '<div class="cost-input-wrapper"></div>';
+      const paidUsdWrapper = paidUsdDiv.querySelector('.cost-input-wrapper');
+      const paidUsdDollarDisplay = document.createElement('span');
+      paidUsdDollarDisplay.className = 'cost-dollar-display';
+      paidUsdDollarDisplay.textContent = '$';
+      paidUsdWrapper.appendChild(paidUsdDollarDisplay);
+      paidUsdWrapper.appendChild(paidUsdInput);
+      
+      // Paid EGP (calculated)
+      const paidEgpDiv = document.createElement('div');
+      paidEgpDiv.className = 'paid-egp-cell';
+      paidEgpDiv.textContent = 'EGP ' + nfINT.format(Math.round((row.paidUsd || 0) * state.fx));
+      
+      // Method select - minimal modern design
+      const methodDiv = document.createElement('div');
+      const methodDropdown = document.createElement('div');
+      methodDropdown.className = 'method-dropdown-minimal';
+      
+      const methodTrigger = document.createElement('button');
+      methodTrigger.className = 'method-trigger-minimal';
+      methodTrigger.innerHTML = `
+        <span class="method-text">${row.method || 'Bank Transfer'}</span>
+        <svg class="method-arrow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M6 9l6 6 6-6"/>
+        </svg>
+      `;
+      
+      const methodMenu = document.createElement('div');
+      methodMenu.className = 'method-menu-minimal';
+      
+      const options = ['Bank Transfer', 'Paypal', 'Cash', 'Crypto', 'Check', 'InstaPay'];
+      options.forEach(option => {
+        const item = document.createElement('div');
+        item.className = 'method-item-minimal';
+        if (option === (row.method || 'Bank Transfer')) {
+          item.classList.add('selected');
+        }
+        item.textContent = option;
+        item.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          row.method = option;
+          methodTrigger.querySelector('.method-text').textContent = option;
+          methodMenu.querySelectorAll('.method-item-minimal').forEach(i => i.classList.remove('selected'));
+          this.classList.add('selected');
+          methodDropdown.classList.remove('open');
+          methodMenu.classList.remove('show');
+          save();
+        });
+        methodMenu.appendChild(item);
+      });
+      
+      methodTrigger.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Close other dropdowns first
+        document.querySelectorAll('.method-dropdown-minimal.open').forEach(dd => {
+          if (dd !== methodDropdown) {
+            dd.classList.remove('open');
+            dd.querySelector('.method-menu-minimal').classList.remove('show');
+          }
+        });
+        
+        methodDropdown.classList.toggle('open');
+        methodMenu.classList.toggle('show');
+      });
+      
+      methodDropdown.appendChild(methodTrigger);
+      methodDropdown.appendChild(methodMenu);
+      methodDiv.appendChild(methodDropdown);
+      
+      // Close dropdown when clicking outside
+      document.addEventListener('click', function(e) {
+        if (!methodDropdown.contains(e.target)) {
+          methodDropdown.classList.remove('open');
+          methodMenu.classList.remove('show');
+        }
+      });
+      
+      
+      // Delete button
+      const deleteDiv = document.createElement('div');
+      deleteDiv.innerHTML = '<button class="delete-btn" data-del aria-label="Delete">\
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4"><path d="M7 9h10M9 9v8m6-8v8M5 6h14l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6Zm3-3h8l1 3H7l1-3Z"/></svg></button>';
+      
+      const delBtn = deleteDiv.querySelector('[data-del]');
+      delBtn.addEventListener('click', function() {
+        if (delBtn.classList.contains('delete-confirm')) {
+          arr.splice(idx, 1);
+          save();
+          renderAll();
+        } else {
+          delBtn.classList.add('delete-confirm');
+          delBtn.innerHTML = 'Confirm';
+          setTimeout(() => {
+            delBtn.classList.remove('delete-confirm');
+            delBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4"><path d="M7 9h10M9 9v8m6-8v8M5 6h14l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6Zm3-3h8l1 3H7l1-3Z"/></svg>';
+          }, 3000);
+        }
+      });
+      
+      // Add icon picker event listener
+      const iconBtn = iconDiv.querySelector('[data-choose-icon]');
+      iconBtn.addEventListener('click', () => openIconPicker(arr, idx));
+      
+      // Append all cells
+      div.appendChild(dragHandleDiv);
+      div.appendChild(iconDiv);
+      div.appendChild(nameDiv);
+      div.appendChild(tagsDiv);
+      div.appendChild(dateDiv);
+      div.appendChild(allPaymentDiv);
+      div.appendChild(paidUsdDiv);
+      div.appendChild(paidEgpDiv);
+      div.appendChild(methodDiv);
+      div.appendChild(deleteDiv);
+      
+      wrap.appendChild(div);
+    });
+    
+    // Update income sum
+    const sumEl = document.getElementById('sum-income');
+    if (sumEl) {
+      const totalAllPayment = arr.reduce((sum, r) => sum + (Number(r.allPayment) || 0), 0);
+      const totalPaidUsd = arr.reduce((sum, r) => sum + (Number(r.paidUsd) || 0), 0);
+      const totalPaidEgp = totalPaidUsd * state.fx;
+      
+      let sumHTML = '';
+      sumHTML += '<div></div>'; // drag handle
+      sumHTML += '<div></div>'; // icon
+      sumHTML += '<div style="font-weight: 600;">Total</div>'; // name
+      sumHTML += '<div></div>'; // tags
+      sumHTML += '<div></div>'; // date
+      sumHTML += '<div></div>'; // progress
+      sumHTML += `<div>$${nfINT.format(totalAllPayment)}</div>`; // all payment
+      sumHTML += `<div>$${nfINT.format(totalPaidUsd)}</div>`; // paid usd
+      sumHTML += `<div>EGP ${nfINT.format(Math.round(totalPaidEgp))}</div>`; // paid egp
+      sumHTML += '<div></div>'; // method
+      sumHTML += '<div></div>'; // note
+      sumHTML += '<div></div>'; // delete
+      sumEl.innerHTML = sumHTML;
+    }
+  }
+  
+  function updateIncomeRowCalculations(rowEl, row) {
+    const paidEgp = (row.paidUsd || 0) * state.fx;
+    
+    const paidEgpCell = rowEl.querySelector('.paid-egp-cell');
+    
+    if (paidEgpCell) paidEgpCell.textContent = 'EGP ' + nfINT.format(Math.round(paidEgp));
+  }
+
+  function renderAll(){
+      renderList('list-personal', state.personal, false);
+      renderList('list-biz', state.biz, true);
+      const currentYearData = state.income[currentYear] || [];
+      renderIncomeList('list-income', currentYearData);
+    renderKPIs();
+    updateGridTemplate();
+  }
+
+  function updateGridTemplate() {
+    // For Personal table (no Next column)
+    const personalTemplate = `24px 32px 1.5fr .8fr .8fr .8fr ${columnOrder.map(() => '1fr').join(' ')} 32px`;
+    document.querySelectorAll('.row:not(.row-biz):not(.row-income)').forEach(row => {
+      row.style.gridTemplateColumns = personalTemplate;
+    });
+    
+    // For Biz table (with Next column)
+    const bizTemplate = `24px 32px 1.4fr .8fr .8fr .8fr .8fr ${columnOrder.map(() => '.9fr').join(' ')} 32px`;
+    document.querySelectorAll('.row-biz').forEach(row => {
+      row.style.gridTemplateColumns = bizTemplate;
+    });
+    
+    // For Income table (responsive structure)
+    let incomeTemplate;
+    if (window.innerWidth <= 480) {
+      incomeTemplate = `16px 20px 1fr 1.2fr 80px 70px 70px 80px 1fr 20px`;
+    } else if (window.innerWidth <= 768) {
+      incomeTemplate = `18px 24px 1fr 1.2fr 100px 85px 85px 100px 1fr 24px`;
+    } else {
+      incomeTemplate = `20px 28px 1fr 1.2fr 120px 100px 100px 120px 1fr 28px`;
+    }
+    
+    document.querySelectorAll('.row-income').forEach(row => {
+      row.style.gridTemplateColumns = incomeTemplate;
+    });
+  }
+
+    // Settings modal
+    $('#btnSettings').addEventListener('click', ()=>{ 
+      $('#inputFx').value = state.fx; 
+      $('#inputAutosave').value = state.autosave||'on'; 
+      $('#inputIncludeAnnual').value = state.includeAnnualInMonthly ? 'true' : 'false';
+      $('#inputDeleteConfirm').value = '';
+      $('#btnDeleteAll').disabled = true;
+      $('#settings').showModal(); 
+    });
+    
+    // Click outside to close modal
+    $('#settings').addEventListener('click', (e) => {
+      if (e.target === $('#settings')) {
+        $('#settings').close();
+      }
+    });
+    // Real-time exchange rate updates
+    $('#inputFx').addEventListener('input', function() {
+      state.fx = Number(this.value) || state.fx;
+      save();
+      // Update only EGP calculations without re-rendering inputs
+      updateAllCalculationsWithoutRerender();
+    });
+    
+    $('#btnSaveSettings').addEventListener('click', (e)=>{ 
+      e.preventDefault(); 
+      state.fx = Number($('#inputFx').value||state.fx); 
+      state.autosave = $('#inputAutosave').value; 
+      state.includeAnnualInMonthly = $('#inputIncludeAnnual').value === 'true';
+      updateAutosaveStatus();
+      save(); 
+      // Update only calculations without re-rendering inputs
+      updateAllCalculationsWithoutRerender();
+      $('#settings').close(); 
+    });
+    
+    // Update only the calculated values in a specific row
+    function updateRowCalculations(rowElement, row, isBiz) {
+      const mUSD = rowMonthlyUSD(row);
+      const yUSD = rowYearlyUSD(row);
+      const mEGP = mUSD * state.fx;
+      const yEGP = yUSD * state.fx;
+      
+      // Update the calculated columns in this row using new wrapper structure
+      const financialWrappers = rowElement.querySelectorAll('.financial-input-wrapper');
+      if (financialWrappers.length >= 4) {
+        // Monthly USD - update value span
+        const mUSDValue = financialWrappers[0].querySelector('.financial-value');
+        if (mUSDValue) {
+          mUSDValue.textContent = Math.round(mUSD).toLocaleString();
+          financialWrappers[0].setAttribute('data-original', Math.round(mUSD));
+        }
+        
+        // Yearly USD - update value span
+        const yUSDValue = financialWrappers[1].querySelector('.financial-value');
+        if (yUSDValue) {
+          yUSDValue.textContent = Math.round(yUSD).toLocaleString();
+          financialWrappers[1].setAttribute('data-original', Math.round(yUSD));
+        }
+        
+        // Monthly EGP - update value span
+        const mEGPValue = financialWrappers[2].querySelector('.financial-value');
+        if (mEGPValue) {
+          mEGPValue.textContent = Math.round(mEGP).toLocaleString();
+          financialWrappers[2].setAttribute('data-original', Math.round(mEGP));
+        }
+        
+        // Yearly EGP - update value span
+        const yEGPValue = financialWrappers[3].querySelector('.financial-value');
+        if (yEGPValue) {
+          yEGPValue.textContent = Math.round(yEGP).toLocaleString();
+          financialWrappers[3].setAttribute('data-original', Math.round(yEGP));
+        }
+      }
+      
+      // Update KPIs and analytics
+      renderKPIs();
+    }
+
+    // Make a calculated value editable
+    function makeEditable(element, row, isBiz, rowElement) {
+      if (element.classList.contains('editing')) return;
+      
+      const field = element.getAttribute('data-field');
+      const currentValue = element.getAttribute('data-original');
+      const type = element.getAttribute('data-type');
+      
+      // Create input field that replaces the value span but keeps the symbol
+      const input = document.createElement('input');
+      input.type = 'number';
+      input.step = '1';
+      input.className = 'editable-input';
+      input.value = Math.round(parseFloat(currentValue));
+      
+      // Find the value span and replace it with input
+      const valueSpan = element.querySelector('.financial-value');
+      if (valueSpan) {
+        valueSpan.style.display = 'none';
+        element.appendChild(input);
+      } else {
+        // Fallback for old structure
+        element.innerHTML = '';
+        element.appendChild(input);
+      }
+      
+      element.classList.add('editing');
+      
+      // Focus and select
+      input.focus();
+      input.select();
+      
+      // Real-time updates as you type (like cost input) - without losing focus
+      input.addEventListener('input', function() {
+        const newValue = Math.round(parseFloat(this.value));
+        if (!isNaN(newValue)) {
+          updateCalculatedValueRealtime(element, row, field, newValue, type, isBiz, rowElement);
+        }
+      });
+      
+      // Handle save on blur or enter
+      const saveValue = () => {
+        const newValue = Math.round(parseFloat(input.value));
+        if (!isNaN(newValue) && newValue !== Math.round(parseFloat(currentValue))) {
+          updateCalculatedValue(element, row, field, newValue, type, isBiz, rowElement);
+        }
+        
+        // Restore the value span and remove input
+        const valueSpan = element.querySelector('.financial-value');
+        if (valueSpan) {
+          valueSpan.style.display = '';
+          input.remove();
+        }
+        
+        element.classList.remove('editing');
+      };
+      
+      input.addEventListener('blur', saveValue);
+      input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          saveValue();
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          
+          // Restore the value span and remove input
+          const valueSpan = element.querySelector('.financial-value');
+          if (valueSpan) {
+            valueSpan.style.display = '';
+            input.remove();
+          }
+          
+          element.classList.remove('editing');
+          updateRowCalculations(rowElement, row, isBiz);
+        }
+      });
+    }
+
+    // Update calculated value and recalculate others - real-time version that preserves focus
+    function updateCalculatedValueRealtime(element, row, field, newValue, type, isBiz, rowElement) {
+      let newBaseCost = row.cost;
+      
+      // Calculate the new base cost based on what was changed
+      if (field === 'monthlyUSD') {
+        // Monthly USD changed - calculate base cost
+        const monthlyUSD = Math.max(0, newValue);
+        if (row.billing === 'Monthly') {
+          newBaseCost = monthlyUSD;
+        } else if (row.billing === 'Annually') {
+          newBaseCost = monthlyUSD * 12;
+        }
+      } else if (field === 'yearlyUSD') {
+        // Yearly USD changed - calculate base cost
+        const yearlyUSD = Math.max(0, newValue);
+        if (row.billing === 'Monthly') {
+          newBaseCost = yearlyUSD / 12;
+        } else if (row.billing === 'Annually') {
+          newBaseCost = yearlyUSD;
+        }
+      } else if (field === 'monthlyEGP') {
+        // Monthly EGP changed - convert to USD first, then calculate base cost
+        const monthlyEGP = Math.max(0, newValue);
+        const monthlyUSD = monthlyEGP / state.fx;
+        if (row.billing === 'Monthly') {
+          newBaseCost = monthlyUSD;
+        } else if (row.billing === 'Annually') {
+          newBaseCost = monthlyUSD * 12;
+        }
+      } else if (field === 'yearlyEGP') {
+        // Yearly EGP changed - convert to USD first, then calculate base cost
+        const yearlyEGP = Math.max(0, newValue);
+        const yearlyUSD = yearlyEGP / state.fx;
+        if (row.billing === 'Monthly') {
+          newBaseCost = yearlyUSD / 12;
+        } else if (row.billing === 'Annually') {
+          newBaseCost = yearlyUSD;
+        }
+      }
+      
+      // Update the base cost
+      row.cost = newBaseCost;
+      
+      // Update the cost input field to match the new base cost
+      const costInput = rowElement.querySelector('.cost-input');
+      if (costInput) {
+        costInput.value = newBaseCost;
+      }
+      
+      // Calculate new values
+      const mUSD = rowMonthlyUSD(row);
+      const yUSD = rowYearlyUSD(row);
+      const mEGP = mUSD * state.fx;
+      const yEGP = yUSD * state.fx;
+      
+      // Update only the specific calculated values without re-rendering
+      const calculatedDivs = rowElement.querySelectorAll('.text-sm');
+      if (calculatedDivs.length >= 4) {
+        // Monthly USD - round to whole number
+        if (calculatedDivs[0] !== element) {
+          calculatedDivs[0].textContent = '$' + Math.round(mUSD).toLocaleString();
+          calculatedDivs[0].setAttribute('data-original', Math.round(mUSD));
+        }
+        
+        // Yearly USD - round to whole number
+        if (calculatedDivs[1] !== element) {
+          calculatedDivs[1].textContent = '$' + Math.round(yUSD).toLocaleString();
+          calculatedDivs[1].setAttribute('data-original', Math.round(yUSD));
+        }
+        
+        // Monthly EGP - round to whole number
+        if (calculatedDivs[2] !== element) {
+          calculatedDivs[2].textContent = 'EGP ' + Math.round(mEGP).toLocaleString();
+          calculatedDivs[2].setAttribute('data-original', Math.round(mEGP));
+        }
+        
+        // Yearly EGP - round to whole number
+        if (calculatedDivs[3] !== element) {
+          calculatedDivs[3].textContent = 'EGP ' + Math.round(yEGP).toLocaleString();
+          calculatedDivs[3].setAttribute('data-original', Math.round(yEGP));
+        }
+      }
+      
+      // Save the updated state
+      save();
+      
+      // Update KPIs only (no full re-render)
+      renderKPIs();
+    }
+
+    // Update calculated value and recalculate others - full version for final save
+    function updateCalculatedValue(element, row, field, newValue, type, isBiz, rowElement) {
+      let newBaseCost = row.cost;
+      
+      // Calculate the new base cost based on what was changed
+      if (field === 'monthlyUSD') {
+        // Monthly USD changed - calculate base cost
+        const monthlyUSD = Math.max(0, newValue);
+        if (row.billing === 'Monthly') {
+          newBaseCost = monthlyUSD;
+        } else if (row.billing === 'Annually') {
+          newBaseCost = monthlyUSD * 12;
+        }
+      } else if (field === 'yearlyUSD') {
+        // Yearly USD changed - calculate base cost
+        const yearlyUSD = Math.max(0, newValue);
+        if (row.billing === 'Monthly') {
+          newBaseCost = yearlyUSD / 12;
+        } else if (row.billing === 'Annually') {
+          newBaseCost = yearlyUSD;
+        }
+      } else if (field === 'monthlyEGP') {
+        // Monthly EGP changed - convert to USD first, then calculate base cost
+        const monthlyEGP = Math.max(0, newValue);
+        const monthlyUSD = monthlyEGP / state.fx;
+        if (row.billing === 'Monthly') {
+          newBaseCost = monthlyUSD;
+        } else if (row.billing === 'Annually') {
+          newBaseCost = monthlyUSD * 12;
+        }
+      } else if (field === 'yearlyEGP') {
+        // Yearly EGP changed - convert to USD first, then calculate base cost
+        const yearlyEGP = Math.max(0, newValue);
+        const yearlyUSD = yearlyEGP / state.fx;
+        if (row.billing === 'Monthly') {
+          newBaseCost = yearlyUSD / 12;
+        } else if (row.billing === 'Annually') {
+          newBaseCost = yearlyUSD;
+        }
+      }
+      
+      // Update the base cost
+      row.cost = newBaseCost;
+      
+      // Update the cost input field to match the new base cost
+      const costInput = rowElement.querySelector('.cost-input');
+      if (costInput) {
+        costInput.value = newBaseCost;
+      }
+      
+      // Save the updated state
+      save();
+      
+      // Re-render this row's calculations
+      updateRowCalculations(rowElement, row, isBiz);
+    }
+    
+    // Update autosave status indicator
+    function updateAutosaveStatus() {
+      const status = document.getElementById('autosaveStatus');
+      if (status) {
+        if (state.autosave === 'on') {
+          status.textContent = '● Auto-save enabled';
+          status.className = 'autosave-status enabled';
+        } else {
+          status.textContent = '● Auto-save disabled';
+          status.className = 'autosave-status disabled';
+        }
+      }
+    }
+    
+    function updateSettingsUI() {
+      // Update FX rate display
+      const fxDisplay = document.getElementById('fxDisplay');
+      if (fxDisplay) {
+        fxDisplay.textContent = state.fx.toFixed(4);
+      }
+      
+      // Update autosave status
+      updateAutosaveStatus();
+      
+      // Update theme if needed
+      if (state.theme === 'light') {
+        document.documentElement.setAttribute('data-theme', 'light');
+      } else {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+      
+      // Update Include Annual in Monthly setting
+      const includeAnnualSelect = document.getElementById('inputIncludeAnnual');
+      if (includeAnnualSelect) {
+        includeAnnualSelect.value = state.includeAnnualInMonthly ? 'true' : 'false';
+        console.log('Updated Include Annual setting in UI:', state.includeAnnualInMonthly);
+      }
+      
+      // Update calculations without re-rendering inputs
+      updateAllCalculationsWithoutRerender();
+    }
+    
+    function updateAllCalculationsWithoutRerender() {
+      // Update all EGP values in existing rows without re-rendering
+      const personalRows = document.querySelectorAll('#list-personal .row');
+      personalRows.forEach((rowEl, idx) => {
+        const rowData = state.personal[idx];
+        if (rowData) {
+          updateRowCalculations(rowEl, rowData, false);
+        }
+      });
+      
+      const bizRows = document.querySelectorAll('#list-biz .row');
+      bizRows.forEach((rowEl, idx) => {
+        const rowData = state.biz[idx];
+        if (rowData) {
+          updateRowCalculations(rowEl, rowData, true);
+        }
+      });
+      
+      // Update KPIs
+      renderKPIs();
+    }
+    
+    
+    // Refresh FX rate button
+    $('#btnRefreshFx').addEventListener('click', async ()=>{
+      const btn = $('#btnRefreshFx');
+      const originalContent = btn.innerHTML;
+      btn.innerHTML = '<svg class="w-3 h-3 animate-spin" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 11-6.364-6.364"/></svg>';
+      btn.disabled = true;
+      
+      try {
+        // Try to fetch live USD/EGP rate from a free API
+        const response = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+        const data = await response.json();
+        const newRate = data.rates.EGP;
+        if (newRate && newRate > 0) {
+          $('#inputFx').value = newRate.toFixed(4);
+          // Show success feedback
+          btn.style.background = '#10b981';
+          btn.style.borderColor = '#10b981';
+          setTimeout(() => {
+            btn.style.background = '';
+            btn.style.borderColor = '';
+          }, 2000);
+        } else {
+          throw new Error('Invalid rate received');
+        }
+      } catch (error) {
+        console.log('Failed to fetch live rate, using fallback');
+        // Fallback to a reasonable rate if API fails
+        $('#inputFx').value = '48.1843';
+        btn.style.background = '#f59e0b';
+        btn.style.borderColor = '#f59e0b';
+        setTimeout(() => {
+          btn.style.background = '';
+          btn.style.borderColor = '';
+        }, 2000);
+      } finally {
+        btn.innerHTML = originalContent;
+        btn.disabled = false;
+      }
+    });
+    
+    // Export/Import functionality
+    $('#btnExportData').addEventListener('click', ()=>{
+      const dataStr = JSON.stringify(state, null, 2);
+      const dataBlob = new Blob([dataStr], {type: 'application/json'});
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'financial-data.json';
+      link.click();
+      URL.revokeObjectURL(url);
+      showNotification('Data exported', 'success', 2000);
+    });
+    
+    $('#btnImportData').addEventListener('click', ()=>{
+      $('#fileInput').click();
+    });
+    
+    $('#fileInput').addEventListener('change', (e)=>{
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = (e)=>{
+        try {
+          const importedData = JSON.parse(e.target.result);
+          if (confirm('This will replace all current data. Continue?')) {
+            state = importedData;
+            // Clear IDs for new data to be created in Firebase
+            state.personal.forEach(item => delete item.id);
+            state.biz.forEach(item => delete item.id);
+            save();
+            renderAll();
+            showNotification('Data imported', 'success', 2000);
+          }
+        } catch (error) {
+          showNotification('Invalid file format', 'error', 3000);
+        }
+      };
+      reader.readAsText(file);
+    });
+    
+    async function clearAllData() {
+      // Reset state to default
+      state = structuredClone(defaultState);
+      
+      if (currentUser && supabaseReady) {
+        try {
+          // Delete backup data from Supabase
+          const { error } = await window.supabaseClient
+            .from('backups')
+            .delete()
+            .eq('user_id', currentUser.id);
+          
+          if (error) throw error;
+          
+          showNotification('All cloud data deleted', 'success', 3000);
+        } catch (error) {
+          console.error('Error clearing Supabase data:', error);
+          showNotification('Error clearing cloud data', 'error', 3000);
+        }
+      } else {
+        // Clear all localStorage
+        localStorage.clear();
+        showNotification('All local data deleted', 'success', 3000);
+      }
+      
+      // Re-render everything
+      renderAll();
+      
+      // Close settings modal
+      $('#settings').close();
+    }
+    
+    // Delete all data functionality
+    $('#inputDeleteConfirm').addEventListener('input', (e)=>{
+      const btn = $('#btnDeleteAll');
+      btn.disabled = e.target.value !== 'DELETE';
+    });
+    
+    $('#btnDeleteAll').addEventListener('click', ()=>{
+      if ($('#inputDeleteConfirm').value === 'DELETE') {
+        if (confirm('Are you absolutely sure? This will permanently delete ALL data and cannot be undone!')) {
+          clearAllData();
+          showNotification('All data deleted', 'success', 3000);
+        }
+      }
+    });
+
+
+
+  // Add-row delegation
+    document.addEventListener('click', (e)=>{ const t=e.target.closest('[data-add-row]'); if(t) window.addRow(t.getAttribute('data-add-row')); });
+
+  // Global dropdown close handler
+  document.addEventListener('click', function(e) {
+    // Close all method dropdowns (income table)
+    document.querySelectorAll('.method-dropdown-minimal.open').forEach(dropdown => {
+      if (!dropdown.contains(e.target)) {
+        dropdown.classList.remove('open');
+        dropdown.querySelector('.method-menu-minimal').classList.remove('show');
+      }
+    });
+  });
+
+     // KPI Card Analytics - Click to expand
+     document.addEventListener('click', (e) => {
+       const kpiCard = e.target.closest('.kpi[data-analytics]');
+       if (kpiCard && !e.target.closest('.analytics-close') && !e.target.closest('.analytics-content')) {
+         // Close any other expanded cards
+         document.querySelectorAll('.kpi.expanded').forEach(card => {
+           if (card !== kpiCard) {
+             card.classList.remove('expanded');
+           }
+         });
+         
+         // Toggle current card
+         kpiCard.classList.toggle('expanded');
+       }
+     });
+
+     // Close analytics when clicking close button
+     document.addEventListener('click', (e) => {
+       if (e.target.matches('[data-close-analytics]')) {
+         const kpiCard = e.target.closest('.kpi');
+         if (kpiCard) {
+           kpiCard.classList.remove('expanded');
+         }
+       }
+     });
+
+     // Close analytics when clicking outside
+     document.addEventListener('click', (e) => {
+       if (!e.target.closest('.kpi') && !e.target.closest('.analytics-content')) {
+         document.querySelectorAll('.kpi.expanded').forEach(card => {
+           card.classList.remove('expanded');
+         });
+       }
+     });
+
+
+  renderAll();
+
+
+    // Drag and Drop functionality for financial columns
+    let draggedElement = null;
+    let draggedColumn = null;
+    
+    function updateColumnOrder() {
+      localStorage.setItem('columnOrder', JSON.stringify(columnOrder));
+      applyColumnOrder();
+    }
+    
+    function applyColumnOrder() {
+      // Apply to both Personal and Biz tables
+      ['', '-biz'].forEach(suffix => {
+        const headerRow = document.querySelector(`.row-head${suffix}`);
+        if (!headerRow) return;
+        
+        const financialColumns = headerRow.querySelectorAll('.financial-column');
+        const newOrder = [...financialColumns].sort((a, b) => {
+          const aIndex = columnOrder.indexOf(a.dataset.column);
+          const bIndex = columnOrder.indexOf(b.dataset.column);
+          return aIndex - bIndex;
+        });
+        
+        // Reorder the columns in the header
+        financialColumns.forEach(col => {
+          const newCol = newOrder.find(c => c.dataset.column === col.dataset.column);
+          if (newCol && newCol !== col) {
+            col.parentNode.insertBefore(newCol, col.nextSibling);
+          }
+        });
+      });
+      
+      // Update CSS grid template columns based on new order
+      updateGridTemplate();
+    }
+    
+    
+    // Add drag event listeners
+    document.addEventListener('dragstart', (e) => {
+      if (e.target.classList.contains('draggable-header')) {
+        draggedElement = e.target;
+        draggedColumn = e.target.dataset.column;
+        e.target.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/html', e.target.outerHTML);
+      }
+    });
+    
+    document.addEventListener('dragend', (e) => {
+      if (e.target.classList.contains('draggable-header')) {
+        e.target.classList.remove('dragging');
+        draggedElement = null;
+        draggedColumn = null;
+        // Remove all drag-over classes
+        document.querySelectorAll('.drop-zone').forEach(el => el.classList.remove('drag-over'));
+      }
+    });
+    
+    document.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      if (e.target.classList.contains('financial-column') && e.target !== draggedElement) {
+        e.target.classList.add('drag-over');
+      }
+    });
+    
+    document.addEventListener('dragleave', (e) => {
+      if (e.target.classList.contains('financial-column')) {
+        e.target.classList.remove('drag-over');
+      }
+    });
+    
+    document.addEventListener('drop', (e) => {
+      e.preventDefault();
+      if (e.target.classList.contains('financial-column') && e.target !== draggedElement) {
+        e.target.classList.remove('drag-over');
+        
+        const targetColumn = e.target.dataset.column;
+        const draggedIndex = columnOrder.indexOf(draggedColumn);
+        const targetIndex = columnOrder.indexOf(targetColumn);
+        
+        if (draggedIndex !== -1 && targetIndex !== -1) {
+          // Remove dragged column from its current position
+          columnOrder.splice(draggedIndex, 1);
+          // Insert it at the new position
+          const newIndex = draggedIndex < targetIndex ? targetIndex - 1 : targetIndex;
+          columnOrder.splice(newIndex, 0, draggedColumn);
+          
+          updateColumnOrder();
+        }
+      }
+    });
+    
+    // Show loading skeletons for first 2 seconds
+    const loadingSkeleton = document.getElementById('loading-skeleton');
+    const loadingSkeletonBiz = document.getElementById('loading-skeleton-biz');
+    
+    if (loadingSkeleton) {
+      loadingSkeleton.classList.remove('hidden');
+    }
+    if (loadingSkeletonBiz) {
+      loadingSkeletonBiz.classList.remove('hidden');
+    }
+    
+    // Hide skeletons after minimum loading time
+    setTimeout(() => {
+      if (loadingSkeleton) {
+        loadingSkeleton.classList.add('hidden');
+      }
+      if (loadingSkeletonBiz) {
+        loadingSkeletonBiz.classList.add('hidden');
+      }
+    }, 2000);
+    
+    // Initialize column order on page load (after renderAll)
+    applyColumnOrder();
+
+    // Row drag and drop functionality
+    let draggedRow = null;
+    let draggedRowIndex = null;
+    let draggedRowArray = null;
+
+    // Add row drag event listeners
+    document.addEventListener('dragstart', (e) => {
+      if (e.target.classList.contains('row-draggable')) {
+        draggedRow = e.target;
+        draggedRowIndex = parseInt(e.target.getAttribute('data-row-index'));
+        if (e.target.closest('#list-personal')) {
+          draggedRowArray = state.personal;
+        } else if (e.target.closest('#list-biz')) {
+          draggedRowArray = state.biz;
+        } else if (e.target.closest('#list-income')) {
+          draggedRowArray = state.income;
+        }
+        e.target.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', ''); // Prevent default drag behavior
+        
+        // Create a custom drag image (invisible)
+        const dragImage = document.createElement('div');
+        dragImage.style.position = 'absolute';
+        dragImage.style.top = '-1000px';
+        dragImage.style.left = '-1000px';
+        dragImage.style.width = '1px';
+        dragImage.style.height = '1px';
+        dragImage.style.background = 'transparent';
+        document.body.appendChild(dragImage);
+        e.dataTransfer.setDragImage(dragImage, 0, 0);
+        
+        // Clean up the drag image after a short delay
+        setTimeout(() => {
+          if (document.body.contains(dragImage)) {
+            document.body.removeChild(dragImage);
+          }
+        }, 0);
+      }
+    });
+
+    document.addEventListener('dragend', (e) => {
+      if (e.target.classList.contains('row-draggable')) {
+        e.target.classList.remove('dragging');
+        draggedRow = null;
+        draggedRowIndex = null;
+        draggedRowArray = null;
+        // Remove all drag-over classes
+        document.querySelectorAll('.row-drop-zone').forEach(el => el.classList.remove('drag-over'));
+      }
+    });
+
+    document.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      if (e.target.classList.contains('row-drop-zone') && e.target !== draggedRow) {
+        e.target.classList.add('drag-over');
+      }
+    });
+
+    document.addEventListener('dragleave', (e) => {
+      if (e.target.classList.contains('row-drop-zone')) {
+        e.target.classList.remove('drag-over');
+      }
+    });
+
+    document.addEventListener('drop', (e) => {
+      e.preventDefault();
+      if (e.target.classList.contains('row-drop-zone') && e.target !== draggedRow) {
+        e.target.classList.remove('drag-over');
+        
+        const targetRowIndex = parseInt(e.target.getAttribute('data-row-index'));
+        let targetArray;
+        if (e.target.closest('#list-personal')) {
+          targetArray = state.personal;
+        } else if (e.target.closest('#list-biz')) {
+          targetArray = state.biz;
+        } else if (e.target.closest('#list-income')) {
+          targetArray = state.income;
+        }
+        
+        // Only allow drops within the same table
+        if (draggedRowArray === targetArray && draggedRowIndex !== targetRowIndex) {
+          // Remove the dragged item from its current position
+          const draggedItem = draggedRowArray.splice(draggedRowIndex, 1)[0];
+          
+          // Adjust target index if we're moving down
+          const adjustedTargetIndex = draggedRowIndex < targetRowIndex ? targetRowIndex - 1 : targetRowIndex;
+          
+          // Insert the item at the new position
+          draggedRowArray.splice(adjustedTargetIndex, 0, draggedItem);
+          
+          // Save and re-render
+          save();
+          renderAll();
+          showNotification('Row reordered', 'success', 1500);
+        }
+      }
+    });
+
+    // tiny tests
+    (function(){
+      function eq(a,b,msg){ if(Math.abs(a-b)>1e-6) console.error('TEST FAIL',msg,a,b); else console.log('TEST OK',msg); }
+      const sample=[{cost:120,billing:'Monthly',status:'Active'},{cost:1200,billing:'Annually',status:'Active'}];
+      eq(rowMonthlyUSD(sample[0]),120,'mUSD monthly');
+      eq(rowMonthlyUSD(sample[1]),100,'mUSD annual');
+      eq(rowYearlyUSD(sample[0]),1440,'yUSD monthly');
+      eq(rowYearlyUSD(sample[1]),1200,'yUSD annual');
+    })();
+  });
