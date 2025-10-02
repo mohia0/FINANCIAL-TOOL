@@ -170,8 +170,8 @@ window.supabaseClient = supabase;
       // Refresh year management panel
       refreshYearManagementPanel();
       
-      // Save changes to Supabase (for other data)
-      saveToSupabase();
+      // Save changes locally and to Supabase
+      save();
       
       // Close dialog
       closeYearConfirmDialog();
@@ -381,6 +381,12 @@ window.supabaseClient = supabase;
       }
       
       console.log(`Created year tabs from Supabase data:`, years);
+      
+      // Save years to Supabase to ensure they're persisted
+      if (years.length > 0) {
+        console.log('Saving years to Supabase:', years);
+        save(); // This will update available_years in user_settings
+      }
     }
     
     function addYearToTabs(newYear) {
@@ -415,8 +421,8 @@ window.supabaseClient = supabase;
       
       yearTabsContainer.insertBefore(newYearTab, insertBefore);
       
-      // Save changes to Supabase
-      saveToSupabase();
+      // Save changes locally and to Supabase
+      save();
       
       console.log(`Added year ${newYear} to income data and synced with Supabase`);
     }
@@ -447,16 +453,27 @@ window.supabaseClient = supabase;
     
     // Add row function
     function addRow(group){
-      // Ensure we have the correct current year from the active tab
-      const activeYearTab = document.querySelector('.year-tab.active');
-      if (activeYearTab) {
-        currentYear = activeYearTab.getAttribute('data-year');
+      console.log('addRow called for group:', group);
+      
+      if(group==='biz') {
+        state.biz.push({name:'', cost:0, status:'Active', billing:'Monthly', next:''});
+        console.log('Added business row, total business rows:', state.biz.length);
       }
-      
-      console.log('Adding row for group:', group, 'currentYear:', currentYear);
-      
-      if(group==='biz') state.biz.push({name:'', cost:0, status:'Active', billing:'Monthly', next:''});
       else if(group==='income') {
+        // Ensure we have the correct current year from the active tab
+        const activeYearTab = document.querySelector('.year-tab.active');
+        if (activeYearTab) {
+          currentYear = activeYearTab.getAttribute('data-year');
+        }
+        
+        // Fallback to current year if no tab is active
+        if (!currentYear) {
+          currentYear = new Date().getFullYear().toString();
+          console.warn('No active year tab found, defaulting to:', currentYear);
+        }
+        
+        console.log('Adding income row for year:', currentYear);
+        
         // Ensure the current year exists in the income data structure
         if (!state.income[currentYear]) {
           state.income[currentYear] = [];
@@ -476,20 +493,53 @@ window.supabaseClient = supabase;
           date: defaultDate, 
           allPayment:0, 
           paidUsd:0, 
-          method:'Bank Transfer'
+          method:'Bank Transfer',
+          icon: 'fa:dollar-sign'
         };
         
         state.income[currentYear].push(newIncome);
-        console.log('Added income row to year:', currentYear, 'Total rows:', state.income[currentYear].length);
+        console.log('Added income row to year:', currentYear, 'Total rows for this year:', state.income[currentYear].length);
+        
+        // Instantly save the new income row to Supabase
+        setTimeout(() => {
+          instantSaveIncomeRow(newIncome, currentYear);
+        }, 100); // Small delay to ensure the row is properly added to state
       }
-      else state.personal.push({name:'', cost:0, status:'Active', billing:'Monthly'});
-      save(); renderAll();
+      else if(group==='personal') {
+        state.personal.push({name:'', cost:0, status:'Active', billing:'Monthly'});
+        console.log('Added personal row, total personal rows:', state.personal.length);
+      }
+      
+      // Save and re-render
+      save(); 
+      renderAll();
     }
     
     // Make functions globally accessible
     window.addRow = addRow;
     window.removeYear = removeYear;
     window.addYearBefore = addYearBefore;
+    window.saveImportedIncomeSequentially = saveImportedIncomeSequentially;
+    window.saveAllRowsWithoutIds = saveAllRowsWithoutIds;
+    
+    // Function to force clear all IDs from income data
+    window.clearAllIncomeIds = function() {
+      let clearedCount = 0;
+      
+      Object.keys(state.income || {}).forEach(year => {
+        const yearData = state.income[year] || [];
+        yearData.forEach((row, index) => {
+          if (row.id) {
+            delete row.id;
+            clearedCount++;
+          }
+        });
+      });
+      
+      saveToLocal();
+      showNotification(`Cleared ${clearedCount} IDs from income data`, 'info', 2000);
+      return clearedCount;
+    };
     window.addYearAfter = addYearAfter;
     window.addYearBetween = addYearBetween;
     window.confirmRemoveYear = confirmRemoveYear;
@@ -1372,6 +1422,15 @@ window.supabaseClient = supabase;
           
           console.log('includeAnnualInMonthly loaded as:', state.includeAnnualInMonthly);
           
+          // Initialize available years from settings
+          if (settings.available_years && Array.isArray(settings.available_years)) {
+            console.log('Loading available years from settings:', settings.available_years);
+            state.income = {};
+            settings.available_years.forEach(year => {
+              state.income[year.toString()] = [];
+            });
+          }
+          
           // Update UI elements to reflect loaded settings
           updateSettingsUI();
         }
@@ -1430,8 +1489,15 @@ window.supabaseClient = supabase;
           .order('created_at', { ascending: true });
         
         if (incomeData && !incomeError) {
+          console.log('Loading income data from Supabase:', incomeData);
+          
+          // Merge income data with existing years from settings
+          // Don't clear state.income completely - merge with existing years
+          if (!state.income) {
+            state.income = {};
+          }
+          
           // Group income data by year
-          state.income = {};
           incomeData.forEach(income => {
             const year = income.year.toString();
             if (!state.income[year]) {
@@ -1444,16 +1510,36 @@ window.supabaseClient = supabase;
               allPayment: income.all_payment,
               paidUsd: income.paid_usd,
               method: income.method,
+              icon: income.icon || 'fa:dollar-sign', // Default icon if not in schema
               id: income.id
             });
           });
           
+          console.log('Final income data structure:', state.income);
+          
+          // Update available_years in settings to include all years from income data
+          const incomeYears = Object.keys(state.income).map(year => parseInt(year)).sort((a, b) => a - b);
+          console.log('Updating available_years with income years:', incomeYears);
+          
           // Create year tabs for all years found in Supabase data
           createYearTabsFromData(state.income);
+        } else {
+          console.log('No income data found in Supabase, keeping existing years from settings');
+          // If no income data in Supabase, keep the years that were initialized from settings
+          // but ensure we have at least the default years
+          if (!state.income || Object.keys(state.income).length === 0) {
+            state.income = {
+              '2022': [],
+              '2023': [],
+              '2024': [],
+              '2025': []
+            };
+          }
+          createYearTabsFromData(state.income);
         }
-          
-          renderAll();
-          showNotification('Data loaded from cloud!', 'success');
+        
+        renderAll();
+        showNotification('Data loaded from cloud!', 'success');
         
       } catch (error) {
         console.error('Error loading user data:', error);
@@ -1523,6 +1609,10 @@ window.supabaseClient = supabase;
       if (!currentUser || !supabaseReady) return;
       
       try {
+        // Get all available years from income data
+        const availableYears = Object.keys(state.income).map(year => parseInt(year)).sort((a, b) => a - b);
+        console.log('Calculated available years for Supabase:', availableYears);
+        
         // Save user settings
         console.log('Saving settings to Supabase:', {
           user_id: currentUser.id,
@@ -1530,7 +1620,8 @@ window.supabaseClient = supabase;
           theme: state.theme,
           autosave: state.autosave === 'on',
           include_annual_in_monthly: state.includeAnnualInMonthly,
-          column_order: columnOrder
+          column_order: columnOrder,
+          available_years: availableYears
         });
         
         await window.supabaseClient
@@ -1541,7 +1632,8 @@ window.supabaseClient = supabase;
             theme: state.theme,
             autosave: state.autosave === 'on',
             include_annual_in_monthly: state.includeAnnualInMonthly,
-            column_order: columnOrder
+            column_order: columnOrder,
+            available_years: availableYears
           }, {
             onConflict: 'user_id'
           });
@@ -1635,45 +1727,75 @@ window.supabaseClient = supabase;
         }
         
         // Save income data for all years
+        console.log('Saving income data for years:', Object.keys(state.income));
+        let incomeSaveCount = 0;
+        let incomeErrorCount = 0;
+        
         for (const [year, incomeData] of Object.entries(state.income)) {
+          console.log(`Saving ${incomeData.length} income records for year ${year}`);
+          
           for (const income of incomeData) {
-            if (income.id) {
-              // Update existing income
-              await window.supabaseClient
-                .from('income')
-                .update({
-                  name: income.name,
-                  tags: income.tags,
-                  date: income.date,
-                  all_payment: income.allPayment,
-                  paid_usd: income.paidUsd,
-                  method: income.method,
-                  year: parseInt(year)
-                })
-                .eq('id', income.id);
-            } else {
-              // Create new income
-              const { data: newIncome, error } = await window.supabaseClient
-                .from('income')
-                .insert({
-                  user_id: currentUser.id,
-                  name: income.name,
-                  tags: income.tags,
-                  date: income.date,
-                  all_payment: income.allPayment,
-                  paid_usd: income.paidUsd,
-                  method: income.method,
-                  year: parseInt(year)
-                })
-                .select()
-                .single();
+            try {
+              console.log('Saving income record:', income);
               
-              if (newIncome) {
-                income.id = newIncome.id;
+              if (income.id) {
+                // Update existing income
+                const { error: updateError } = await window.supabaseClient
+                  .from('income')
+                  .update({
+                    name: income.name || '',
+                    tags: income.tags || '',
+                    date: income.date || new Date().toISOString().split('T')[0],
+                    all_payment: income.allPayment || 0,
+                    paid_usd: income.paidUsd || 0,
+                    method: income.method || 'Bank Transfer',
+                    icon: income.icon || 'fa:dollar-sign',
+                    year: parseInt(year)
+                  })
+                  .eq('id', income.id);
+                
+                if (updateError) {
+                  console.error('Error updating income record:', updateError);
+                  incomeErrorCount++;
+                } else {
+                  console.log('Successfully updated income record:', income.id);
+                  incomeSaveCount++;
+                }
+              } else {
+                // Create new income
+                const { data: newIncome, error: insertError } = await window.supabaseClient
+                  .from('income')
+                  .insert({
+                    user_id: currentUser.id,
+                    name: income.name || '',
+                    tags: income.tags || '',
+                    date: income.date || new Date().toISOString().split('T')[0],
+                    all_payment: income.allPayment || 0,
+                    paid_usd: income.paidUsd || 0,
+                    method: income.method || 'Bank Transfer',
+                    icon: income.icon || 'fa:dollar-sign',
+                    year: parseInt(year)
+                  })
+                  .select()
+                  .single();
+                
+                if (insertError) {
+                  console.error('Error creating income record:', insertError);
+                  incomeErrorCount++;
+                } else if (newIncome) {
+                  income.id = newIncome.id;
+                  console.log('Successfully created income record:', newIncome.id);
+                  incomeSaveCount++;
+                }
               }
+            } catch (error) {
+              console.error('Unexpected error saving income record:', error);
+              incomeErrorCount++;
             }
           }
         }
+        
+        console.log(`Income save completed: ${incomeSaveCount} successful, ${incomeErrorCount} errors`);
         
         showSaveIndicator();
       } catch (error) {
@@ -1720,13 +1842,8 @@ window.supabaseClient = supabase;
     }
     
     function save(){ 
-      if(state.autosave==='on') {
-        if (currentUser && supabaseReady) {
-          saveToSupabase();
-        } else {
-          saveToLocal();
-        }
-      }
+      // Always save with live saving - no need to check autosave setting
+      liveSave();
     }
     
     // Autocomplete functionality
@@ -1860,14 +1977,281 @@ window.supabaseClient = supabase;
     applyTheme();
     $('#btnTheme').addEventListener('click', ()=>{ state.theme = state.theme==='light'?'dark':'light'; save(); applyTheme(); });
 
-    // Refresh functionality
-    let refreshInterval = null;
-    let isRefreshing = false;
+    // Live saving functionality
+    let saveTimeout = null;
+    let isSaving = false;
+
+    function liveSave() {
+      console.log('Live save triggered');
+      // Clear any existing save timeout
+      if (saveTimeout) {
+        clearTimeout(saveTimeout);
+      }
+      
+      // Debounce saves to prevent excessive API calls
+      saveTimeout = setTimeout(() => {
+        if (!isSaving) {
+          isSaving = true;
+          updateSyncStatus('syncing');
+          console.log('Executing live save...');
+          
+          const savePromise = currentUser && supabaseReady ? saveToSupabase() : saveToLocal();
+          
+          savePromise.then(() => {
+            updateSyncStatus('success');
+            showNotification('Data saved', 'success', 1000);
+            setTimeout(() => {
+              updateSyncStatus('');
+              isSaving = false;
+            }, 1000);
+          }).catch((error) => {
+            console.error('Save error:', error);
+            updateSyncStatus('error');
+            showNotification('Save failed', 'error', 2000);
+            setTimeout(() => {
+              updateSyncStatus('');
+              isSaving = false;
+            }, 2000);
+          });
+        }
+      }, 500); // 500ms debounce
+    }
+
+    // Instant save function specifically for income data
+    let incomeDebounceTimeouts = new Map();
+    
+    async function instantSaveIncomeRow(incomeRow, year) {
+      if (!currentUser || !supabaseReady) {
+        console.log('Supabase not ready, falling back to local save');
+        saveToLocal();
+        return;
+      }
+      
+      // Create a unique key for this income row to debounce individual row saves
+      const rowKey = incomeRow.id || `temp_${incomeRow.name}_${incomeRow.date}`;
+      
+      // Clear existing timeout for this row
+      if (incomeDebounceTimeouts.has(rowKey)) {
+        clearTimeout(incomeDebounceTimeouts.get(rowKey));
+      }
+      
+      // Set new debounced save for this specific row
+      const timeoutId = setTimeout(async () => {
+        try {
+          console.log('Instant saving income row:', incomeRow);
+          
+          if (incomeRow.id) {
+            // Update existing income record
+            const { error: updateError } = await window.supabaseClient
+              .from('income')
+              .update({
+                name: incomeRow.name || '',
+                tags: incomeRow.tags || '',
+                date: incomeRow.date || new Date().toISOString().split('T')[0],
+                all_payment: incomeRow.allPayment || 0,
+                paid_usd: incomeRow.paidUsd || 0,
+                method: incomeRow.method || 'Bank Transfer',
+                icon: incomeRow.icon || 'fa:dollar-sign',
+                year: parseInt(year),
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', incomeRow.id);
+            
+            if (updateError) {
+              console.error('Error updating income record:', updateError);
+              showNotification('Failed to save income', 'error', 2000);
+              throw updateError;
+            } else {
+              console.log('Successfully updated income record:', incomeRow.id);
+              showNotification('Income saved', 'success', 800);
+            }
+          } else {
+            // Create new income record
+            const { data: newIncome, error: insertError } = await window.supabaseClient
+              .from('income')
+              .insert({
+                user_id: currentUser.id,
+                name: incomeRow.name || '',
+                tags: incomeRow.tags || '',
+                date: incomeRow.date || new Date().toISOString().split('T')[0],
+                all_payment: incomeRow.allPayment || 0,
+                paid_usd: incomeRow.paidUsd || 0,
+                method: incomeRow.method || 'Bank Transfer',
+                icon: incomeRow.icon || 'fa:dollar-sign',
+                year: parseInt(year)
+              })
+              .select()
+              .single();
+            
+            if (insertError) {
+              console.error('Error creating income record:', insertError);
+              showNotification('Failed to save income', 'error', 2000);
+              throw insertError;
+            } else {
+              console.log('Successfully created income record:', newIncome);
+              // Update the local row with the new ID
+              if (newIncome) {
+                incomeRow.id = newIncome.id;
+              }
+              showNotification('Income saved', 'success', 800);
+            }
+          }
+          
+          // Also save to local storage as backup
+          saveToLocal();
+          
+        } catch (error) {
+          console.error('Error in instant save income:', error);
+          showNotification('Failed to save income', 'error', 2000);
+          // Fallback to local save
+          saveToLocal();
+        }
+        
+        // Remove timeout from map
+        incomeDebounceTimeouts.delete(rowKey);
+      }, 300); // Shorter debounce for instant feel
+      
+      incomeDebounceTimeouts.set(rowKey, timeoutId);
+    }
+
+    // Sequential save function for imported income data
+    async function saveImportedIncomeSequentially(importedIncomeData) {
+      if (!currentUser || !supabaseReady) {
+        return;
+      }
+
+      let totalRows = 0;
+      let savedRows = 0;
+      let errorRows = 0;
+
+      // Count total rows to save
+      for (const [year, yearData] of Object.entries(importedIncomeData)) {
+        totalRows += yearData.length;
+      }
+
+      if (totalRows === 0) {
+        return;
+      }
+
+      showNotification(`Saving ${totalRows} imported income rows to cloud...`, 'info', 3000);
+
+      try {
+        // Process each year sequentially
+        for (const [year, yearData] of Object.entries(importedIncomeData)) {
+          const rowsToSave = yearData || [];
+          
+          if (rowsToSave.length === 0) continue;
+
+          // Process each row in the year sequentially
+          for (let i = 0; i < rowsToSave.length; i++) {
+            const incomeRow = rowsToSave[i];
+            
+            // Find the corresponding row in state.income to update with the new ID
+            const stateRowIndex = (state.income[year] || []).findIndex(stateRow => 
+              stateRow.name === incomeRow.name && 
+              stateRow.date === incomeRow.date &&
+              stateRow.allPayment === incomeRow.allPayment &&
+              !stateRow.id
+            );
+            
+            try {
+              // Use direct Supabase call instead of instantSaveIncomeRow to avoid debouncing
+              const { data: newIncome, error: insertError } = await window.supabaseClient
+                .from('income')
+                .insert({
+                  user_id: currentUser.id,
+                  name: incomeRow.name || '',
+                  tags: incomeRow.tags || '',
+                  date: incomeRow.date || new Date().toISOString().split('T')[0],
+                  all_payment: incomeRow.allPayment || 0,
+                  paid_usd: incomeRow.paidUsd || 0,
+                  method: incomeRow.method || 'Bank Transfer',
+                  icon: incomeRow.icon || 'fa:dollar-sign',
+                  year: parseInt(year)
+                })
+                .select()
+                .single();
+
+              if (insertError) {
+                errorRows++;
+              } else {
+                // Update the corresponding row in state.income with the new ID
+                if (stateRowIndex >= 0) {
+                  state.income[year][stateRowIndex].id = newIncome.id;
+                }
+                savedRows++;
+              }
+
+              // Small delay between saves to avoid overwhelming the API
+              if (i < rowsToSave.length - 1) {
+                await new Promise(resolve => setTimeout(resolve, 300));
+              }
+
+            } catch (error) {
+              errorRows++;
+            }
+          }
+
+          // Delay between years
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+
+        // Show final result
+        if (errorRows === 0) {
+          showNotification(`Successfully saved all ${savedRows} imported income rows to cloud!`, 'success', 3000);
+        } else {
+          showNotification(`Saved ${savedRows}/${totalRows} imported rows (${errorRows} failed)`, 'warning', 4000);
+        }
+
+        // Save to local storage as backup
+        saveToLocal();
+
+      } catch (error) {
+        showNotification('Failed to save imported income data', 'error', 3000);
+      }
+    }
+
+    // Helper function to find and save any income rows without IDs
+    async function saveAllRowsWithoutIds() {
+      if (!currentUser || !supabaseReady) {
+        showNotification('Please sign in first to save to cloud', 'error', 3000);
+        return;
+      }
+
+      const rowsWithoutIds = {};
+      let totalCount = 0;
+
+      // Find all rows without IDs
+      for (const [year, yearData] of Object.entries(state.income || {})) {
+        const rowsInYear = yearData.filter(row => !row.id);
+        if (rowsInYear.length > 0) {
+          rowsWithoutIds[year] = rowsInYear;
+          totalCount += rowsInYear.length;
+        }
+      }
+
+      if (totalCount === 0) {
+        showNotification('All income rows already have IDs', 'info', 2000);
+        return;
+      }
+
+      showNotification(`Found ${totalCount} rows to save. Starting save process...`, 'info', 2000);
+
+      // Create cleaned data (remove any lingering IDs)
+      const cleanedData = {};
+      Object.keys(rowsWithoutIds).forEach(year => {
+        cleanedData[year] = rowsWithoutIds[year].map(row => {
+          const cleanRow = { ...row };
+          delete cleanRow.id;
+          return cleanRow;
+        });
+      });
+
+      // Use the sequential save function
+      await saveImportedIncomeSequentially(cleanedData);
+    }
 
     function refreshData() {
-      if (isRefreshing) return;
-      isRefreshing = true;
-      
       const refreshIcon = document.getElementById('iconRefresh');
       const syncStatus = document.getElementById('syncStatus');
       const originalTransform = refreshIcon.style.transform;
@@ -1879,30 +2263,28 @@ window.supabaseClient = supabase;
       refreshIcon.style.transform = 'rotate(360deg)';
       refreshIcon.style.transition = 'transform 0.5s ease';
       
-      // Smart sync: Try cloud first, fallback to local
+      // Only load fresh data from cloud - no saving
       if (currentUser && supabaseReady) {
-        syncWithCloud().then(() => {
+        loadUserData().then(() => {
           updateSyncStatus('success');
           showNotification('Data synced from cloud', 'success', 2000);
           resetRefreshIcon();
         }).catch((error) => {
-          console.error('Cloud sync failed, falling back to local:', error);
-          loadLocalData();
+          console.error('Cloud sync failed:', error);
           updateSyncStatus('error');
-          showNotification('Cloud sync failed, using local data', 'warning', 3000);
+          showNotification('Cloud sync failed', 'error', 2000);
           resetRefreshIcon();
         });
       } else {
         loadLocalData();
         updateSyncStatus('offline');
-        showNotification('Offline mode - using local data', 'info', 2000);
+        showNotification('Using local data', 'info', 2000);
         resetRefreshIcon();
       }
       
       function resetRefreshIcon() {
         setTimeout(() => {
           refreshIcon.style.transform = originalTransform;
-          isRefreshing = false;
           // Keep success status for 2 seconds, then hide
           if (syncStatus.classList.contains('success')) {
             setTimeout(() => {
@@ -1947,19 +2329,7 @@ window.supabaseClient = supabase;
       }
     }
 
-    function startAutoRefresh() {
-      if (refreshInterval) clearInterval(refreshInterval);
-      const intervalSeconds = (state.autosaveInterval || 15) * 1000; // Convert to milliseconds
-      refreshInterval = setInterval(refreshData, intervalSeconds);
-    }
-    
-    function updateAutoRefreshInterval() {
-      if (state.autosave === 'on') {
-        startAutoRefresh();
-      } else {
-        stopAutoRefresh();
-      }
-    }
+    // Live saving is always enabled - no need for auto-refresh intervals
     
     // Check connection status and update sync indicator
     function checkConnectionStatus() {
@@ -1991,18 +2361,8 @@ window.supabaseClient = supabase;
     // Initial connection check
     checkConnectionStatus();
 
-    function stopAutoRefresh() {
-      if (refreshInterval) {
-        clearInterval(refreshInterval);
-        refreshInterval = null;
-      }
-    }
-
     // Manual refresh button
     $('#btnRefresh').addEventListener('click', refreshData);
-
-    // Start auto-refresh
-    startAutoRefresh();
 
     // Numbers
     const nfUSD = new Intl.NumberFormat('en-US',{style:'currency', currency:'USD', maximumFractionDigits:2});
@@ -2021,14 +2381,13 @@ window.supabaseClient = supabase;
     
     // Income calculation functions
     const rowIncomeMonthlyUSD = (r) => {
-      if (r.status !== 'Active') return 0;
-      if (r.billing === 'Monthly') return Number(r.cost || 0);
-      if (r.billing === 'Annually') {
-        return state.includeAnnualInMonthly ? Number(r.cost || 0) / 12 : 0;
-      }
-      return 0;
+      // For income, we use paidUsd as the monthly amount
+      return Number(r.paidUsd || 0);
     };
-    const rowIncomeYearlyUSD = (r) => r.status === 'Active' ? (r.billing === 'Monthly' ? Number(r.cost || 0) * 12 : Number(r.cost || 0)) : 0;
+    const rowIncomeYearlyUSD = (r) => {
+      // For income, yearly is the same as monthly since it's already the actual payment
+      return Number(r.paidUsd || 0);
+    };
     function incomeTotals(arr) { 
       const mUSD = arr.reduce((s, r) => s + rowIncomeMonthlyUSD(r), 0); 
       const yUSD = arr.reduce((s, r) => s + rowIncomeYearlyUSD(r), 0); 
@@ -3233,7 +3592,16 @@ window.supabaseClient = supabase;
           } else {
           arr[idx].icon = name;
           }
-          save();
+          
+          // Use instant save for income rows, regular save for others
+          const isIncomeRow = arr === state.income[currentYear] || 
+                             Object.values(state.income || {}).some(yearData => yearData === arr);
+          if (isIncomeRow && arr[idx]) {
+            instantSaveIncomeRow(arr[idx], currentYear);
+          } else {
+            save();
+          }
+          
           iconPickerEl.close();
           iconPickCtx = null;
           renderAll();
@@ -3270,7 +3638,15 @@ window.supabaseClient = supabase;
         // Add to custom icons
         addCustomIcon(cleanUnicode, 'glyph', `Glyph ${cleanUnicode}`);
         
-        save();
+        // Use instant save for income rows, regular save for others
+        const isIncomeRow = arr === state.income[currentYear] || 
+                           Object.values(state.income || {}).some(yearData => yearData === arr);
+        if (isIncomeRow && arr[idx]) {
+          instantSaveIncomeRow(arr[idx], currentYear);
+        } else {
+          save();
+        }
+        
         iconPickerEl.close();
         iconPickCtx = null;
         renderAll();
@@ -3310,7 +3686,15 @@ window.supabaseClient = supabase;
         // Add to custom icons
         addCustomIcon(customImageData, 'image', 'Custom Image');
         
-        save();
+        // Use instant save for income rows, regular save for others
+        const isIncomeRow = arr === state.income[currentYear] || 
+                           Object.values(state.income || {}).some(yearData => yearData === arr);
+        if (isIncomeRow && arr[idx]) {
+          instantSaveIncomeRow(arr[idx], currentYear);
+        } else {
+          save();
+        }
+        
         iconPickerEl.close();
         iconPickCtx = null;
         renderAll();
@@ -3339,7 +3723,16 @@ window.supabaseClient = supabase;
           const { arr, idx } = iconPickCtx;
           const cleanUnicode = unicode.replace(/^\\u/, '');
           arr[idx].icon = `fa-glyph:${cleanUnicode}`;
-          save();
+          
+          // Use instant save for income rows, regular save for others
+          const isIncomeRow = arr === state.income[currentYear] || 
+                             Object.values(state.income || {}).some(yearData => yearData === arr);
+          if (isIncomeRow && arr[idx]) {
+            instantSaveIncomeRow(arr[idx], currentYear);
+          } else {
+            save();
+          }
+          
           iconPickerEl.close();
           iconPickCtx = null;
           renderAll();
@@ -3601,7 +3994,7 @@ window.supabaseClient = supabase;
             }, 3000);
           }
         });
-        costInp.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && idx===arr.length-1){ addRow(isBiz?'biz':'personal'); } });
+        // Removed auto-add row on Enter key to prevent unwanted row creation
 
       wrap.appendChild(div);
     });
@@ -3683,9 +4076,10 @@ window.supabaseClient = supabase;
       nameInput.style.padding = '0.4rem 0.6rem';
       nameInput.style.borderRadius = '8px';
       nameInput.addEventListener('input', function() {
+        console.log('Income name input changed:', this.value);
         row.name = this.value;
         saveInputValue('projectName', this.value);
-        save();
+        instantSaveIncomeRow(row, currentYear);
       });
       addAutocompleteToInput(nameInput, 'projectName');
       nameDiv.appendChild(nameInput);
@@ -3708,6 +4102,7 @@ window.supabaseClient = supabase;
       tagsInput.placeholder = existingTags.length > 0 ? 'Add+' : 'Add+';
       tagsInput.addEventListener('input', function() {
         handleTagInput(this, tagsWrapper, row);
+        instantSaveIncomeRow(row, currentYear); // Instant save when tags are modified
       });
       tagsInput.addEventListener('keydown', function(e) {
         handleTagKeydown(e, this, tagsWrapper, row);
@@ -3762,7 +4157,7 @@ window.supabaseClient = supabase;
         
         row.date = fullDate;
         this.value = fullDate;
-        save();
+        instantSaveIncomeRow(row, currentYear);
       });
       dateDiv.appendChild(dateInput);
       
@@ -3779,8 +4174,9 @@ window.supabaseClient = supabase;
       allPaymentInput.style.padding = '0.5rem 0.75rem';
       allPaymentInput.style.borderRadius = '8px';
       allPaymentInput.addEventListener('input', function() {
+        console.log('All payment input changed:', this.value);
         row.allPayment = Number(this.value) || 0;
-        save();
+        instantSaveIncomeRow(row, currentYear);
         updateIncomeRowCalculations(div, row);
       });
       allPaymentDiv.innerHTML = '<div class="cost-input-wrapper"></div>';
@@ -3803,8 +4199,9 @@ window.supabaseClient = supabase;
       paidUsdInput.style.padding = '0.5rem 0.75rem';
       paidUsdInput.style.borderRadius = '8px';
       paidUsdInput.addEventListener('input', function() {
+        console.log('Paid USD input changed:', this.value);
         row.paidUsd = Number(this.value) || 0;
-        save();
+        instantSaveIncomeRow(row, currentYear);
         updateIncomeRowCalculations(div, row);
       });
       paidUsdDiv.innerHTML = '<div class="cost-input-wrapper"></div>';
@@ -3855,7 +4252,7 @@ window.supabaseClient = supabase;
           this.classList.add('selected');
           methodDropdown.classList.remove('open');
           methodMenu.classList.remove('show');
-          save();
+          instantSaveIncomeRow(row, currentYear);
         });
         methodMenu.appendChild(item);
       });
@@ -3918,8 +4315,24 @@ window.supabaseClient = supabase;
       const delBtn = deleteDiv.querySelector('[data-del]');
       delBtn.addEventListener('click', function() {
         if (delBtn.classList.contains('delete-confirm')) {
+          // If the row has an ID, delete it from Supabase
+          if (row.id && currentUser && supabaseReady) {
+            window.supabaseClient
+              .from('income')
+              .delete()
+              .eq('id', row.id)
+              .then(({ error }) => {
+                if (error) {
+                  console.error('Error deleting income record:', error);
+                  showNotification('Failed to delete income', 'error', 2000);
+                } else {
+                  console.log('Successfully deleted income record:', row.id);
+                  showNotification('Income deleted', 'success', 1000);
+                }
+              });
+          }
           arr.splice(idx, 1);
-          save();
+          saveToLocal(); // Save locally as well
           renderAll();
         } else {
           delBtn.classList.add('delete-confirm');
@@ -3989,6 +4402,9 @@ window.supabaseClient = supabase;
       renderIncomeList('list-income', currentYearData);
     renderKPIs();
     updateGridTemplate();
+    
+    // Re-add event listeners after rendering
+    addRowButtonListeners();
   }
 
   function updateGridTemplate() {
@@ -4022,8 +4438,6 @@ window.supabaseClient = supabase;
     // Settings modal
     $('#btnSettings').addEventListener('click', ()=>{ 
       $('#inputFx').value = state.fx; 
-      $('#inputAutosave').value = state.autosave||'on'; 
-      $('#inputAutosaveInterval').value = state.autosaveInterval || 15;
       $('#inputIncludeAnnual').value = state.includeAnnualInMonthly ? 'true' : 'false';
       $('#inputDeleteConfirm').value = '';
       $('#btnDeleteAll').disabled = true;
@@ -4047,11 +4461,8 @@ window.supabaseClient = supabase;
     $('#btnSaveSettings').addEventListener('click', (e)=>{ 
       e.preventDefault(); 
       state.fx = Number($('#inputFx').value||state.fx); 
-      state.autosave = $('#inputAutosave').value; 
-      state.autosaveInterval = Number($('#inputAutosaveInterval').value) || 15;
       state.includeAnnualInMonthly = $('#inputIncludeAnnual').value === 'true';
       updateAutosaveStatus();
-      updateAutoRefreshInterval();
       save(); 
       // Update only calculations without re-rendering inputs
       updateAllCalculationsWithoutRerender();
@@ -4331,13 +4742,8 @@ window.supabaseClient = supabase;
     function updateAutosaveStatus() {
       const status = document.getElementById('autosaveStatus');
       if (status) {
-        if (state.autosave === 'on') {
-          status.textContent = '● Auto-save enabled';
-          status.className = 'autosave-status enabled';
-        } else {
-          status.textContent = '● Auto-save disabled';
-          status.className = 'autosave-status disabled';
-        }
+        status.textContent = '● Live Save enabled';
+        status.className = 'autosave-status enabled';
       }
     }
     
@@ -4670,9 +5076,37 @@ window.supabaseClient = supabase;
                       state.income[year] = [];
                     }
                     state.income[year] = [...state.income[year], ...importedData.income[year]];
-                    // Clear IDs for new data
-                    state.income[year].forEach(item => delete item.id);
+                    // Clear IDs for new data to ensure they get saved as new records
+                    state.income[year].forEach(item => {
+                      delete item.id;
+                    });
                   });
+                }
+                
+                // Update available years to include imported years
+                const importedYears = Object.keys(importedData.income).map(year => parseInt(year));
+                const currentYears = Object.keys(state.income).map(year => parseInt(year));
+                const allYears = [...new Set([...currentYears, ...importedYears])].sort((a, b) => a - b);
+                
+                
+                // Update year tabs UI to show imported years
+                createYearTabsFromData(state.income);
+                
+                // Save imported income rows to Supabase sequentially
+                if (currentUser && supabaseReady) {
+                  // Force all imported rows to be treated as new by clearing their IDs
+                  const cleanedImportData = {};
+                  Object.keys(importedData.income).forEach(year => {
+                    cleanedImportData[year] = (state.income[year] || []).map(row => {
+                      const cleanRow = { ...row };
+                      delete cleanRow.id; // Ensure no ID exists
+                      return cleanRow;
+                    });
+                  });
+                  
+                  saveImportedIncomeSequentially(cleanedImportData);
+                } else {
+                  showNotification('Imported data saved locally only - please sign in to sync to cloud', 'warning', 4000);
                 }
               }
               
@@ -4775,8 +5209,52 @@ window.supabaseClient = supabase;
 
 
 
-  // Add-row delegation
-    document.addEventListener('click', (e)=>{ const t=e.target.closest('[data-add-row]'); if(t) window.addRow(t.getAttribute('data-add-row')); });
+  // Add individual event listeners to add row buttons to prevent unwanted row addition during refresh
+    function addRowButtonListeners() {
+      // Remove existing event listeners first to prevent duplicates
+      const buttons = document.querySelectorAll('[data-add-row]');
+      buttons.forEach(btn => {
+        // Clone and replace to remove all event listeners
+        const newBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(newBtn, btn);
+      });
+      
+      // Personal expenses add row button
+      const personalAddBtn = document.querySelector('[data-add-row="personal"]');
+      if (personalAddBtn) {
+        personalAddBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          console.log('Personal add row clicked');
+          addRow('personal');
+        });
+      }
+      
+      // Business expenses add row button
+      const bizAddBtn = document.querySelector('[data-add-row="biz"]');
+      if (bizAddBtn) {
+        bizAddBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          console.log('Business add row clicked');
+          addRow('biz');
+        });
+      }
+      
+      // Income add row button
+      const incomeAddBtn = document.querySelector('[data-add-row="income"]');
+      if (incomeAddBtn) {
+        incomeAddBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          console.log('Income add row clicked for year:', currentYear);
+          addRow('income');
+        });
+      }
+    }
+    
+    // Add event listeners when page loads
+    addRowButtonListeners();
 
   // Global dropdown close handler
   document.addEventListener('click', function(e) {
@@ -5179,7 +5657,13 @@ window.supabaseClient = supabase;
         return textSpan ? textSpan.textContent.trim() : '';
       }).filter(tag => tag);
       row.tags = tags.join(',');
-      save();
+      
+      // Use instant save for income rows, regular save for others
+      if (wrapper.closest('.row-income')) {
+        instantSaveIncomeRow(row, currentYear);
+      } else {
+        save();
+      }
     }
     
     function showTagSuggestions(input, wrapper) {
