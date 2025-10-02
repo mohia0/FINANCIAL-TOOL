@@ -1413,23 +1413,14 @@ window.supabaseClient = supabase;
           .single();
         
         if (settings && !settingsError) {
-          console.log('Loaded settings from Supabase:', settings);
           state.fx = settings.fx_rate || 48.1843;
           state.theme = settings.theme || 'dark';
           state.autosave = settings.autosave ? 'on' : 'off';
           state.includeAnnualInMonthly = settings.include_annual_in_monthly === true || settings.include_annual_in_monthly === 'true' || false;
           columnOrder = settings.column_order || ['monthly', 'yearly', 'monthly-egp', 'yearly-egp'];
           
-          console.log('includeAnnualInMonthly loaded as:', state.includeAnnualInMonthly);
           
-          // Initialize available years from settings
-          if (settings.available_years && Array.isArray(settings.available_years)) {
-            console.log('Loading available years from settings:', settings.available_years);
-            state.income = {};
-            settings.available_years.forEach(year => {
-              state.income[year.toString()] = [];
-            });
-          }
+          // Don't initialize income arrays here - let the income loading handle it completely
           
           // Update UI elements to reflect loaded settings
           updateSettingsUI();
@@ -1489,21 +1480,16 @@ window.supabaseClient = supabase;
           .order('created_at', { ascending: true });
         
         if (incomeData && !incomeError) {
-          console.log('Loading income data from Supabase:', incomeData);
-          
-          // Merge income data with existing years from settings
-          // Don't clear state.income completely - merge with existing years
-          if (!state.income) {
-            state.income = {};
-          }
+          // Completely clear and replace income data with Supabase data
+          const newIncomeData = {};
           
           // Group income data by year
           incomeData.forEach(income => {
             const year = income.year.toString();
-            if (!state.income[year]) {
-              state.income[year] = [];
+            if (!newIncomeData[year]) {
+              newIncomeData[year] = [];
             }
-            state.income[year].push({
+            newIncomeData[year].push({
               name: income.name,
               tags: income.tags,
               date: income.date,
@@ -1515,16 +1501,15 @@ window.supabaseClient = supabase;
             });
           });
           
-          console.log('Final income data structure:', state.income);
+          // Replace state.income with fresh data from Supabase
+          state.income = newIncomeData;
           
           // Update available_years in settings to include all years from income data
           const incomeYears = Object.keys(state.income).map(year => parseInt(year)).sort((a, b) => a - b);
-          console.log('Updating available_years with income years:', incomeYears);
           
           // Create year tabs for all years found in Supabase data
           createYearTabsFromData(state.income);
         } else {
-          console.log('No income data found in Supabase, keeping existing years from settings');
           // If no income data in Supabase, keep the years that were initialized from settings
           // but ensure we have at least the default years
           if (!state.income || Object.keys(state.income).length === 0) {
@@ -1549,17 +1534,22 @@ window.supabaseClient = supabase;
     }
     
     function loadLocalData() {
-      // Fallback to localStorage
+      // Fallback to localStorage - COMPLETELY REPLACE state, don't merge
       const stored = localStorage.getItem('finance-notion-v6');
       if (stored) {
         try {
           const parsed = JSON.parse(stored);
-          state.personal = parsed.personal || [];
-          state.biz = parsed.biz || [];
-          state.fx = parsed.fx || 48.1843;
-          state.theme = parsed.theme || 'dark';
-          state.autosave = parsed.autosave || 'on';
-          state.includeAnnualInMonthly = parsed.includeAnnualInMonthly || true;
+          
+          // Completely reset state to avoid merging
+          state = {
+            personal: parsed.personal || [],
+            biz: parsed.biz || [],
+            income: {},
+            fx: parsed.fx || 48.1843,
+            theme: parsed.theme || 'dark',
+            autosave: parsed.autosave || 'on',
+            includeAnnualInMonthly: parsed.includeAnnualInMonthly || true
+          };
           
           // Handle migration from old income structure to new year-based structure
           if (parsed.income) {
@@ -2270,15 +2260,13 @@ window.supabaseClient = supabase;
           showNotification('Data synced from cloud', 'success', 2000);
           resetRefreshIcon();
         }).catch((error) => {
-          console.error('Cloud sync failed:', error);
           updateSyncStatus('error');
           showNotification('Cloud sync failed', 'error', 2000);
           resetRefreshIcon();
         });
       } else {
-        loadLocalData();
         updateSyncStatus('offline');
-        showNotification('Using local data', 'info', 2000);
+        showNotification('Not connected to cloud', 'info', 2000);
         resetRefreshIcon();
       }
       
