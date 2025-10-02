@@ -76,6 +76,25 @@ window.supabaseClient = supabase;
       if (manageYearsBtn) {
         manageYearsBtn.addEventListener('click', showYearManagementPanel);
       }
+      
+      // Set current year as active by default
+      const currentYearString = new Date().getFullYear().toString();
+      const currentYearTab = document.querySelector(`[data-year="${currentYearString}"]`);
+      if (currentYearTab) {
+        // Remove active class from all tabs first
+        yearTabs.forEach(tab => tab.classList.remove('active'));
+        // Set current year as active
+        currentYearTab.classList.add('active');
+        currentYear = currentYearString;
+        console.log('Set current year as default:', currentYear);
+      } else {
+        // If current year tab doesn't exist, use the first available tab
+        if (yearTabs.length > 0) {
+          yearTabs[0].classList.add('active');
+          currentYear = yearTabs[0].getAttribute('data-year');
+          console.log('Current year tab not found, using first available:', currentYear);
+        }
+      }
     }
     
     function switchYear(year) {
@@ -444,12 +463,7 @@ window.supabaseClient = supabase;
     initPageNavigation();
     initYearTabs();
     
-    // Set initial year based on active tab
-    const activeYearTab = document.querySelector('.year-tab.active');
-    if (activeYearTab) {
-      currentYear = activeYearTab.getAttribute('data-year');
-      console.log('Initial year set to:', currentYear);
-    }
+    // Note: currentYear is now set in initYearTabs() to default to current year
     
     // Add row function
     function addRow(group){
@@ -579,7 +593,7 @@ window.supabaseClient = supabase;
         console.log('Supabase auth state changed:', event, session ? 'User signed in' : 'User signed out');
         if (session?.user) {
           currentUser = session.user;
-        updateAuthUI();
+          updateAuthUI();
           loadUserData();
         } else if (event === 'SIGNED_OUT') {
           currentUser = null;
@@ -606,6 +620,12 @@ window.supabaseClient = supabase;
           
           // Render empty tables
           renderAll();
+        } else {
+          // No session (not signed in) - load local data if available
+          currentUser = null;
+          updateAuthUI();
+          console.log('No user session - loading local data');
+          loadLocalData();
         }
       });
       
@@ -1534,11 +1554,13 @@ window.supabaseClient = supabase;
     }
     
     function loadLocalData() {
+      console.log('Loading local data...');
       // Fallback to localStorage - COMPLETELY REPLACE state, don't merge
       const stored = localStorage.getItem('finance-notion-v6');
       if (stored) {
         try {
           const parsed = JSON.parse(stored);
+          console.log('Found local data:', parsed);
           
           // Completely reset state to avoid merging
           state = {
@@ -1564,7 +1586,36 @@ window.supabaseClient = supabase;
         } catch (e) {
           console.error('Error parsing local data:', e);
         }
+      } else {
+        console.log('No local data found - initializing with default state');
+        // No local data - initialize with default empty state
+        state = {
+          personal: [],
+          biz: [],
+          income: {
+            '2022': [],
+            '2023': [],
+            '2024': [],
+            '2025': []
+          },
+          fx: 48.1843,
+          theme: 'dark',
+          autosave: 'on',
+          includeAnnualInMonthly: true
+        };
       }
+      
+      // Ensure income structure exists
+      if (!state.income || typeof state.income !== 'object') {
+        state.income = {
+          '2022': [],
+          '2023': [],
+          '2024': [],
+          '2025': []
+        };
+      }
+      
+      console.log('Final state after loading:', state);
       renderAll();
     }
     
@@ -2368,14 +2419,99 @@ window.supabaseClient = supabase;
     function totals(arr){ const mUSD=arr.reduce((s,r)=>s+rowMonthlyUSD(r),0); const yUSD=arr.reduce((s,r)=>s+rowYearlyUSD(r),0); return { mUSD, yUSD, mEGP: usdToEgp(mUSD), yEGP: usdToEgp(yUSD) }; }
     
     // Income calculation functions
+    // For income, each entry is a single payment, not a recurring amount
     const rowIncomeMonthlyUSD = (r) => {
-      // For income, we use paidUsd as the monthly amount
-      return Number(r.paidUsd || 0);
+      // Income entries are individual payments, so monthly = 0 unless it's this month
+      const paymentDate = new Date(r.date);
+      const now = new Date();
+      const isThisMonth = paymentDate.getFullYear() === now.getFullYear() && 
+                         paymentDate.getMonth() === now.getMonth();
+      return isThisMonth ? Number(r.paidUsd || 0) : 0;
     };
     const rowIncomeYearlyUSD = (r) => {
-      // For income, yearly is the same as monthly since it's already the actual payment
-      return Number(r.paidUsd || 0);
+      // Income entries are individual payments, so yearly = 0 unless it's this year
+      const paymentDate = new Date(r.date);
+      const now = new Date();
+      const isThisYear = paymentDate.getFullYear() === now.getFullYear();
+      return isThisYear ? Number(r.paidUsd || 0) : 0;
     };
+    
+    // Calculate lifetime income totals across all years
+    function lifetimeIncomeTotals() {
+      let totalUSD = 0;
+      let totalEGP = 0;
+      let totalEntries = 0;
+      let earliestDate = null;
+      let latestDate = null;
+      
+      // Sum up income from all years and find date range
+      Object.keys(state.income).forEach(year => {
+        const yearData = state.income[year] || [];
+        yearData.forEach(r => {
+          const usdAmount = Number(r.paidUsd || 0);
+          totalUSD += usdAmount;
+          totalEGP += usdAmount * Number(state.fx || 0); // Calculate EGP from USD
+          totalEntries++;
+          
+          // Track date range for accurate time calculations
+          if (r.date) {
+            const entryDate = new Date(r.date);
+            if (!earliestDate || entryDate < earliestDate) {
+              earliestDate = entryDate;
+            }
+            if (!latestDate || entryDate > latestDate) {
+              latestDate = entryDate;
+            }
+          }
+        });
+      });
+      
+      // Calculate time span in different units
+      const now = new Date();
+      const startDate = earliestDate || now;
+      const endDate = latestDate || now;
+      
+      // Calculate actual time span (not just current year)
+      const totalDays = Math.max(1, Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1);
+      const totalHours = totalDays * 24;
+      const totalMinutes = totalHours * 60;
+      const totalSeconds = totalMinutes * 60;
+      
+      // Calculate years span
+      const yearsSpan = Math.max(1, endDate.getFullYear() - startDate.getFullYear() + 1);
+      const monthsSpan = Math.max(1, yearsSpan * 12);
+      
+      return {
+        // Totals
+        totalUSD,
+        totalEGP,
+        totalEntries,
+        
+        // Time-based calculations (based on actual earning period)
+        yearlyUSD: totalUSD / yearsSpan,
+        monthlyUSD: totalUSD / monthsSpan,
+        dailyUSD: totalUSD / totalDays,
+        hourlyUSD: totalUSD / totalHours,
+        minutelyUSD: totalUSD / totalMinutes,
+        secondlyUSD: totalUSD / totalSeconds,
+        
+        // EGP equivalents
+        yearlyEGP: totalEGP / yearsSpan,
+        monthlyEGP: totalEGP / monthsSpan,
+        dailyEGP: totalEGP / totalDays,
+        hourlyEGP: totalEGP / totalHours,
+        minutelyEGP: totalEGP / totalMinutes,
+        secondlyEGP: totalEGP / totalSeconds,
+        
+        // Additional info
+        yearsSpan,
+        monthsSpan,
+        totalDays,
+        startDate,
+        endDate
+      };
+    }
+    
     function incomeTotals(arr) { 
       const mUSD = arr.reduce((s, r) => s + rowIncomeMonthlyUSD(r), 0); 
       const yUSD = arr.reduce((s, r) => s + rowIncomeYearlyUSD(r), 0); 
@@ -2384,8 +2520,54 @@ window.supabaseClient = supabase;
 
     function setText(id,val){ const el=document.getElementById(id); if(el) el.textContent=val; }
 
+    // Skeleton loading functions
+    function showCardSkeleton(cardId) {
+      const skeleton = document.getElementById(cardId + 'Skeleton');
+      const content = skeleton?.parentElement?.children;
+      if (skeleton && content) {
+        // Hide all content except skeleton and title
+        for (let i = 0; i < content.length; i++) {
+          const child = content[i];
+          if (child !== skeleton && !child.tagName?.toLowerCase().includes('h3')) {
+            child.style.display = 'none';
+          }
+        }
+        skeleton.classList.remove('hidden');
+      }
+    }
+
+    function hideCardSkeleton(cardId) {
+      const skeleton = document.getElementById(cardId + 'Skeleton');
+      const content = skeleton?.parentElement?.children;
+      if (skeleton && content) {
+        skeleton.classList.add('hidden');
+        // Show all content
+        for (let i = 0; i < content.length; i++) {
+          const child = content[i];
+          if (child !== skeleton) {
+            child.style.display = '';
+          }
+        }
+      }
+    }
+
+    function showAllCardSkeletons() {
+      const skeletonIds = ['kpiAll', 'kpiPersonal', 'kpiBiz', 'kpiIncomeAll', 'kpiIncomeMonthly', 'kpiIncomeYearly'];
+      skeletonIds.forEach(id => showCardSkeleton(id));
+    }
+
+    function hideAllCardSkeletons() {
+      const skeletonIds = ['kpiAll', 'kpiPersonal', 'kpiBiz', 'kpiIncomeAll', 'kpiIncomeMonthly', 'kpiIncomeYearly'];
+      skeletonIds.forEach(id => hideCardSkeleton(id));
+    }
+
   function renderKPIs(){
-    const p = totals(state.personal); const b = totals(state.biz);
+    // Show skeleton loading briefly for smooth UX
+    showAllCardSkeletons();
+    
+    // Small delay to show skeleton, then render actual content
+    setTimeout(() => {
+      const p = totals(state.personal); const b = totals(state.biz);
     const currentYearData = state.income[currentYear] || [];
     const i = incomeTotals(currentYearData);
       const all = { mUSD:p.mUSD + b.mUSD, yUSD:p.yUSD + b.yUSD };
@@ -2409,50 +2591,33 @@ window.supabaseClient = supabase;
       setText('sharePersonalVal', sp + '%'); setText('shareBizVal', sb + '%');
       const ps=$('#sharePersonalBar'); if(ps) ps.style.width=sp+'%'; const bs=$('#shareBizBar'); if(bs) bs.style.width=sb+'%';
     
-    // Update Income KPIs
-    setText('kpiIncomeAllMonthlyUSD', nfUSD.format(i.mUSD));
-    setText('kpiIncomeAllMonthlyEGP', 'EGP ' + nfINT.format(Math.round(i.mEGP)));
-    setText('kpiIncomeAllYearlyUSD', nfUSD.format(i.yUSD));
-    setText('kpiIncomeAllYearlyEGP', 'EGP ' + nfINT.format(Math.round(i.yEGP)));
+    // Update Income KPIs with lifetime totals
+    const lifetimeIncome = lifetimeIncomeTotals();
+    setText('kpiIncomeAllMonthlyUSD', nfUSD.format(lifetimeIncome.monthlyUSD));
+    setText('kpiIncomeAllMonthlyEGP', 'EGP ' + nfINT.format(Math.round(lifetimeIncome.monthlyEGP)));
+    setText('kpiIncomeAllYearlyUSD', nfUSD.format(lifetimeIncome.yearlyUSD));
+    setText('kpiIncomeAllYearlyEGP', 'EGP ' + nfINT.format(Math.round(lifetimeIncome.yearlyEGP)));
     setText('kpiIncomeFxSmall', Number(state.fx||0).toFixed(4));
     setText('kpiIncomeMonthlyCurrent', nfUSD.format(i.mUSD));
     setText('kpiIncomeMonthlyCurrentEGP', 'EGP ' + nfINT.format(Math.round(i.mEGP)));
-    setText('kpiIncomeMonthlyAvg', nfUSD.format(currentYearData.length > 0 ? i.mUSD / currentYearData.length : 0));
-    setText('kpiIncomeMonthlyAvgEGP', 'EGP ' + nfINT.format(Math.round(currentYearData.length > 0 ? i.mEGP / currentYearData.length : 0)));
+     setText('kpiIncomeMonthlyAvg', nfUSD.format(lifetimeIncome.monthlyUSD));
+     setText('kpiIncomeMonthlyAvgEGP', 'EGP ' + nfINT.format(Math.round(lifetimeIncome.monthlyEGP)));
     setText('kpiIncomeYearlyCurrent', nfUSD.format(i.yUSD));
     setText('kpiIncomeYearlyCurrentEGP', 'EGP ' + nfINT.format(Math.round(i.yEGP)));
-    setText('kpiIncomeYearlyTarget', nfUSD.format(i.yUSD * 1.2)); // 20% above current as target
-    setText('kpiIncomeYearlyTargetEGP', 'EGP ' + nfINT.format(Math.round(i.yEGP * 1.2)));
+    setText('kpiIncomeYearlyTarget', nfUSD.format(lifetimeIncome.yearlyUSD * 1.2)); // 20% above lifetime as target
+    setText('kpiIncomeYearlyTargetEGP', 'EGP ' + nfINT.format(Math.round(lifetimeIncome.yearlyEGP * 1.2)));
     
-    // Year progress calculation
-    const now = new Date();
-    const currentYearNum = parseInt(currentYear);
-    const yearStart = new Date(currentYearNum, 0, 1);
-    const yearEnd = new Date(currentYearNum, 11, 31, 23, 59, 59);
-    const yearProgress = Math.round(((now - yearStart) / (yearEnd - yearStart)) * 100);
-    const yearProgressPct = Math.min(Math.max(yearProgress, 0), 100);
-    
-    // Calculate days left in the year
-    const daysLeft = Math.max(0, Math.ceil((yearEnd - now) / (1000 * 60 * 60 * 24)));
-    
-    setText('shareIncomeCompletedVal', yearProgressPct + '%');
-    setText('shareIncomePendingVal', daysLeft.toString());
-    const completedBar = $('#shareIncomeCompletedBar');
-    const pendingBar = $('#shareIncomePendingBar');
-    if (completedBar) {
-      completedBar.style.width = yearProgressPct + '%';
-      completedBar.style.background = 'linear-gradient(90deg, #10b981, #059669)';
-    }
-    if (pendingBar) {
-      // Show days left as a visual indicator (inverse of year progress)
-      const daysLeftPct = Math.round((daysLeft / 365) * 100);
-      pendingBar.style.width = daysLeftPct + '%';
-      pendingBar.style.background = 'linear-gradient(90deg, #f59e0b, #d97706)';
-    }
+    // Update lifetime income breakdown (no progress bars)
+    setText('shareIncomeCompletedVal', nfUSD.format(lifetimeIncome.totalUSD));
+    setText('shareIncomePendingVal', lifetimeIncome.totalEntries.toString());
     
     // Update analytics content
     updateAnalytics();
     updateIncomeAnalytics();
+    
+    // Hide skeleton loading after content is rendered
+    hideAllCardSkeletons();
+    }, 150); // 150ms delay to show skeleton briefly
     }
     
     // Income Analytics function
@@ -2468,119 +2633,154 @@ window.supabaseClient = supabase;
       const container = document.getElementById('analyticsIncomeAll');
       if (!container) return;
 
-      const currentYearData = state.income[currentYear] || [];
-      const activeItems = currentYearData.filter(r => r.status === 'Active');
-      const totalItems = currentYearData.length;
-      const cancelledItems = currentYearData.filter(r => r.status === 'Cancelled').length;
+      const lifetimeIncome = lifetimeIncomeTotals();
       
-      // Calculate averages
-      const avgIncome = activeItems.length > 0 ? income.mUSD / activeItems.length : 0;
+      // Get all income data across all years
+      let allIncomeEntries = [];
+      Object.keys(state.income).forEach(year => {
+        const yearData = state.income[year] || [];
+        allIncomeEntries = allIncomeEntries.concat(yearData);
+      });
       
-      // Calculate monthly vs annual distribution
-      const monthlyItems = activeItems.filter(r => r.billing === 'Monthly').length;
-      const annualItems = activeItems.filter(r => r.billing === 'Annually').length;
+      const totalItems = allIncomeEntries.length;
+      const avgIncomePerEntry = totalItems > 0 ? lifetimeIncome.totalUSD / totalItems : 0;
       
-      // Calculate spending breakdowns
-      const dailyIncome = income.mUSD / 30;
-      const weeklyIncome = income.mUSD / 4.33;
-      
-      // Find highest income
-      const sortedByCost = activeItems.sort((a, b) => {
-        const aCost = a.billing === 'Monthly' ? Number(a.cost || 0) : Number(a.cost || 0) / 12;
-        const bCost = b.billing === 'Monthly' ? Number(b.cost || 0) : Number(b.cost || 0) / 12;
-        return bCost - aCost;
+      // Find highest and lowest income entries
+      const sortedByCost = allIncomeEntries.sort((a, b) => {
+        return Number(b.paidUsd || 0) - Number(a.paidUsd || 0);
       });
       
       const highestIncome = sortedByCost[0];
+      const lowestIncome = sortedByCost[sortedByCost.length - 1];
+      
+      // Calculate year distribution
+      const yearDistribution = {};
+      Object.keys(state.income).forEach(year => {
+        const yearData = state.income[year] || [];
+        const yearTotal = yearData.reduce((sum, r) => sum + Number(r.paidUsd || 0), 0);
+        if (yearTotal > 0) {
+          yearDistribution[year] = yearTotal;
+        }
+      });
+      
+      const bestYear = Object.keys(yearDistribution).reduce((a, b) => 
+        yearDistribution[a] > yearDistribution[b] ? a : b, Object.keys(yearDistribution)[0]);
+      const bestYearAmount = yearDistribution[bestYear] || 0;
 
       container.innerHTML = `
-        <div class="analytics-grid-4">
-          <div class="analytics-section">
-            <div class="section-title">Total Income</div>
-            <div class="metric-grid">
-              <div class="metric-item">
-                <div class="metric-value">${totalItems}</div>
-                <div class="metric-label">All Projects</div>
-              </div>
-              <div class="metric-item">
-                <div class="metric-value">${activeItems.length}</div>
-                <div class="metric-label">Active</div>
-              </div>
+        <div class="analytics-section">
+          <div class="section-title">🏆 Lifetime Income Overview</div>
+          <div class="analytics-grid-4">
+            <div class="metric-item">
+              <div class="metric-value">${nfUSD.format(lifetimeIncome.totalUSD)}</div>
+              <div class="metric-label">Total Lifetime</div>
             </div>
-          </div>
-          
-          <div class="analytics-section">
-            <div class="section-title">Revenue Streams</div>
-            <div class="metric-grid">
-              <div class="metric-item">
-                <div class="metric-value">${monthlyItems}</div>
-                <div class="metric-label">Monthly</div>
-              </div>
-              <div class="metric-item">
-                <div class="metric-value">${annualItems}</div>
-                <div class="metric-label">Annual</div>
-              </div>
+            <div class="metric-item">
+              <div class="metric-value">${totalItems}</div>
+              <div class="metric-label">Total Entries</div>
             </div>
-          </div>
-          
-          <div class="analytics-section">
-            <div class="section-title">Time Breakdown</div>
-            <div class="metric-grid">
-              <div class="metric-item">
-                <div class="metric-value">${nfUSD.format(income.mUSD)}</div>
-                <div class="metric-label">Monthly</div>
-              </div>
-              <div class="metric-item">
-                <div class="metric-value">${nfUSD.format(dailyIncome)}</div>
-                <div class="metric-label">Daily</div>
-              </div>
-              <div class="metric-item">
-                <div class="metric-value">${nfUSD.format(weeklyIncome)}</div>
-                <div class="metric-label">Weekly</div>
-              </div>
-              <div class="metric-item">
-                <div class="metric-value">${nfUSD.format(dailyIncome / 24)}</div>
-                <div class="metric-label">Hourly</div>
-              </div>
-              <div class="metric-item">
-                <div class="metric-value">${nfUSD.format((dailyIncome / 24) / 60)}</div>
-                <div class="metric-label">Per Minute</div>
-              </div>
-              <div class="metric-item">
-                <div class="metric-value">${nfUSD.format(((dailyIncome / 24) / 60) / 60)}</div>
-                <div class="metric-label">Per Second</div>
-              </div>
-              <div class="metric-item">
-                <div class="metric-value">${nfUSD.format(income.yUSD)}</div>
-                <div class="metric-label">Yearly</div>
-              </div>
+            <div class="metric-item">
+              <div class="metric-value">${nfUSD.format(avgIncomePerEntry)}</div>
+              <div class="metric-label">Avg Per Entry</div>
             </div>
-          </div>
-          
-          <div class="analytics-section">
-            <div class="section-title">Average Project</div>
-            <div class="metric-grid">
-              <div class="metric-item">
-                <div class="metric-value">${nfUSD.format(avgIncome)}</div>
-                <div class="metric-label">Monthly</div>
-              </div>
-              <div class="metric-item">
-                <div class="metric-value">${nfUSD.format(avgIncome * 12)}</div>
-                <div class="metric-label">Yearly</div>
-              </div>
+            <div class="metric-item">
+              <div class="metric-value">${Object.keys(yearDistribution).length}</div>
+              <div class="metric-label">Active Years</div>
             </div>
           </div>
         </div>
 
         <div class="analytics-section">
-          <div class="section-title">Insights</div>
+          <div class="section-title">⏰ Complete Time Breakdown</div>
+          <div class="analytics-grid-3">
+            <div class="metric-item">
+              <div class="metric-value">${nfUSD.format(lifetimeIncome.yearlyUSD)}</div>
+              <div class="metric-label">Per Year</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-value">${nfUSD.format(lifetimeIncome.monthlyUSD)}</div>
+              <div class="metric-label">Per Month</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-value">${nfUSD.format(lifetimeIncome.dailyUSD)}</div>
+              <div class="metric-label">Per Day</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-value">${nfUSD.format(lifetimeIncome.hourlyUSD)}</div>
+              <div class="metric-label">Per Hour</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-value">${nfUSD.format(lifetimeIncome.minutelyUSD)}</div>
+              <div class="metric-label">Per Minute</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-value">${nfUSD.format(lifetimeIncome.secondlyUSD)}</div>
+              <div class="metric-label">Per Second</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="analytics-section">
+          <div class="section-title">💰 EGP Breakdown</div>
+          <div class="analytics-grid-3">
+            <div class="metric-item">
+              <div class="metric-value">EGP ${nfINT.format(Math.round(lifetimeIncome.totalEGP))}</div>
+              <div class="metric-label">Total Lifetime</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-value">EGP ${nfINT.format(Math.round(lifetimeIncome.monthlyEGP))}</div>
+              <div class="metric-label">Per Month</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-value">EGP ${nfINT.format(Math.round(lifetimeIncome.dailyEGP))}</div>
+              <div class="metric-label">Per Day</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-value">EGP ${nfINT.format(Math.round(lifetimeIncome.hourlyEGP))}</div>
+              <div class="metric-label">Per Hour</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-value">EGP ${Math.round(lifetimeIncome.minutelyEGP * 100) / 100}</div>
+              <div class="metric-label">Per Minute</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-value">EGP ${Math.round(lifetimeIncome.secondlyEGP * 10000) / 10000}</div>
+              <div class="metric-label">Per Second</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="analytics-section">
+          <div class="section-title">📊 Performance Insights</div>
+          <div class="analytics-grid">
+            <div class="metric-item">
+              <div class="metric-value">${bestYear || 'N/A'}</div>
+              <div class="metric-label">Best Year</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-value">${nfUSD.format(bestYearAmount)}</div>
+              <div class="metric-label">Best Year Total</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-value">${highestIncome ? nfUSD.format(Number(highestIncome.paidUsd || 0)) : 'N/A'}</div>
+              <div class="metric-label">Highest Entry</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-value">${lowestIncome ? nfUSD.format(Number(lowestIncome.paidUsd || 0)) : 'N/A'}</div>
+              <div class="metric-label">Lowest Entry</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="analytics-section">
+          <div class="section-title">💡 Smart Insights</div>
           <div class="insight-card">
             <div class="insight-text">
               <i class="fas fa-chart-line insight-icon"></i>
-              Total Revenue: <strong>${nfUSD.format(income.mUSD)}</strong>/month | 
-              Active Projects: <strong>${activeItems.length}</strong> | 
-              Daily Income: <strong>${nfUSD.format(dailyIncome)}</strong>
-              ${highestIncome ? ` | Top Project: <strong>${highestIncome.name || 'Unnamed'}</strong> (${nfUSD.format(highestIncome.billing === 'Monthly' ? Number(highestIncome.cost || 0) : Number(highestIncome.cost || 0) / 12)})` : ''}
+              You've earned <strong>${nfUSD.format(lifetimeIncome.totalUSD)}</strong> across <strong>${totalItems}</strong> projects over <strong>${Object.keys(yearDistribution).length}</strong> years.
+              That's <strong>${nfUSD.format(lifetimeIncome.dailyUSD)}</strong> per day or <strong>${nfUSD.format(lifetimeIncome.hourlyUSD)}</strong> per hour!
+              ${bestYear ? ` Your best year was <strong>${bestYear}</strong> with <strong>${nfUSD.format(bestYearAmount)}</strong>.` : ''}
+              ${highestIncome ? ` Your highest single entry was <strong>${nfUSD.format(Number(highestIncome.paidUsd || 0))}</strong> from "${highestIncome.name || 'Unnamed Project'}".` : ''}
             </div>
           </div>
         </div>
@@ -2591,88 +2791,120 @@ window.supabaseClient = supabase;
       const container = document.getElementById('analyticsIncomeMonthly');
       if (!container) return;
 
+      const lifetimeIncome = lifetimeIncomeTotals();
       const currentYearData = state.income[currentYear] || [];
-      const activeItems = currentYearData.filter(r => r.status === 'Active');
-      const monthlyItems = activeItems.filter(r => r.billing === 'Monthly');
-      const annualItems = activeItems.filter(r => r.billing === 'Annually');
+      const currentMonthIncome = income.mUSD;
       
-      const avgMonthly = monthlyItems.length > 0 ? monthlyItems.reduce((sum, r) => sum + Number(r.cost || 0), 0) / monthlyItems.length : 0;
-      const avgAnnual = annualItems.length > 0 ? annualItems.reduce((sum, r) => sum + Number(r.cost || 0), 0) / annualItems.length : 0;
+      // Calculate actual monthly totals across all years
+      const monthlyTotals = {};
+      Object.keys(state.income).forEach(year => {
+        const yearData = state.income[year] || [];
+        yearData.forEach(r => {
+          if (r.date && r.paidUsd) {
+            const date = new Date(r.date);
+            const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+            if (!monthlyTotals[monthKey]) {
+              monthlyTotals[monthKey] = 0;
+            }
+            monthlyTotals[monthKey] += Number(r.paidUsd || 0);
+          }
+        });
+      });
       
-      const dailyIncome = income.mUSD / 30;
-      const hourlyIncome = income.mUSD / 720;
+      const allMonthlyTotals = Object.values(monthlyTotals);
+      const avgMonthlyAllTime = allMonthlyTotals.length > 0 ? 
+        allMonthlyTotals.reduce((sum, val) => sum + val, 0) / allMonthlyTotals.length : 0;
+      const bestMonth = allMonthlyTotals.length > 0 ? Math.max(...allMonthlyTotals) : 0;
+      const worstMonth = allMonthlyTotals.length > 0 ? Math.min(...allMonthlyTotals) : 0;
+      
+      // Performance comparison
+      const vsAverage = avgMonthlyAllTime > 0 ? ((currentMonthIncome - avgMonthlyAllTime) / avgMonthlyAllTime) * 100 : 0;
+      const vsBest = bestMonth > 0 ? ((currentMonthIncome - bestMonth) / bestMonth) * 100 : 0;
 
       container.innerHTML = `
-        <div class="analytics-grid-4">
-          <div class="analytics-section">
-            <div class="section-title">Current Month</div>
-            <div class="metric-grid">
-              <div class="metric-item">
-                <div class="metric-value">${nfUSD.format(income.mUSD)}</div>
-                <div class="metric-label">Total</div>
-              </div>
-              <div class="metric-item">
-                <div class="metric-value">${activeItems.length}</div>
-                <div class="metric-label">Projects</div>
-              </div>
+        <div class="analytics-section">
+          <div class="section-title">📅 Monthly Performance</div>
+          <div class="analytics-grid-4">
+            <div class="metric-item">
+              <div class="metric-value">${nfUSD.format(currentMonthIncome)}</div>
+              <div class="metric-label">Current Month</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-value">${nfUSD.format(avgMonthlyAllTime)}</div>
+              <div class="metric-label">All-Time Avg</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-value">${nfUSD.format(bestMonth)}</div>
+              <div class="metric-label">Best Month</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-value">${nfUSD.format(worstMonth)}</div>
+              <div class="metric-label">Worst Month</div>
             </div>
           </div>
-          
-          <div class="analytics-section">
-            <div class="section-title">Averages</div>
-            <div class="metric-grid">
-              <div class="metric-item">
-                <div class="metric-value">${nfUSD.format(avgMonthly)}</div>
-                <div class="metric-label">Monthly</div>
-              </div>
-              <div class="metric-item">
-                <div class="metric-value">${nfUSD.format(avgAnnual)}</div>
-                <div class="metric-label">Annual</div>
-              </div>
+        </div>
+
+        <div class="analytics-section">
+          <div class="section-title">⏰ Monthly Time Breakdown</div>
+          <div class="analytics-grid-3">
+            <div class="metric-item">
+              <div class="metric-value">${nfUSD.format(lifetimeIncome.monthlyUSD)}</div>
+              <div class="metric-label">Per Month</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-value">${nfUSD.format(lifetimeIncome.dailyUSD)}</div>
+              <div class="metric-label">Per Day</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-value">${nfUSD.format(lifetimeIncome.hourlyUSD)}</div>
+              <div class="metric-label">Per Hour</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-value">${nfUSD.format(lifetimeIncome.minutelyUSD)}</div>
+              <div class="metric-label">Per Minute</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-value">${nfUSD.format(lifetimeIncome.secondlyUSD)}</div>
+              <div class="metric-label">Per Second</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-value">${currentYearData.length}</div>
+              <div class="metric-label">This Year Entries</div>
             </div>
           </div>
-          
-          <div class="analytics-section">
-            <div class="section-title">Time Breakdown</div>
-            <div class="metric-grid">
-              <div class="metric-item">
-                <div class="metric-value">${nfUSD.format(income.mUSD)}</div>
-                <div class="metric-label">Monthly</div>
-              </div>
-              <div class="metric-item">
-                <div class="metric-value">${nfUSD.format(dailyIncome)}</div>
-                <div class="metric-label">Daily</div>
-              </div>
-              <div class="metric-item">
-                <div class="metric-value">${nfUSD.format(hourlyIncome)}</div>
-                <div class="metric-label">Hourly</div>
-              </div>
-              <div class="metric-item">
-                <div class="metric-value">${nfUSD.format(hourlyIncome / 60)}</div>
-                <div class="metric-label">Per Minute</div>
-              </div>
-              <div class="metric-item">
-                <div class="metric-value">${nfUSD.format((hourlyIncome / 60) / 60)}</div>
-                <div class="metric-label">Per Second</div>
-              </div>
-              <div class="metric-item">
-                <div class="metric-value">${nfUSD.format(income.yUSD)}</div>
-                <div class="metric-label">Yearly</div>
-              </div>
+        </div>
+
+        <div class="analytics-section">
+          <div class="section-title">📊 Performance Comparison</div>
+          <div class="analytics-grid">
+            <div class="metric-item">
+              <div class="metric-value ${vsAverage >= 0 ? 'trend-up' : 'trend-down'}">${vsAverage >= 0 ? '+' : ''}${vsAverage.toFixed(1)}%</div>
+              <div class="metric-label">vs All-Time Avg</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-value ${vsBest >= 0 ? 'trend-up' : 'trend-down'}">${vsBest >= 0 ? '+' : ''}${vsBest.toFixed(1)}%</div>
+              <div class="metric-label">vs Best Month</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-value">${allMonthlyTotals.length}</div>
+              <div class="metric-label">Months Tracked</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-value">EGP ${nfINT.format(Math.round(lifetimeIncome.monthlyEGP))}</div>
+              <div class="metric-label">Monthly EGP</div>
             </div>
           </div>
-          
-          <div class="analytics-section">
-            <div class="section-title">Distribution</div>
-            <div class="metric-grid">
-              <div class="metric-item">
-                <div class="metric-value">${monthlyItems.length}</div>
-                <div class="metric-label">Monthly</div>
-              </div>
-              <div class="metric-item">
-                <div class="metric-value">${annualItems.length}</div>
-                <div class="metric-label">Annual</div>
-              </div>
+        </div>
+
+        <div class="analytics-section">
+          <div class="section-title">💡 Monthly Insights</div>
+          <div class="insight-card">
+            <div class="insight-text">
+              <i class="fas fa-calendar-alt insight-icon"></i>
+              This month you're earning <strong>${nfUSD.format(currentMonthIncome)}</strong>, which is 
+              <strong>${vsAverage >= 0 ? vsAverage.toFixed(1) + '% above' : Math.abs(vsAverage).toFixed(1) + '% below'}</strong> your all-time monthly average.
+              ${bestMonth > 0 ? ` Your best month ever was <strong>${nfUSD.format(bestMonth)}</strong>.` : ''}
+              At this rate, you earn <strong>${nfUSD.format(lifetimeIncome.dailyUSD)}</strong> per day!
             </div>
           </div>
         </div>
@@ -2683,70 +2915,143 @@ window.supabaseClient = supabase;
       const container = document.getElementById('analyticsIncomeYearly');
       if (!container) return;
 
+      const lifetimeIncome = lifetimeIncomeTotals();
       const currentYearData = state.income[currentYear] || [];
-      const activeItems = currentYearData.filter(r => r.status === 'Active');
-      const targetIncome = income.yUSD * 1.2;
-      const progressToTarget = targetIncome > 0 ? Math.round((income.yUSD / targetIncome) * 100) : 0;
+      const currentYearTotal = income.yUSD;
       
-      const monthlyTarget = targetIncome / 12;
-      const remainingMonths = 12 - new Date().getMonth();
-      const projectedYearly = income.yUSD + (income.mUSD * remainingMonths);
+      // Calculate yearly performance across all years
+      const yearlyTotals = {};
+      Object.keys(state.income).forEach(year => {
+        const yearData = state.income[year] || [];
+        const yearTotal = yearData.reduce((sum, r) => sum + Number(r.paidUsd || 0), 0);
+        if (yearTotal > 0) {
+          yearlyTotals[year] = yearTotal;
+        }
+      });
+      
+      const allYearlyValues = Object.values(yearlyTotals);
+      const avgYearlyAllTime = allYearlyValues.length > 0 ? 
+        allYearlyValues.reduce((sum, val) => sum + val, 0) / allYearlyValues.length : 0;
+      const bestYear = Object.keys(yearlyTotals).reduce((a, b) => 
+        yearlyTotals[a] > yearlyTotals[b] ? a : b, Object.keys(yearlyTotals)[0]);
+      const bestYearAmount = yearlyTotals[bestYear] || 0;
+      const worstYearAmount = allYearlyValues.length > 0 ? Math.min(...allYearlyValues) : 0;
+      
+      // Performance comparison
+      const vsAverage = avgYearlyAllTime > 0 ? ((currentYearTotal - avgYearlyAllTime) / avgYearlyAllTime) * 100 : 0;
+      const vsBest = bestYearAmount > 0 ? ((currentYearTotal - bestYearAmount) / bestYearAmount) * 100 : 0;
+      
+      // Growth calculation
+      const years = Object.keys(yearlyTotals).sort();
+      const growthRate = years.length > 1 ? 
+        ((yearlyTotals[years[years.length - 1]] - yearlyTotals[years[0]]) / yearlyTotals[years[0]]) * 100 : 0;
 
       container.innerHTML = `
-        <div class="analytics-grid-4">
-          <div class="analytics-section">
-            <div class="section-title">This Year</div>
-            <div class="metric-grid">
-              <div class="metric-item">
-                <div class="metric-value">${nfUSD.format(income.yUSD)}</div>
-                <div class="metric-label">Current</div>
-              </div>
-              <div class="metric-item">
-                <div class="metric-value">${nfUSD.format(targetIncome)}</div>
-                <div class="metric-label">Target</div>
-              </div>
+        <div class="analytics-section">
+          <div class="section-title">📈 Yearly Performance</div>
+          <div class="analytics-grid-4">
+            <div class="metric-item">
+              <div class="metric-value">${nfUSD.format(currentYearTotal)}</div>
+              <div class="metric-label">This Year (${currentYear})</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-value">${nfUSD.format(avgYearlyAllTime)}</div>
+              <div class="metric-label">All-Time Avg</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-value">${nfUSD.format(bestYearAmount)}</div>
+              <div class="metric-label">Best Year (${bestYear || 'N/A'})</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-value">${nfUSD.format(worstYearAmount)}</div>
+              <div class="metric-label">Worst Year</div>
             </div>
           </div>
-          
-          <div class="analytics-section">
-            <div class="section-title">Progress</div>
-            <div class="metric-grid">
-              <div class="metric-item">
-                <div class="metric-value">${progressToTarget}%</div>
-                <div class="metric-label">To Target</div>
-              </div>
-              <div class="metric-item">
-                <div class="metric-value">${nfUSD.format(targetIncome - income.yUSD)}</div>
-                <div class="metric-label">Remaining</div>
-              </div>
+        </div>
+
+        <div class="analytics-section">
+          <div class="section-title">⏰ Yearly Time Breakdown</div>
+          <div class="analytics-grid-3">
+            <div class="metric-item">
+              <div class="metric-value">${nfUSD.format(lifetimeIncome.yearlyUSD)}</div>
+              <div class="metric-label">Per Year</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-value">${nfUSD.format(lifetimeIncome.monthlyUSD)}</div>
+              <div class="metric-label">Per Month</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-value">${nfUSD.format(lifetimeIncome.dailyUSD)}</div>
+              <div class="metric-label">Per Day</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-value">${nfUSD.format(lifetimeIncome.hourlyUSD)}</div>
+              <div class="metric-label">Per Hour</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-value">${nfUSD.format(lifetimeIncome.minutelyUSD)}</div>
+              <div class="metric-label">Per Minute</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-value">${nfUSD.format(lifetimeIncome.secondlyUSD)}</div>
+              <div class="metric-label">Per Second</div>
             </div>
           </div>
-          
-          <div class="analytics-section">
-            <div class="section-title">Projection</div>
-            <div class="metric-grid">
-              <div class="metric-item">
-                <div class="metric-value">${nfUSD.format(projectedYearly)}</div>
-                <div class="metric-label">Projected</div>
-              </div>
-              <div class="metric-item">
-                <div class="metric-value">${nfUSD.format(monthlyTarget)}</div>
-                <div class="metric-label">Monthly Target</div>
-              </div>
+        </div>
+
+        <div class="analytics-section">
+          <div class="section-title">📊 Growth & Comparison</div>
+          <div class="analytics-grid">
+            <div class="metric-item">
+              <div class="metric-value ${vsAverage >= 0 ? 'trend-up' : 'trend-down'}">${vsAverage >= 0 ? '+' : ''}${vsAverage.toFixed(1)}%</div>
+              <div class="metric-label">vs All-Time Avg</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-value ${vsBest >= 0 ? 'trend-up' : 'trend-down'}">${vsBest >= 0 ? '+' : ''}${vsBest.toFixed(1)}%</div>
+              <div class="metric-label">vs Best Year</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-value ${growthRate >= 0 ? 'trend-up' : 'trend-down'}">${growthRate >= 0 ? '+' : ''}${growthRate.toFixed(1)}%</div>
+              <div class="metric-label">Total Growth</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-value">${years.length}</div>
+              <div class="metric-label">Years Tracked</div>
             </div>
           </div>
-          
-          <div class="analytics-section">
-            <div class="section-title">Performance</div>
-            <div class="metric-grid">
-              <div class="metric-item">
-                <div class="metric-value">${activeItems.length}</div>
-                <div class="metric-label">Active</div>
-              </div>
-              <div class="metric-item">
-                <div class="metric-value">${nfUSD.format(income.yUSD / 12)}</div>
-                <div class="metric-label">Monthly Avg</div>
-              </div>
+        </div>
+
+        <div class="analytics-section">
+          <div class="section-title">💰 EGP Yearly Breakdown</div>
+          <div class="analytics-grid">
+            <div class="metric-item">
+              <div class="metric-value">EGP ${nfINT.format(Math.round(lifetimeIncome.yearlyEGP))}</div>
+              <div class="metric-label">Per Year</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-value">EGP ${nfINT.format(Math.round(lifetimeIncome.monthlyEGP))}</div>
+              <div class="metric-label">Per Month</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-value">EGP ${nfINT.format(Math.round(lifetimeIncome.dailyEGP))}</div>
+              <div class="metric-label">Per Day</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-value">${currentYearData.length}</div>
+              <div class="metric-label">This Year Entries</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="analytics-section">
+          <div class="section-title">💡 Yearly Insights</div>
+          <div class="insight-card">
+            <div class="insight-text">
+              <i class="fas fa-chart-bar insight-icon"></i>
+              This year (${currentYear}) you've earned <strong>${nfUSD.format(currentYearTotal)}</strong>, which is 
+              <strong>${vsAverage >= 0 ? vsAverage.toFixed(1) + '% above' : Math.abs(vsAverage).toFixed(1) + '% below'}</strong> your all-time yearly average.
+              ${bestYear && bestYear !== currentYear ? ` Your best year was <strong>${bestYear}</strong> with <strong>${nfUSD.format(bestYearAmount)}</strong>.` : ''}
+              ${years.length > 1 ? ` Over ${years.length} years, you've grown by <strong>${growthRate >= 0 ? '+' : ''}${growthRate.toFixed(1)}%</strong>!` : ''}
             </div>
           </div>
         </div>
@@ -3968,10 +4273,29 @@ window.supabaseClient = supabase;
         const iconBtn=iconDiv.querySelector('[data-choose-icon]');
         iconBtn.addEventListener('click', ()=> openIconPicker(arr, idx));
         const delBtn=del.querySelector('[data-del]'); 
-        delBtn.addEventListener('click', ()=>{ 
+        delBtn.addEventListener('click', async ()=>{ 
           if(delBtn.classList.contains('delete-confirm')){
+            // If the row has an ID, delete it from Supabase first
+            if (row.id && currentUser && supabaseReady) {
+              const tableName = isBiz ? 'business_expenses' : 'personal_expenses';
+              const { error } = await window.supabaseClient
+                .from(tableName)
+                .delete()
+                .eq('id', row.id);
+              
+              if (error) {
+                console.error(`Error deleting ${tableName} record:`, error);
+                showNotification(`Failed to delete ${isBiz ? 'business' : 'personal'} expense`, 'error', 2000);
+                return; // Don't delete locally if Supabase delete failed
+              } else {
+                console.log(`Successfully deleted ${tableName} record:`, row.id);
+                showNotification(`${isBiz ? 'Business' : 'Personal'} expense deleted`, 'success', 1000);
+              }
+            }
+            
+            // Remove from local state
             arr.splice(idx,1); 
-            save(); 
+            saveToLocal(); // Save locally as well
             renderAll();
           } else {
             delBtn.classList.add('delete-confirm');
@@ -3997,9 +4321,9 @@ window.supabaseClient = supabase;
       sumHTML += '<div></div>';
       // label
       sumHTML += '<div class="font-medium" style="color:var(--muted)">Totals</div>';
-      // spacer columns before computed values
-      if(isBiz){ sumHTML += '<div></div><div></div><div></div><div></div>'; }
-      else { sumHTML += '<div></div><div></div><div></div>'; }
+      // spacer columns before computed values (Cost USD, Status, Billing, Next for Biz)
+      if(isBiz){ sumHTML += '<div></div><div></div><div></div><div></div>'; } // Cost, Status, Billing, Next
+      else { sumHTML += '<div></div><div></div><div></div>'; } // Cost, Status, Billing
       // computed sum cells
       sumHTML += '<div class="font-semibold">$'+nfINT.format(t.mUSD)+'</div>';
       sumHTML += '<div class="font-semibold">$'+nfINT.format(t.yUSD)+'</div>';
@@ -4087,7 +4411,7 @@ window.supabaseClient = supabase;
       const tagsInput = document.createElement('input');
       tagsInput.className = 'tag-input';
       tagsInput.type = 'text';
-      tagsInput.placeholder = existingTags.length > 0 ? 'Add+' : 'Add+';
+      tagsInput.placeholder = '';
       tagsInput.addEventListener('input', function() {
         handleTagInput(this, tagsWrapper, row);
         instantSaveIncomeRow(row, currentYear); // Instant save when tags are modified
@@ -4265,16 +4589,8 @@ window.supabaseClient = supabase;
         
         if (methodMenu.classList.contains('show')) {
           methodMenu.classList.remove('show');
-          methodMenu.remove(); // Remove from document.body
         } else {
-          // Position dropdown using getBoundingClientRect
-          const triggerRect = methodTrigger.getBoundingClientRect();
-          methodMenu.style.left = triggerRect.left + 'px';
-          methodMenu.style.top = (triggerRect.bottom + 4) + 'px';
-          methodMenu.style.minWidth = triggerRect.width + 'px';
-          
-          // Append to document body
-          document.body.appendChild(methodMenu);
+          // No need to position - CSS handles it with absolute positioning
           methodMenu.classList.add('show');
         }
       });
@@ -4285,12 +4601,9 @@ window.supabaseClient = supabase;
       
       // Close dropdown when clicking outside
       document.addEventListener('click', function(e) {
-        if (!methodDropdown.contains(e.target) && !methodMenu.contains(e.target)) {
+        if (!methodDropdown.contains(e.target)) {
           methodDropdown.classList.remove('open');
           methodMenu.classList.remove('show');
-          if (methodMenu.parentNode) {
-            methodMenu.remove(); // Remove from document.body
-          }
         }
       });
       
@@ -4361,15 +4674,13 @@ window.supabaseClient = supabase;
       let sumHTML = '';
       sumHTML += '<div></div>'; // drag handle
       sumHTML += '<div></div>'; // icon
-      sumHTML += '<div style="font-weight: 600;">Total</div>'; // name
+      sumHTML += '<div style="font-weight: 600;">Total</div>'; // project name
       sumHTML += '<div></div>'; // tags
       sumHTML += '<div></div>'; // date
-      sumHTML += '<div></div>'; // progress
-      sumHTML += `<div>$${nfINT.format(totalAllPayment)}</div>`; // all payment
-      sumHTML += `<div>$${nfINT.format(totalPaidUsd)}</div>`; // paid usd
-      sumHTML += `<div>EGP ${nfINT.format(Math.round(totalPaidEgp))}</div>`; // paid egp
+      sumHTML += `<div class="font-semibold">$${nfINT.format(totalAllPayment)}</div>`; // all payment
+      sumHTML += `<div class="font-semibold">$${nfINT.format(totalPaidUsd)}</div>`; // paid usd
+      sumHTML += `<div class="font-semibold">EGP ${nfINT.format(Math.round(totalPaidEgp))}</div>`; // paid egp
       sumHTML += '<div></div>'; // method
-      sumHTML += '<div></div>'; // note
       sumHTML += '<div></div>'; // delete
       sumEl.innerHTML = sumHTML;
     }
@@ -5290,9 +5601,10 @@ window.supabaseClient = supabase;
        }
      });
 
+    // Note: renderAll() is now called after data loading in loadUserData() or loadLocalData()
+    // Initial render will happen after authentication check completes
 
-  renderAll();
-
+    // Note: Using built-in sticky headers with position: sticky on .row-head elements
 
     // Drag and Drop functionality for financial columns
     let draggedElement = null;
@@ -5571,7 +5883,7 @@ window.supabaseClient = supabase;
         
         // Update placeholder if max tags reached
         if (wrapper.querySelectorAll('.tag-chip').length >= maxTags) {
-          input.placeholder = 'Max tags reached';
+          input.placeholder = '';
           input.disabled = true;
         }
       } else if (value.length > 0) {
@@ -5605,7 +5917,7 @@ window.supabaseClient = supabase;
           
           // Update placeholder if max tags reached
           if (wrapper.querySelectorAll('.tag-chip').length >= maxTags) {
-            input.placeholder = 'Max tags reached';
+            input.placeholder = '';
             input.disabled = true;
           }
         }
@@ -5623,7 +5935,7 @@ window.supabaseClient = supabase;
           
           // Re-enable input if under max tags
           if (wrapper.querySelectorAll('.tag-chip').length < 5) {
-            input.placeholder = 'Add+';
+            input.placeholder = '';
             input.disabled = false;
           }
         }
@@ -5645,6 +5957,13 @@ window.supabaseClient = supabase;
         return textSpan ? textSpan.textContent.trim() : '';
       }).filter(tag => tag);
       row.tags = tags.join(',');
+      
+      // Add expanded class if 3+ tags
+      if (tags.length >= 3) {
+        wrapper.classList.add('expanded');
+      } else {
+        wrapper.classList.remove('expanded');
+      }
       
       // Use instant save for income rows, regular save for others
       if (wrapper.closest('.row-income')) {
@@ -5710,14 +6029,8 @@ window.supabaseClient = supabase;
         dropdown.appendChild(suggestion);
       });
       
-      // Position dropdown using getBoundingClientRect
-      const inputRect = input.getBoundingClientRect();
-      dropdown.style.left = inputRect.left + 'px';
-      dropdown.style.top = (inputRect.bottom + 4) + 'px';
-      dropdown.style.minWidth = inputRect.width + 'px';
-      
-      // Append to document body
-      document.body.appendChild(dropdown);
+      // Append dropdown to the wrapper (relative positioning)
+      wrapper.appendChild(dropdown);
       
       // Show dropdown
       console.log('Dropdown created with', filteredTags.length, 'suggestions');
@@ -5728,7 +6041,7 @@ window.supabaseClient = supabase;
     }
     
     function hideTagSuggestions(wrapper) {
-      const dropdown = document.querySelector('.tag-dropdown');
+      const dropdown = wrapper.querySelector('.tag-dropdown');
       if (dropdown) {
         dropdown.remove();
       }

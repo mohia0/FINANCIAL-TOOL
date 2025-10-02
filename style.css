@@ -758,18 +758,27 @@
     }
     
     .tag {
-      display: inline-block;
-      padding: 4px 10px;
-      border-radius: 16px;
-      font-size: 0.65rem;
-      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1px 4px;
+      border-radius: 6px;
+      font-size: 0.45rem;
+      font-weight: 500;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.02em;
       background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(56, 189, 248, 0.1));
       border: 1px solid rgba(99, 102, 241, 0.2);
       color: var(--fg);
-      margin: 2px 4px 2px 0;
+      margin: 0;
       transition: all 0.2s ease;
+      line-height: 1;
+      white-space: nowrap;
+      flex-shrink: 0;
+      max-width: 60px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      height: 16px;
     }
     
     .tag:hover {
@@ -778,23 +787,48 @@
       transform: translateY(-1px);
     }
     
+    /* Tags in expanded mode (3+ tags) */
+    .tag-input-wrapper.expanded .tag {
+      margin: 1px 0;
+    }
+    
     /* Modern Tag Selection System */
     .tag-input-wrapper {
       position: relative;
       display: flex;
       flex-wrap: wrap;
-      align-items: flex-start;
-      min-height: 32px;
-      max-height: 64px;
+      align-items: center;
+      justify-content: center;
+      min-height: 20px;
+      height: auto;
+      max-height: none;
       max-width: 200px;
-      padding: 4px 8px;
+      width: 200px;
+      padding: 2px 4px;
       background: transparent;
       border: none;
-      border-radius: 8px;
+      border-radius: 3px;
       transition: all 0.2s ease;
-      gap: 2px;
+      gap: 3px;
       overflow: visible;
-      z-index: 1;
+      z-index: 10;
+    }
+    
+    /* When wrapper has 1-2 tags, keep single line and centered */
+    .tag-input-wrapper:not(.expanded) {
+      flex-wrap: nowrap;
+      max-height: 22px;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    /* When wrapper has 3+ tags, allow multi-line and left align */
+    .tag-input-wrapper.expanded {
+      flex-wrap: wrap;
+      align-items: flex-start;
+      justify-content: flex-start;
+      max-height: none;
+      padding: 3px 4px;
     }
     
     .tag-input-wrapper:focus-within {
@@ -821,12 +855,29 @@
       background: transparent;
       border: none;
       outline: none;
-      font-size: 0.6rem;
+      font-size: 0.45rem;
       color: var(--fg);
-      flex: 1;
+      flex: 1 1 auto;
+      min-width: 40px;
+      max-width: none;
+      padding: 0 3px;
+      height: 16px;
+      text-align: left;
+      order: 999;
+    }
+    
+    /* Tag input in non-expanded mode (1-2 tags) - center align */
+    .tag-input-wrapper:not(.expanded) .tag-input {
+      text-align: center;
+      min-width: 30px;
+    }
+    
+    /* Tag input in expanded mode (3+ tags) - left align and full width */
+    .tag-input-wrapper.expanded .tag-input {
+      text-align: left;
       min-width: 60px;
-      padding: 1px 2px;
-      height: 24px;
+      flex-basis: 100%;
+      order: 999;
     }
     
     .tag-input::placeholder {
@@ -834,21 +885,29 @@
     }
     
     .tag-dropdown {
-      position: fixed;
+      position: absolute;
       background: var(--card);
       border: 1px solid var(--stroke);
       border-radius: 8px;
       box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
       backdrop-filter: blur(10px);
-      z-index: 999999;
+      z-index: 9999;
       opacity: 0;
       visibility: hidden;
       transform: translateY(-8px);
       transition: all 0.2s ease;
       max-height: 200px;
       overflow-y: auto;
-      min-width: 150px;
+      min-width: 180px;
       pointer-events: none;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+    }
+    
+    /* Dropdown positioning for expanded mode */
+    .tag-input-wrapper.expanded .tag-dropdown {
+      top: calc(100% + 2px);
     }
     
     .tag-dropdown.show {
@@ -960,6 +1019,62 @@
       0% { background-position: 200% 0; }
       100% { background-position: -200% 0; }
     }
+    
+    /* Card Text Skeleton Loading */
+    .card-skeleton {
+      display: block;
+    }
+    
+    .card-skeleton.hidden {
+      display: none;
+    }
+    
+    .skeleton-text {
+      height: 1rem;
+      background: linear-gradient(90deg, var(--glass) 25%, var(--stroke) 50%, var(--glass) 75%);
+      background-size: 200% 100%;
+      animation: skeleton-loading 1.5s infinite;
+      border-radius: 4px;
+      margin: 0.25rem 0;
+    }
+    
+    .skeleton-text-sm {
+      height: 0.75rem;
+      background: linear-gradient(90deg, var(--glass) 25%, var(--stroke) 50%, var(--glass) 75%);
+      background-size: 200% 100%;
+      animation: skeleton-loading 1.5s infinite;
+      border-radius: 3px;
+      margin: 0.2rem 0;
+    }
+    
+    .skeleton-text-lg {
+      height: 1.5rem;
+      background: linear-gradient(90deg, var(--glass) 25%, var(--stroke) 50%, var(--glass) 75%);
+      background-size: 200% 100%;
+      animation: skeleton-loading 1.5s infinite;
+      border-radius: 6px;
+      margin: 0.3rem 0;
+    }
+    
+    .skeleton-text-xl {
+      height: 2rem;
+      background: linear-gradient(90deg, var(--glass) 25%, var(--stroke) 50%, var(--glass) 75%);
+      background-size: 200% 100%;
+      animation: skeleton-loading 1.5s infinite;
+      border-radius: 8px;
+      margin: 0.4rem 0;
+    }
+    
+    /* Skeleton text width variations */
+    .skeleton-w-full { width: 100%; }
+    .skeleton-w-3-4 { width: 75%; }
+    .skeleton-w-1-2 { width: 50%; }
+    .skeleton-w-1-3 { width: 33.333333%; }
+    .skeleton-w-1-4 { width: 25%; }
+    .skeleton-w-20 { width: 5rem; }
+    .skeleton-w-24 { width: 6rem; }
+    .skeleton-w-32 { width: 8rem; }
+    .skeleton-w-40 { width: 10rem; }
     
     .select-wrap{ 
       position:relative; 
@@ -1160,24 +1275,25 @@
 
     /* Minimal Date Input for Income Rows */
     .date-input-minimal {
-      font-size: 0.75rem;
-      padding: 0.4rem 2.8rem 0.4rem 0.6rem !important;
-      min-width: 120px;
-      max-width: 140px;
-      width: auto;
-      height: 2rem;
+      font-size: 0.7rem;
+      padding: 0.3rem 1rem 0.3rem 0.4rem !important;
+      min-width: 85px;
+      max-width: 90px;
+      width: 88px;
+      height: 1.6rem;
       text-align: left;
-      border-radius: 8px;
+      border-radius: 4px;
       flex-shrink: 0;
+      line-height: 1;
     }
     
     .date-input-minimal::-webkit-calendar-picker-indicator {
       filter: invert(0.6) !important;
       cursor: pointer;
-      width: 14px !important;
-      height: 14px !important;
+      width: 10px !important;
+      height: 10px !important;
       position: absolute !important;
-      right: 0.6rem !important;
+      right: 0.25rem !important;
       top: 50% !important;
       transform: translateY(-50%) !important;
       margin-right: 0 !important;
@@ -1192,26 +1308,27 @@
       position: relative;
       display: inline-block;
       width: 100%;
-      z-index: 1;
+      z-index: 10;
     }
     
     .method-trigger-minimal {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      width: 100%;
-      padding: 0.5rem 0.75rem;
+      justify-content: flex-start;
+      width: auto;
+      padding: 0.4rem 0.5rem;
       background: transparent;
       border: none;
-      border-radius: 8px;
+      border-radius: 6px;
       color: var(--fg);
       font-size: 0.75rem;
       font-weight: 500;
       cursor: pointer;
       transition: all 0.2s ease;
-      min-height: 40px;
-      min-width: 120px;
+      min-height: 32px;
+      min-width: 80px;
       outline: none;
+      gap: 0.25rem;
     }
     
     .method-trigger-minimal:hover {
@@ -1220,7 +1337,7 @@
     }
     
     .method-text {
-      flex: 1;
+      flex: 0 1 auto;
       text-align: left;
       white-space: nowrap;
       overflow: visible;
@@ -1228,12 +1345,12 @@
     }
     
     .method-arrow {
-      width: 10px;
-      height: 10px;
+      width: 8px;
+      height: 8px;
       color: var(--muted);
       transition: transform 0.2s ease;
       flex-shrink: 0;
-      margin-left: 0.5rem;
+      margin-left: 0.25rem;
     }
     
     .method-dropdown-minimal.open .method-arrow {
@@ -1241,13 +1358,16 @@
     }
     
     .method-menu-minimal {
-      position: fixed;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
       background: var(--card);
       border: 1px solid var(--stroke);
       border-radius: 8px;
       box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
       backdrop-filter: blur(10px);
-      z-index: 999999;
+      z-index: 1000;
       opacity: 0;
       visibility: hidden;
       transform: translateY(-8px);
@@ -1256,6 +1376,7 @@
       overflow-y: auto;
       min-width: 150px;
       pointer-events: none;
+      margin-top: 2px;
     }
     
     .method-menu-minimal.show {
@@ -1687,7 +1808,12 @@
     /* Increase z-index when dropdown is open */
     .row-income:has(.tag-dropdown.show),
     .row-income:has(.method-menu-minimal.show) {
-      z-index: 10;
+      z-index: 100;
+    }
+    
+    .row:has(.tag-dropdown.show),
+    .row-biz:has(.tag-dropdown.show) {
+      z-index: 100;
     }
     
     /* Responsive Table Container */
@@ -1792,19 +1918,19 @@
       grid-template-columns:24px 32px 1.5fr .8fr .8fr .8fr 1fr 1fr 1fr 1fr 32px; 
       gap:.7rem; 
       align-items:center; 
-      background:rgba(24,24,27,0.95); 
+      background:rgba(24,24,27,0.98); 
       position:sticky; 
       top:0; 
-      backdrop-filter:blur(20px); 
-      z-index:100; 
+      backdrop-filter:blur(25px); 
+      z-index:1000; 
       padding:.5rem .4rem; 
-      border-bottom:1px solid var(--stroke);
+      border-bottom:2px solid var(--stroke);
       transition:all .2s ease;
       margin:0;
-      box-shadow:0 2px 8px rgba(0,0,0,0.1);
+      box-shadow:0 4px 16px rgba(0,0,0,0.2);
     }
     [data-theme="light"] .row-head {
-      background:rgba(248,250,252,0.95);
+      background:rgba(248,250,252,0.98);
     }
     .row-head:hover{ 
       background:rgba(24,24,27,0.98); 
@@ -1823,16 +1949,63 @@
     }
     
     /* Sticky section headers */
-    .sticky-header {
-      position: sticky;
-      top: 0;
-      z-index: 50;
-      background: var(--bg);
-      padding: 1rem 0 0.5rem 0;
-      margin-bottom: 1rem;
-      border-bottom: 1px solid var(--stroke);
-      backdrop-filter: blur(10px);
-    }
+     .sticky-header {
+       position: sticky;
+       top: 0;
+       z-index: 50;
+       background: var(--bg);
+       padding: 1rem 0 0.5rem 0;
+       margin-bottom: 1rem;
+       border-bottom: 1px solid var(--stroke);
+       backdrop-filter: blur(10px);
+     }
+
+     /* Sticky table headers */
+     .table-header-sticky {
+       position: sticky;
+       top: 0;
+       z-index: 1000;
+       background: rgba(var(--bg-rgb), 0.95);
+       backdrop-filter: blur(20px);
+       border-bottom: 1px solid var(--stroke);
+       font-size: 0.65rem;
+       font-weight: 600;
+       text-transform: uppercase;
+       letter-spacing: 0.025em;
+       padding: 0.4rem 0.5rem;
+       margin: 0;
+       transition: all 0.3s ease;
+       box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+       display: grid;
+       align-items: center;
+       gap: 0.5rem;
+       min-height: 32px;
+       color: var(--muted);
+       opacity: 0;
+       visibility: hidden;
+       transform: translateY(-10px);
+     }
+
+     .table-header-sticky.show {
+       opacity: 1;
+       visibility: visible;
+       transform: translateY(0);
+     }
+
+     /* Personal expenses sticky header */
+     .table-header-sticky.personal-header {
+       grid-template-columns: 24px 32px 1.5fr .8fr .8fr .8fr 1fr 1fr 1fr 1fr 32px;
+     }
+
+     /* Business expenses sticky header */
+     .table-header-sticky.biz-header {
+       grid-template-columns: 24px 32px 1.4fr .8fr .8fr .8fr .8fr .9fr .9fr .9fr .9fr 32px;
+     }
+
+     /* Income sticky header */
+     .table-header-sticky.income-header {
+       grid-template-columns: 20px 28px 1fr 1.2fr 100px 100px 100px 120px 1fr 28px;
+     }
     .row-sum{ 
       font-weight:600; 
       background:var(--glass); 
