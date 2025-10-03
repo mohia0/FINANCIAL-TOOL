@@ -1813,6 +1813,7 @@ window.supabaseClient = supabase;
                     date: income.date || new Date().toISOString().split('T')[0],
                     all_payment: income.allPayment || 0,
                     paid_usd: income.paidUsd || 0,
+                    paid_egp: income.paidEgp || null,
                     method: income.method || 'Bank Transfer',
                     icon: income.icon || 'fa:dollar-sign',
                     year: parseInt(year)
@@ -2076,35 +2077,79 @@ window.supabaseClient = supabase;
         clearTimeout(incomeDebounceTimeouts.get(rowKey));
       }
       
-      // Set new debounced save for this specific row
+      // Set new debounced save for this specific row (reduced timeout for faster sync)
       const timeoutId = setTimeout(async () => {
         try {
-          console.log('Instant saving income row:', incomeRow);
           
           if (incomeRow.id) {
             // Update existing income record
-            const { error: updateError } = await window.supabaseClient
-              .from('income')
-              .update({
-                name: incomeRow.name || '',
-                tags: incomeRow.tags || '',
-                date: incomeRow.date || new Date().toISOString().split('T')[0],
-                all_payment: incomeRow.allPayment || 0,
-                paid_usd: incomeRow.paidUsd || 0,
-                method: incomeRow.method || 'Bank Transfer',
-                icon: incomeRow.icon || 'fa:dollar-sign',
-                year: parseInt(year),
-                updated_at: new Date().toISOString()
-              })
-              .eq('id', incomeRow.id);
+            // Try to update with paid_egp first, fallback if field doesn't exist
+            let updateError;
+            try {
+              const { error } = await window.supabaseClient
+                .from('income')
+                .update({
+                  name: incomeRow.name || '',
+                  tags: incomeRow.tags || '',
+                  date: incomeRow.date || new Date().toISOString().split('T')[0],
+                  all_payment: incomeRow.allPayment || 0,
+                  paid_usd: incomeRow.paidUsd || 0,
+                  paid_egp: incomeRow.paidEgp || null,
+                  method: incomeRow.method || 'Bank Transfer',
+                  icon: incomeRow.icon || 'fa:dollar-sign',
+                  year: parseInt(year),
+                  updated_at: new Date().toISOString()
+                })
+                .eq('id', incomeRow.id);
+              updateError = error;
+            } catch (schemaError) {
+              // If paid_egp field doesn't exist, fallback to without it
+              console.warn('paid_egp field not found, falling back to standard fields:', schemaError);
+              const { error } = await window.supabaseClient
+                .from('income')
+                .update({
+                  name: incomeRow.name || '',
+                  tags: incomeRow.tags || '',
+                  date: incomeRow.date || new Date().toISOString().split('T')[0],
+                  all_payment: incomeRow.allPayment || 0,
+                  paid_usd: incomeRow.paidUsd || 0,
+                  method: incomeRow.method || 'Bank Transfer',
+                  icon: incomeRow.icon || 'fa:dollar-sign',
+                  year: parseInt(year),
+                  updated_at: new Date().toISOString()
+                })
+                .eq('id', incomeRow.id);
+              updateError = error;
+            }
             
             if (updateError) {
-              console.error('Error updating income record:', updateError);
-              showNotification('Failed to save income', 'error', 2000);
+              console.error('Error updating income row:', updateError);
+              showNotification('Failed to save changes, retrying...', 'error', 2000);
+              
+              // Retry once after a short delay
+              setTimeout(async () => {
+                try {
+                  const { error: retryError } = await window.supabaseClient
+                    .from('income')
+                    .update({
+                      tags: incomeRow.tags || '',
+                      updated_at: new Date().toISOString()
+                    })
+                    .eq('id', incomeRow.id);
+                  
+                  if (retryError) {
+                    showNotification('Failed to sync tags', 'error', 3000);
+                  } else {
+                    showNotification('Tags synced', 'success', 1000);
+                  }
+                } catch (retryErr) {
+                  // Silent retry error
+                }
+              }, 1000);
+              
               throw updateError;
             } else {
-              console.log('Successfully updated income record:', incomeRow.id);
-              showNotification('Income saved', 'success', 800);
+              showNotification('Tags updated', 'success', 800);
             }
           } else {
             // Create new income record
@@ -2117,6 +2162,7 @@ window.supabaseClient = supabase;
                 date: incomeRow.date || new Date().toISOString().split('T')[0],
                 all_payment: incomeRow.allPayment || 0,
                 paid_usd: incomeRow.paidUsd || 0,
+                paid_egp: incomeRow.paidEgp || null,
                 method: incomeRow.method || 'Bank Transfer',
                 icon: incomeRow.icon || 'fa:dollar-sign',
                 year: parseInt(year)
@@ -2153,6 +2199,57 @@ window.supabaseClient = supabase;
       }, 300); // Shorter debounce for instant feel
       
       incomeDebounceTimeouts.set(rowKey, timeoutId);
+    }
+
+    // Direct save function for tag removal (no debouncing)
+    async function saveIncomeRowDirectly(incomeRow, year) {
+      if (!currentUser || !supabaseReady) {
+        saveToLocal();
+        return;
+      }
+      
+      try {
+        
+        if (incomeRow.id) {
+          // Update existing income record directly
+          // Try to update with paid_egp first, fallback to tags only if it fails
+          let updateError;
+          try {
+            const { error } = await window.supabaseClient
+              .from('income')
+              .update({
+                tags: incomeRow.tags || '',
+                paid_egp: incomeRow.paidEgp || null,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', incomeRow.id);
+            updateError = error;
+          } catch (schemaError) {
+            // If paid_egp field doesn't exist, fallback to tags only
+            console.warn('paid_egp field not found, falling back to tags only:', schemaError);
+            const { error } = await window.supabaseClient
+              .from('income')
+              .update({
+                tags: incomeRow.tags || '',
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', incomeRow.id);
+            updateError = error;
+          }
+          
+          if (updateError) {
+            showNotification('Failed to save changes', 'error', 2000);
+            throw updateError;
+          } else {
+            showNotification('Changes synced', 'success', 800);
+          }
+        } else {
+          instantSaveIncomeRow(incomeRow, year);
+        }
+      } catch (error) {
+        console.error('Error syncing changes:', error);
+        showNotification(`Failed to sync changes: ${error.message}`, 'error', 3000);
+      }
     }
 
     // Sequential save function for imported income data
@@ -2206,6 +2303,7 @@ window.supabaseClient = supabase;
                   date: incomeRow.date || new Date().toISOString().split('T')[0],
                   all_payment: incomeRow.allPayment || 0,
                   paid_usd: incomeRow.paidUsd || 0,
+                  paid_egp: incomeRow.paidEgp || null,
                   method: incomeRow.method || 'Bank Transfer',
                   icon: incomeRow.icon || 'fa:dollar-sign',
                   year: parseInt(year)
@@ -2519,55 +2617,30 @@ window.supabaseClient = supabase;
     }
 
     function setText(id,val){ const el=document.getElementById(id); if(el) el.textContent=val; }
-
-    // Skeleton loading functions
-    function showCardSkeleton(cardId) {
-      const skeleton = document.getElementById(cardId + 'Skeleton');
-      const content = skeleton?.parentElement?.children;
-      if (skeleton && content) {
-        // Hide all content except skeleton and title
-        for (let i = 0; i < content.length; i++) {
-          const child = content[i];
-          if (child !== skeleton && !child.tagName?.toLowerCase().includes('h3')) {
-            child.style.display = 'none';
-          }
-        }
-        skeleton.classList.remove('hidden');
-      }
+    
+    // Helper function to format date for display (Month Day format)
+    function formatDateForDisplay(dateString) {
+      if (!dateString) return '';
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return '';
+      
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                     'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      return `${months[date.getMonth()]} ${date.getDate()}`;
+    }
+    
+    // Helper function to check if date is in the future
+    function isFutureDate(dateString) {
+      if (!dateString) return false;
+      const date = new Date(dateString);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Reset time to start of day
+      return date >= today;
     }
 
-    function hideCardSkeleton(cardId) {
-      const skeleton = document.getElementById(cardId + 'Skeleton');
-      const content = skeleton?.parentElement?.children;
-      if (skeleton && content) {
-        skeleton.classList.add('hidden');
-        // Show all content
-        for (let i = 0; i < content.length; i++) {
-          const child = content[i];
-          if (child !== skeleton) {
-            child.style.display = '';
-          }
-        }
-      }
-    }
-
-    function showAllCardSkeletons() {
-      const skeletonIds = ['kpiAll', 'kpiPersonal', 'kpiBiz', 'kpiIncomeAll', 'kpiIncomeMonthly', 'kpiIncomeYearly'];
-      skeletonIds.forEach(id => showCardSkeleton(id));
-    }
-
-    function hideAllCardSkeletons() {
-      const skeletonIds = ['kpiAll', 'kpiPersonal', 'kpiBiz', 'kpiIncomeAll', 'kpiIncomeMonthly', 'kpiIncomeYearly'];
-      skeletonIds.forEach(id => hideCardSkeleton(id));
-    }
 
   function renderKPIs(){
-    // Show skeleton loading briefly for smooth UX
-    showAllCardSkeletons();
-    
-    // Small delay to show skeleton, then render actual content
-    setTimeout(() => {
-      const p = totals(state.personal); const b = totals(state.biz);
+    const p = totals(state.personal); const b = totals(state.biz);
     const currentYearData = state.income[currentYear] || [];
     const i = incomeTotals(currentYearData);
       const all = { mUSD:p.mUSD + b.mUSD, yUSD:p.yUSD + b.yUSD };
@@ -2614,10 +2687,6 @@ window.supabaseClient = supabase;
     // Update analytics content
     updateAnalytics();
     updateIncomeAnalytics();
-    
-    // Hide skeleton loading after content is rendered
-    hideAllCardSkeletons();
-    }, 150); // 150ms delay to show skeleton briefly
     }
     
     // Income Analytics function
@@ -2773,10 +2842,9 @@ window.supabaseClient = supabase;
         </div>
 
         <div class="analytics-section">
-          <div class="section-title">💡 Smart Insights</div>
+          <div class="section-title">Smart Insights</div>
           <div class="insight-card">
             <div class="insight-text">
-              <i class="fas fa-chart-line insight-icon"></i>
               You've earned <strong>${nfUSD.format(lifetimeIncome.totalUSD)}</strong> across <strong>${totalItems}</strong> projects over <strong>${Object.keys(yearDistribution).length}</strong> years.
               That's <strong>${nfUSD.format(lifetimeIncome.dailyUSD)}</strong> per day or <strong>${nfUSD.format(lifetimeIncome.hourlyUSD)}</strong> per hour!
               ${bestYear ? ` Your best year was <strong>${bestYear}</strong> with <strong>${nfUSD.format(bestYearAmount)}</strong>.` : ''}
@@ -2897,10 +2965,9 @@ window.supabaseClient = supabase;
         </div>
 
         <div class="analytics-section">
-          <div class="section-title">💡 Monthly Insights</div>
+          <div class="section-title">Monthly Insights</div>
           <div class="insight-card">
             <div class="insight-text">
-              <i class="fas fa-calendar-alt insight-icon"></i>
               This month you're earning <strong>${nfUSD.format(currentMonthIncome)}</strong>, which is 
               <strong>${vsAverage >= 0 ? vsAverage.toFixed(1) + '% above' : Math.abs(vsAverage).toFixed(1) + '% below'}</strong> your all-time monthly average.
               ${bestMonth > 0 ? ` Your best month ever was <strong>${nfUSD.format(bestMonth)}</strong>.` : ''}
@@ -3044,10 +3111,9 @@ window.supabaseClient = supabase;
         </div>
 
         <div class="analytics-section">
-          <div class="section-title">💡 Yearly Insights</div>
+          <div class="section-title">Yearly Insights</div>
           <div class="insight-card">
             <div class="insight-text">
-              <i class="fas fa-chart-bar insight-icon"></i>
               This year (${currentYear}) you've earned <strong>${nfUSD.format(currentYearTotal)}</strong>, which is 
               <strong>${vsAverage >= 0 ? vsAverage.toFixed(1) + '% above' : Math.abs(vsAverage).toFixed(1) + '% below'}</strong> your all-time yearly average.
               ${bestYear && bestYear !== currentYear ? ` Your best year was <strong>${bestYear}</strong> with <strong>${nfUSD.format(bestYearAmount)}</strong>.` : ''}
@@ -3265,7 +3331,6 @@ window.supabaseClient = supabase;
           <div class="section-title">Insights</div>
           <div class="insight-card">
             <div class="insight-text">
-              <i class="fas fa-chart-line insight-icon"></i>
               Total Portfolio: <strong>${totalActive + totalCancelled}</strong> services | Monthly Burn: <strong>${nfUSD.format(all.mUSD)}</strong> | 
               Efficiency: <strong>${Math.round((totalActive / (totalActive + totalCancelled)) * 100) || 0}%</strong> active rate
               ${highestExpense ? ` | Top Expense: <strong>${highestExpense.name || 'Unnamed'}</strong> (${nfUSD.format(highestExpense.billing === 'Monthly' ? Number(highestExpense.cost || 0) : Number(highestExpense.cost || 0) / 12)})` : ''}
@@ -3461,7 +3526,6 @@ window.supabaseClient = supabase;
           <div class="section-title">Insights</div>
           <div class="insight-card">
             <div class="insight-text">
-              <i class="fas fa-home insight-icon"></i>
               Personal Budget: <strong>${nfUSD.format(personal.mUSD)}</strong>/month | 
               Cost Efficiency: <strong>${Math.round((highCostItems / activeItems.length) * 100) || 0}%</strong> premium services | 
               Daily Impact: <strong>${nfUSD.format(dailyPersonal)}</strong>/day
@@ -3494,24 +3558,24 @@ window.supabaseClient = supabase;
       // Calculate potential savings from annual discounts
       const annualSavings = annualItems.reduce((sum, r) => sum + (Number(r.cost || 0) * 0.1), 0);
       
-      // Find upcoming renewals (within 30 days)
+      // Find upcoming renewals (within 30 days) - all dates
       const upcomingRenewals = activeItems.filter(item => {
         if (!item.next) return false;
         const nextDate = new Date(item.next);
         const today = new Date();
         const diffTime = nextDate - today;
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        return diffDays >= 0 && diffDays <= 30;
+        return diffDays <= 30;
       });
       
-      // Find renewals due in next 7 days (urgent)
+      // Find renewals due in next 7 days (urgent) - all dates
       const urgentRenewals = activeItems.filter(item => {
         if (!item.next) return false;
         const nextDate = new Date(item.next);
         const today = new Date();
         const diffTime = nextDate - today;
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        return diffDays >= 0 && diffDays <= 7;
+        return diffDays <= 7;
       });
       
       // Find highest and lowest expenses
@@ -3701,12 +3765,22 @@ window.supabaseClient = supabase;
               const today = new Date();
               const diffTime = nextDate - today;
               const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+              let statusText;
+              if (diffDays === 0) {
+                statusText = 'Today';
+              } else if (diffDays === 1) {
+                statusText = 'Tomorrow';
+              } else if (diffDays > 0) {
+                statusText = `${diffDays} days`;
+              } else {
+                statusText = 'Overdue';
+              }
               return `
                 <li class="breakdown-item">
                   <span class="breakdown-name">${item.name || 'Unnamed'}</span>
                   <div>
-                    <span class="breakdown-amount">${nfUSD.format(Number(item.cost || 0))}</span>
-                    <span class="breakdown-percentage">${diffDays} days</span>
+                    <span class="breakdown-amount">${formatDateForDisplay(item.next)}</span>
+                    <span class="breakdown-percentage">${statusText}</span>
                   </div>
                 </li>
               `;
@@ -3719,7 +3793,6 @@ window.supabaseClient = supabase;
           <div class="section-title">Insights</div>
           <div class="insight-card">
             <div class="insight-text">
-              <i class="fas fa-briefcase insight-icon"></i>
               Business Investment: <strong>${nfUSD.format(biz.mUSD)}</strong>/month | 
               Tool Efficiency: <strong>${Math.round((highCostItems / activeItems.length) * 100) || 0}%</strong> high-value tools | 
               Renewal Alert: <strong>${upcomingRenewals.length}</strong> due soon
@@ -4201,16 +4274,67 @@ window.supabaseClient = supabase;
         if(isBiz){ 
           const dateDiv=document.createElement('div'); 
           dateDiv.style.position = 'relative';
+          // Create a container for the date display
+          const dateContainer = document.createElement('div');
+          dateContainer.className = 'next-date-container';
+          dateContainer.style.cssText = 'display: flex; align-items: center; gap: 0.25rem; font-size: 0.65rem; color: var(--muted);';
+          
+          // Create the date input (hidden by default)
           const dateInput = document.createElement('input');
           dateInput.className = 'input date-input-minimal';
           dateInput.type = 'date';
           dateInput.value = row.next || '';
+          dateInput.style.display = 'none';
+          
+          // Create display element
+          const dateDisplay = document.createElement('span');
+          dateDisplay.className = 'next-date-display';
+          dateDisplay.style.cssText = 'cursor: pointer; padding: 0.25rem 0.5rem; border-radius: 4px; transition: all 0.2s ease;';
+          
+          // Function to update display
+          const updateDateDisplay = () => {
+            if (row.next) {
+              dateDisplay.textContent = formatDateForDisplay(row.next);
+              dateDisplay.style.color = 'var(--fg)';
+              dateDisplay.style.backgroundColor = 'var(--hover)';
+            } else {
+              dateDisplay.textContent = 'Set date';
+              dateDisplay.style.color = 'var(--muted)';
+              dateDisplay.style.backgroundColor = 'transparent';
+            }
+          };
+          
+          // Initial display update
+          updateDateDisplay();
+          
+          // Click to edit
+          dateDisplay.addEventListener('click', () => {
+            dateInput.style.display = 'block';
+            dateDisplay.style.display = 'none';
+            dateInput.focus();
+          });
+          
+          // Save and hide input
           dateInput.addEventListener('change', function() {
             row.next = this.value;
+            this.style.display = 'none';
+            dateDisplay.style.display = 'block';
+            updateDateDisplay();
             save();
             renderKPIs(); // Update KPIs for renewal analytics
           });
-          dateDiv.appendChild(dateInput);
+          
+          // Hide input on blur if no change
+          dateInput.addEventListener('blur', function() {
+            setTimeout(() => {
+              this.style.display = 'none';
+              dateDisplay.style.display = 'block';
+            }, 100);
+          });
+          
+          dateContainer.appendChild(dateDisplay);
+          dateContainer.appendChild(dateInput);
+          dateDiv.appendChild(dateContainer);
           div.appendChild(dateDiv); 
         }
         // computed columns - all editable with clean formatting and always-visible symbols
@@ -4526,8 +4650,11 @@ window.supabaseClient = supabase;
       
       // Paid EGP (calculated)
       const paidEgpDiv = document.createElement('div');
-      paidEgpDiv.className = 'paid-egp-cell';
-      paidEgpDiv.textContent = 'EGP ' + nfINT.format(Math.round((row.paidUsd || 0) * state.fx));
+      paidEgpDiv.className = 'paid-egp-cell editable-value';
+      paidEgpDiv.textContent = 'EGP ' + nfINT.format(Math.round((row.paidEgp || (row.paidUsd || 0) * state.fx)));
+      paidEgpDiv.setAttribute('data-field', 'paidEgp');
+      paidEgpDiv.setAttribute('data-row-id', row.id || '');
+      paidEgpDiv.setAttribute('data-year', currentYear);
       
       // Method select - minimal modern design
       const methodDiv = document.createElement('div');
@@ -4546,7 +4673,7 @@ window.supabaseClient = supabase;
       const methodMenu = document.createElement('div');
       methodMenu.className = 'method-menu-minimal';
       
-      const options = ['Bank Transfer', 'Paypal', 'Cash', 'Crypto', 'Check', 'InstaPay'];
+      const options = ['Bank Transfer', 'Paypal', 'Cash', 'Crypto', 'InstaPay', 'Credit Card', 'Wire Transfer', 'Mobile Payment'];
       options.forEach(option => {
         const item = document.createElement('div');
         item.className = 'method-item-minimal';
@@ -4590,7 +4717,8 @@ window.supabaseClient = supabase;
         if (methodMenu.classList.contains('show')) {
           methodMenu.classList.remove('show');
         } else {
-          // No need to position - CSS handles it with absolute positioning
+          // Position dropdown based on available space
+          positionDropdown(methodTrigger, methodMenu);
           methodMenu.classList.add('show');
         }
       });
@@ -4658,6 +4786,74 @@ window.supabaseClient = supabase;
       div.appendChild(allPaymentDiv);
       div.appendChild(paidUsdDiv);
       div.appendChild(paidEgpDiv);
+      
+      // Add click event listener for PAID EGP editing
+      paidEgpDiv.addEventListener('click', function() {
+        if (this.classList.contains('editing')) return;
+        
+        this.classList.add('editing');
+        const currentValue = row.paidEgp || (row.paidUsd || 0) * state.fx;
+        
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.value = Math.round(currentValue);
+        input.className = 'editable-input';
+        input.style.textAlign = 'left';
+        input.style.padding = '0.25rem 0.5rem';
+        input.style.fontSize = '0.65rem';
+        input.style.minWidth = '60px';
+        
+        const originalContent = this.textContent;
+        this.textContent = '';
+        this.appendChild(input);
+        input.focus();
+        input.select();
+        
+        const saveEdit = () => {
+          const newValue = parseFloat(input.value) || 0;
+          row.paidEgp = newValue;
+          
+          // Update the state as well
+          const year = currentYear;
+          const stateRowIndex = (state.income[year] || []).findIndex(stateRow => 
+            stateRow.id === row.id || 
+            (stateRow.name === row.name && stateRow.date === row.date)
+          );
+          
+          if (stateRowIndex !== -1) {
+            state.income[year][stateRowIndex].paidEgp = newValue;
+          }
+          
+          // Update the display
+          this.textContent = 'EGP ' + nfINT.format(Math.round(newValue));
+          this.classList.remove('editing');
+          
+          // Save to cloud using direct save, with fallback to local save
+          try {
+            saveIncomeRowDirectly(row, currentYear);
+          } catch (error) {
+            console.warn('Cloud save failed, saving locally:', error);
+            saveToLocal();
+            showNotification('Saved locally (cloud sync failed)', 'warning', 2000);
+          }
+        };
+        
+        const cancelEdit = () => {
+          this.textContent = originalContent;
+          this.classList.remove('editing');
+        };
+        
+        input.addEventListener('blur', saveEdit);
+        input.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            saveEdit();
+          } else if (e.key === 'Escape') {
+            e.preventDefault();
+            cancelEdit();
+          }
+        });
+      });
       div.appendChild(methodDiv);
       div.appendChild(deleteDiv);
       
@@ -4687,7 +4883,7 @@ window.supabaseClient = supabase;
   }
   
   function updateIncomeRowCalculations(rowEl, row) {
-    const paidEgp = (row.paidUsd || 0) * state.fx;
+    const paidEgp = row.paidEgp || (row.paidUsd || 0) * state.fx;
     
     const paidEgpCell = rowEl.querySelector('.paid-egp-cell');
     
@@ -4704,6 +4900,11 @@ window.supabaseClient = supabase;
     
     // Re-add event listeners after rendering
     addRowButtonListeners();
+    
+    // Apply custom date picker to any new date inputs
+    if (typeof applyDatePickerToNewInputs === 'function') {
+      applyDatePickerToNewInputs();
+    }
   }
 
   function updateGridTemplate() {
@@ -5605,6 +5806,7 @@ window.supabaseClient = supabase;
     // Initial render will happen after authentication check completes
 
     // Note: Using built-in sticky headers with position: sticky on .row-head elements
+    
 
     // Drag and Drop functionality for financial columns
     let draggedElement = null;
@@ -5842,13 +6044,93 @@ window.supabaseClient = supabase;
       removeBtn.addEventListener('click', function(e) {
         e.preventDefault();
         e.stopPropagation();
-        chip.remove();
-        // Update the row data if we have access to it
-        const wrapper = chip.closest('.tag-input-wrapper');
+        // Remove the chip
+        
+        // Try multiple ways to find the wrapper
+        let wrapper = chip.closest('.tag-input-wrapper');
+        if (!wrapper) {
+          // Try finding by parent elements
+          wrapper = chip.parentElement?.closest('.tag-input-wrapper');
+        }
+        if (!wrapper) {
+          // Try finding by looking up the DOM tree
+          let parent = chip.parentElement;
+          while (parent && !wrapper) {
+            if (parent.classList?.contains('tag-input-wrapper')) {
+              wrapper = parent;
+              break;
+            }
+            parent = parent.parentElement;
+          }
+        }
+        
+        // If still no wrapper, try searching the entire document for tag-input-wrapper near this chip
+        if (!wrapper) {
+          const allWrappers = document.querySelectorAll('.tag-input-wrapper');
+          
+          // Find the wrapper that contains this chip
+          for (let w of allWrappers) {
+            if (w.contains(chip)) {
+              wrapper = w;
+              break;
+            }
+          }
+        }
+        
         if (wrapper) {
           const rowElement = wrapper.closest('.row-income');
-          if (rowElement && rowElement.__rowData) {
-            updateRowTags(wrapper, rowElement.__rowData);
+          
+          if (rowElement) {
+            let rowData = rowElement.__rowData;
+            
+            // If no __rowData, try to find it by looking at the row structure
+            if (!rowData) {
+              // Try to find the row data by looking at the table structure
+              const allRows = document.querySelectorAll('.row-income');
+              const rowIndex = Array.from(allRows).indexOf(rowElement);
+              
+              if (rowIndex !== -1 && state.income[currentYear] && state.income[currentYear][rowIndex]) {
+                rowData = state.income[currentYear][rowIndex];
+              }
+            }
+            
+            if (rowData) {
+              // Remove the chip first
+              chip.remove();
+              // Then update the tags
+              updateRowTags(wrapper, rowData);
+            } else {
+              // Still remove the chip even if we can't update
+              chip.remove();
+            }
+          } else {
+            chip.remove();
+          }
+        } else {
+          chip.remove();
+          
+          // Fallback: try to update state manually by finding the row
+          const allRows = document.querySelectorAll('.row-income');
+          for (let i = 0; i < allRows.length; i++) {
+            const row = allRows[i];
+            if (row.contains(chip)) {
+              if (state.income[currentYear] && state.income[currentYear][i]) {
+                const rowData = state.income[currentYear][i];
+                
+                // Get all remaining tags from this row
+                const remainingChips = row.querySelectorAll('.tag-chip');
+                const remainingTags = Array.from(remainingChips).map(c => {
+                  const textSpan = c.querySelector('span:first-child');
+                  return textSpan ? textSpan.textContent.trim() : '';
+                }).filter(tag => tag);
+                
+                rowData.tags = remainingTags.join(',');
+                
+                // Save directly
+                saveIncomeRowDirectly(rowData, currentYear);
+                break;
+              }
+            }
           }
         }
       });
@@ -5888,11 +6170,9 @@ window.supabaseClient = supabase;
         }
       } else if (value.length > 0) {
         // Show suggestions as user types
-        console.log('handleTagInput: Showing suggestions for value:', value);
         showTagSuggestions(input, wrapper);
       } else {
         // Hide suggestions when input is empty
-        console.log('handleTagInput: Hiding suggestions - empty input');
         hideTagSuggestions(wrapper);
       }
     }
@@ -5965,9 +6245,26 @@ window.supabaseClient = supabase;
         wrapper.classList.remove('expanded');
       }
       
-      // Use instant save for income rows, regular save for others
+      // Update the row in the state as well
       if (wrapper.closest('.row-income')) {
-        instantSaveIncomeRow(row, currentYear);
+        const year = currentYear;
+        const stateRowIndex = (state.income[year] || []).findIndex(stateRow => 
+          stateRow.id === row.id || 
+          (stateRow.name === row.name && stateRow.date === row.date)
+        );
+        
+        if (stateRowIndex !== -1) {
+          // Update the state row with the new tags
+          state.income[year][stateRowIndex].tags = row.tags;
+        }
+        
+        // Use direct save for tag removal to ensure immediate sync
+        saveIncomeRowDirectly(row, year);
+        
+        // Force a small delay then refresh the UI to ensure sync
+        setTimeout(() => {
+          renderAll();
+        }, 500);
       } else {
         save();
       }
@@ -5990,9 +6287,6 @@ window.supabaseClient = supabase;
         !isTagAlreadyAdded(wrapper, tag)
       ).slice(0, 8); // Limit to 8 suggestions
       
-      console.log('All tags:', allTags);
-      console.log('Filtered tags:', filteredTags);
-      console.log('Input value:', inputValue);
       
       if (filteredTags.length === 0) {
         return;
@@ -6033,10 +6327,8 @@ window.supabaseClient = supabase;
       wrapper.appendChild(dropdown);
       
       // Show dropdown
-      console.log('Dropdown created with', filteredTags.length, 'suggestions');
       setTimeout(() => {
         dropdown.classList.add('show');
-        console.log('Dropdown show class added');
       }, 10);
     }
     
@@ -6134,6 +6426,383 @@ window.supabaseClient = supabase;
       eq(rowYearlyUSD(sample[0]),1440,'yUSD monthly');
       eq(rowYearlyUSD(sample[1]),1200,'yUSD annual');
     })();
+  });
+
+  // Custom Date Picker functionality
+  let customDatePicker = null;
+  let currentDatePickerInput = null;
+  let currentDatePickerDate = new Date();
+
+  function initCustomDatePicker() {
+    customDatePicker = document.getElementById('customDatePicker');
+    const monthSelect = document.getElementById('monthSelect');
+    const yearSelect = document.getElementById('yearSelect');
+    const prevMonthBtn = document.getElementById('prevMonth');
+    const nextMonthBtn = document.getElementById('nextMonth');
+    const clearDateBtn = document.getElementById('clearDate');
+    const todayDateBtn = document.getElementById('todayDate');
+    const datePickerDays = document.getElementById('datePickerDays');
+
+    // Populate month select
+    const months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    
+    months.forEach((month, index) => {
+      const option = document.createElement('option');
+      option.value = index;
+      option.textContent = month;
+      monthSelect.appendChild(option);
+    });
+
+    // Populate year select (current year ± 10)
+    const currentYear = new Date().getFullYear();
+    for (let year = currentYear - 10; year <= currentYear + 10; year++) {
+      const option = document.createElement('option');
+      option.value = year;
+      option.textContent = year;
+      yearSelect.appendChild(option);
+    }
+
+    // Event listeners
+    monthSelect.addEventListener('change', () => {
+      currentDatePickerDate.setMonth(parseInt(monthSelect.value));
+      renderDatePickerDays();
+    });
+
+    yearSelect.addEventListener('change', () => {
+      currentDatePickerDate.setFullYear(parseInt(yearSelect.value));
+      renderDatePickerDays();
+    });
+
+    prevMonthBtn.addEventListener('click', () => {
+      currentDatePickerDate.setMonth(currentDatePickerDate.getMonth() - 1);
+      updateDatePickerHeader();
+      renderDatePickerDays();
+    });
+
+    nextMonthBtn.addEventListener('click', () => {
+      currentDatePickerDate.setMonth(currentDatePickerDate.getMonth() + 1);
+      updateDatePickerHeader();
+      renderDatePickerDays();
+    });
+
+    clearDateBtn.addEventListener('click', () => {
+      if (currentDatePickerInput) {
+        currentDatePickerInput.value = '';
+        currentDatePickerInput.dispatchEvent(new Event('change'));
+      }
+      hideCustomDatePicker();
+    });
+
+    todayDateBtn.addEventListener('click', () => {
+      const today = new Date();
+      selectDate(today);
+    });
+
+    // Close on backdrop click
+    customDatePicker.addEventListener('click', (e) => {
+      if (e.target === customDatePicker) {
+        hideCustomDatePicker();
+      }
+    });
+  }
+
+  function showCustomDatePicker(inputElement) {
+    currentDatePickerInput = inputElement;
+    const currentValue = inputElement.value;
+    
+    if (currentValue) {
+      const date = new Date(currentValue);
+      if (!isNaN(date.getTime())) {
+        currentDatePickerDate = date;
+      }
+    } else {
+      currentDatePickerDate = new Date();
+    }
+
+    updateDatePickerHeader();
+    renderDatePickerDays();
+    customDatePicker.style.display = 'flex';
+  }
+
+  function hideCustomDatePicker() {
+    customDatePicker.style.display = 'none';
+    currentDatePickerInput = null;
+  }
+
+  function updateDatePickerHeader() {
+    const monthSelect = document.getElementById('monthSelect');
+    const yearSelect = document.getElementById('yearSelect');
+    
+    monthSelect.value = currentDatePickerDate.getMonth();
+    yearSelect.value = currentDatePickerDate.getFullYear();
+  }
+
+  function renderDatePickerDays() {
+    const datePickerDays = document.getElementById('datePickerDays');
+    datePickerDays.innerHTML = '';
+
+    const year = currentDatePickerDate.getFullYear();
+    const month = currentDatePickerDate.getMonth();
+    const today = new Date();
+    
+    // Get first day of month and number of days
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startingDayOfWeek = firstDay.getDay();
+
+    // Add empty cells for days before the first day of the month
+    for (let i = 0; i < startingDayOfWeek; i++) {
+      const prevMonthDay = new Date(year, month, -startingDayOfWeek + i + 1);
+      const dayElement = createDayElement(prevMonthDay.getDate(), true, false);
+      datePickerDays.appendChild(dayElement);
+    }
+
+    // Add days of the current month
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(year, month, day);
+      const isToday = date.toDateString() === today.toDateString();
+      const isSelected = currentDatePickerInput && 
+        currentDatePickerInput.value === formatDateForInput(date);
+      
+      const dayElement = createDayElement(day, false, isToday, isSelected);
+      datePickerDays.appendChild(dayElement);
+    }
+
+    // Add empty cells for days after the last day of the month
+    const remainingCells = 42 - (startingDayOfWeek + daysInMonth);
+    for (let i = 1; i <= remainingCells; i++) {
+      const nextMonthDay = new Date(year, month + 1, i);
+      const dayElement = createDayElement(nextMonthDay.getDate(), true, false);
+      datePickerDays.appendChild(dayElement);
+    }
+  }
+
+  function createDayElement(day, isOtherMonth, isToday = false, isSelected = false) {
+    const dayElement = document.createElement('div');
+    dayElement.className = 'date-day';
+    dayElement.textContent = day;
+    
+    if (isOtherMonth) {
+      dayElement.classList.add('other-month');
+    }
+    if (isToday) {
+      dayElement.classList.add('today');
+    }
+    if (isSelected) {
+      dayElement.classList.add('selected');
+    }
+
+    if (!isOtherMonth) {
+      dayElement.addEventListener('click', () => {
+        const year = currentDatePickerDate.getFullYear();
+        const month = currentDatePickerDate.getMonth();
+        const selectedDate = new Date(year, month, day);
+        selectDate(selectedDate);
+      });
+    }
+
+    return dayElement;
+  }
+
+  function selectDate(date) {
+    if (currentDatePickerInput) {
+      currentDatePickerInput.value = formatDateForInput(date);
+      currentDatePickerInput.dispatchEvent(new Event('change'));
+    }
+    hideCustomDatePicker();
+  }
+
+  function formatDateForInput(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  // Override default date input behavior
+  function overrideDateInputs() {
+    // Prevent default date input behavior more aggressively
+    document.addEventListener('click', (e) => {
+      if (e.target.type === 'date') {
+        e.preventDefault();
+        e.stopPropagation();
+        showCustomDatePicker(e.target);
+        return false;
+      }
+    }, true);
+
+    // Handle focus events
+    document.addEventListener('focus', (e) => {
+      if (e.target.type === 'date') {
+        e.preventDefault();
+        e.stopPropagation();
+        showCustomDatePicker(e.target);
+        return false;
+      }
+    }, true);
+
+    // Handle mousedown events
+    document.addEventListener('mousedown', (e) => {
+      if (e.target.type === 'date') {
+        e.preventDefault();
+        e.stopPropagation();
+        showCustomDatePicker(e.target);
+        return false;
+      }
+    }, true);
+
+    // Handle touch events for mobile
+    document.addEventListener('touchstart', (e) => {
+      if (e.target.type === 'date') {
+        e.preventDefault();
+        e.stopPropagation();
+        showCustomDatePicker(e.target);
+        return false;
+      }
+    }, true);
+
+    // Disable native date picker on all date inputs
+    document.addEventListener('DOMContentLoaded', () => {
+      const dateInputs = document.querySelectorAll('input[type="date"]');
+      dateInputs.forEach(input => {
+        input.addEventListener('focus', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          showCustomDatePicker(input);
+          return false;
+        });
+        
+        input.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          showCustomDatePicker(input);
+          return false;
+        });
+        
+        // Prevent native picker but keep icon visible
+        input.style.cursor = 'pointer';
+        input.addEventListener('focus', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          showCustomDatePicker(input);
+          return false;
+        });
+      });
+    });
+  }
+
+  // Function to apply date picker overrides to new inputs
+  function applyDatePickerToNewInputs() {
+    const dateInputs = document.querySelectorAll('input[type="date"]:not([data-custom-picker-applied])');
+    dateInputs.forEach(input => {
+      input.setAttribute('data-custom-picker-applied', 'true');
+      input.style.cursor = 'pointer';
+      
+      input.addEventListener('focus', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        showCustomDatePicker(input);
+        return false;
+      });
+      
+      input.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        showCustomDatePicker(input);
+        return false;
+      });
+    });
+  }
+
+  // Function to position dropdown based on available space
+  function positionDropdown(trigger, menu) {
+    const triggerRect = trigger.getBoundingClientRect();
+    const menuHeight = 200; // Approximate menu height
+    const viewportHeight = window.innerHeight;
+    const spaceBelow = viewportHeight - triggerRect.bottom;
+    const spaceAbove = triggerRect.top;
+    
+    // Reset any previous positioning
+    menu.style.top = '';
+    menu.style.bottom = '';
+    menu.style.transform = '';
+    
+    if (spaceBelow < menuHeight && spaceAbove > spaceBelow) {
+      // Position above the trigger
+      menu.style.bottom = '100%';
+      menu.style.top = 'auto';
+      menu.style.transform = 'translateY(-4px)';
+    } else {
+      // Position below the trigger (default)
+      menu.style.top = '100%';
+      menu.style.bottom = 'auto';
+      menu.style.transform = 'translateY(4px)';
+    }
+  }
+
+  // Function to check if paid_egp field exists in database
+  async function checkDatabaseSchema() {
+    if (!currentUser || !supabaseReady) return false;
+    
+    try {
+      // Try to select paid_egp field to see if it exists
+      const { data, error } = await window.supabaseClient
+        .from('income')
+        .select('paid_egp')
+        .limit(1);
+      
+      if (error && error.code === 'PGRST116') {
+        console.warn('paid_egp field does not exist in database schema');
+        return false;
+      }
+      
+      console.log('paid_egp field exists in database');
+      return true;
+    } catch (error) {
+      console.error('Error checking database schema:', error);
+      return false;
+    }
+  }
+
+  // Initialize custom date picker when DOM is loaded
+  document.addEventListener('DOMContentLoaded', () => {
+    initCustomDatePicker();
+    overrideDateInputs();
+    applyDatePickerToNewInputs();
+    
+    // Check database schema on load
+    if (currentUser && supabaseReady) {
+      checkDatabaseSchema();
+    }
+  });
+
+  // Re-apply date picker overrides when new content is added
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.type === 'childList') {
+        mutation.addedNodes.forEach((node) => {
+          if (node.nodeType === 1) { // Element node
+            if (node.tagName === 'INPUT' && node.type === 'date') {
+              applyDatePickerToNewInputs();
+            } else if (node.querySelectorAll) {
+              const dateInputs = node.querySelectorAll('input[type="date"]');
+              if (dateInputs.length > 0) {
+                applyDatePickerToNewInputs();
+              }
+            }
+          }
+        });
+      }
+    });
+  });
+
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true
   });
 
 
