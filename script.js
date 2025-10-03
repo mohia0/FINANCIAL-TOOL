@@ -58,6 +58,32 @@ window.supabaseClient = supabase;
         pageIncome?.style.setProperty('display', 'block');
         yearTabsContainer?.style.setProperty('display', 'flex');
         currentPage = 'income';
+        
+        // Ensure current year is selected when switching to income page
+        ensureCurrentYearSelected();
+      }
+    }
+    
+    // Ensure current year is selected
+    function ensureCurrentYearSelected() {
+      const currentYearString = new Date().getFullYear().toString();
+      const currentYearTab = document.querySelector(`[data-year="${currentYearString}"]`);
+      
+      if (currentYearTab) {
+        // Remove active class from all tabs first
+        document.querySelectorAll('.year-tab').forEach(tab => tab.classList.remove('active'));
+        // Set current year as active
+        currentYearTab.classList.add('active');
+        currentYear = currentYearString;
+        console.log('Ensured current year is selected:', currentYear);
+        
+        // Update income data for the current year
+        updateIncomeForYear(currentYear);
+      } else {
+        // If current year tab doesn't exist, create it and set as active
+        console.log('Current year tab not found, creating it:', currentYearString);
+        createYearTab(currentYearString);
+        switchYear(currentYearString);
       }
     }
     
@@ -2618,6 +2644,38 @@ window.supabaseClient = supabase;
 
     function setText(id,val){ const el=document.getElementById(id); if(el) el.textContent=val; }
     
+    // Custom method options management
+    function getCustomMethodOptions() {
+      const saved = localStorage.getItem('customMethodOptions');
+      return saved ? JSON.parse(saved) : [];
+    }
+    
+    function saveCustomMethodOptions(options) {
+      localStorage.setItem('customMethodOptions', JSON.stringify(options));
+    }
+    
+    function addCustomMethodOption(option) {
+      if (!option || option.trim() === '') return;
+      const customOptions = getCustomMethodOptions();
+      const trimmedOption = option.trim();
+      if (!customOptions.includes(trimmedOption)) {
+        customOptions.push(trimmedOption);
+        saveCustomMethodOptions(customOptions);
+      }
+    }
+    
+    function removeCustomMethodOption(option) {
+      const customOptions = getCustomMethodOptions();
+      const filtered = customOptions.filter(opt => opt !== option);
+      saveCustomMethodOptions(filtered);
+    }
+    
+    function getAllMethodOptions() {
+      const defaultOptions = ['Bank Transfer', 'Paypal', 'Cash', 'Crypto', 'InstaPay', 'Wire Transfer'];
+      const customOptions = getCustomMethodOptions();
+      return [...defaultOptions, ...customOptions];
+    }
+    
     // Helper function to format date for display (Month Day format)
     function formatDateForDisplay(dateString) {
       if (!dateString) return '';
@@ -4481,6 +4539,21 @@ window.supabaseClient = supabase;
       dragHandleDiv.className = 'drag-handle';
       dragHandleDiv.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4"><path d="M8 6h8M8 12h8M8 18h8"/></svg>';
       dragHandleDiv.title = 'Drag to reorder';
+      dragHandleDiv.setAttribute('draggable', 'true');
+      
+      // Make the drag handle work by delegating to the row
+      dragHandleDiv.addEventListener('dragstart', (e) => {
+        e.stopPropagation();
+        // Transfer the drag to the parent row
+        const rowDragEvent = new DragEvent('dragstart', {
+          bubbles: true,
+          cancelable: true,
+          dataTransfer: e.dataTransfer
+        });
+        // Set the target to the row element
+        Object.defineProperty(rowDragEvent, 'target', { value: div, enumerable: true });
+        div.dispatchEvent(rowDragEvent);
+      });
       
       // Icon cell
       const iconName = row.icon || 'fa:dollar-sign';
@@ -4673,28 +4746,108 @@ window.supabaseClient = supabase;
       const methodMenu = document.createElement('div');
       methodMenu.className = 'method-menu-minimal';
       
-      const options = ['Bank Transfer', 'Paypal', 'Cash', 'Crypto', 'InstaPay', 'Credit Card', 'Wire Transfer', 'Mobile Payment'];
-      options.forEach(option => {
-        const item = document.createElement('div');
-        item.className = 'method-item-minimal';
-        if (option === (row.method || 'Bank Transfer')) {
-          item.classList.add('selected');
-        }
-        item.textContent = option;
-        item.addEventListener('click', function(e) {
+      // Add custom input section at the top
+      const customInputSection = document.createElement('div');
+      customInputSection.className = 'method-custom-section';
+      customInputSection.style.cssText = 'padding: 0.5rem; border-bottom: 1px solid var(--stroke); margin-bottom: 0.25rem;';
+      
+      const customInput = document.createElement('input');
+      customInput.type = 'text';
+      customInput.placeholder = 'Add custom method...';
+      customInput.className = 'method-custom-input';
+      customInput.style.cssText = 'width: 100%; padding: 0.25rem 0.5rem; font-size: 0.7rem; border: 1px solid var(--stroke); border-radius: 4px; background: var(--card); color: var(--fg); outline: none;';
+      
+      customInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
           e.preventDefault();
-          e.stopPropagation();
-          
-          row.method = option;
-          methodTrigger.querySelector('.method-text').textContent = option;
-          methodMenu.querySelectorAll('.method-item-minimal').forEach(i => i.classList.remove('selected'));
-          this.classList.add('selected');
-          methodDropdown.classList.remove('open');
-          methodMenu.classList.remove('show');
-          instantSaveIncomeRow(row, currentYear);
-        });
-        methodMenu.appendChild(item);
+          const value = this.value.trim();
+          if (value) {
+            addCustomMethodOption(value);
+            this.value = '';
+            // Refresh the dropdown
+            refreshMethodDropdown();
+          }
+        }
       });
+      
+      // Function to refresh the entire dropdown
+      const refreshMethodDropdown = () => {
+        methodMenu.innerHTML = '';
+        methodMenu.appendChild(customInputSection);
+        renderMethodOptions(methodMenu, row, methodDropdown);
+      };
+      
+      customInputSection.appendChild(customInput);
+      methodMenu.appendChild(customInputSection);
+      
+      // Function to render method options
+      const renderMethodOptions = (container, rowData, dropdown) => {
+        const options = getAllMethodOptions();
+        const customOptions = getCustomMethodOptions();
+        
+        options.forEach(option => {
+          const item = document.createElement('div');
+          item.className = 'method-item-minimal';
+          item.style.cssText = 'display: flex; align-items: center; justify-content: space-between; padding: 0.5rem; cursor: pointer; transition: all 0.2s ease;';
+          
+          if (option === (rowData.method || 'Bank Transfer')) {
+            item.classList.add('selected');
+          }
+          
+          const itemText = document.createElement('span');
+          itemText.textContent = option;
+          itemText.style.flex = '1';
+          
+          item.appendChild(itemText);
+          
+          // Add remove button for custom options only
+          if (customOptions.includes(option)) {
+            const removeBtn = document.createElement('button');
+            removeBtn.innerHTML = '×';
+            removeBtn.className = 'method-remove-btn';
+            removeBtn.style.cssText = 'background: none; border: none; color: var(--muted); cursor: pointer; padding: 0.125rem 0.25rem; border-radius: 2px; font-size: 0.8rem; margin-left: 0.5rem; transition: all 0.2s ease;';
+            removeBtn.title = 'Remove this option';
+            
+            removeBtn.addEventListener('click', function(e) {
+              e.preventDefault();
+              e.stopPropagation();
+              removeCustomMethodOption(option);
+              // Refresh the dropdown
+              refreshMethodDropdown();
+            });
+            
+            removeBtn.addEventListener('mouseenter', function() {
+              this.style.backgroundColor = 'var(--hover)';
+              this.style.color = 'var(--fg)';
+            });
+            
+            removeBtn.addEventListener('mouseleave', function() {
+              this.style.backgroundColor = 'transparent';
+              this.style.color = 'var(--muted)';
+            });
+            
+            item.appendChild(removeBtn);
+          }
+          
+          item.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            rowData.method = option;
+            methodTrigger.querySelector('.method-text').textContent = option;
+            methodMenu.querySelectorAll('.method-item-minimal').forEach(i => i.classList.remove('selected'));
+            this.classList.add('selected');
+            methodDropdown.classList.remove('open');
+            methodMenu.classList.remove('show');
+            instantSaveIncomeRow(rowData, currentYear);
+          });
+          
+          container.appendChild(item);
+        });
+      };
+      
+      // Initial render
+      renderMethodOptions(methodMenu, row, methodDropdown);
       
       methodTrigger.addEventListener('click', function(e) {
         e.preventDefault();
@@ -5930,17 +6083,18 @@ window.supabaseClient = supabase;
 
     // Add row drag event listeners
     document.addEventListener('dragstart', (e) => {
-      if (e.target.classList.contains('row-draggable')) {
-        draggedRow = e.target;
-        draggedRowIndex = parseInt(e.target.getAttribute('data-row-index'));
-        if (e.target.closest('#list-personal')) {
+      if (e.target.classList.contains('row-draggable') || e.target.closest('.row-draggable')) {
+        const rowElement = e.target.classList.contains('row-draggable') ? e.target : e.target.closest('.row-draggable');
+        draggedRow = rowElement;
+        draggedRowIndex = parseInt(rowElement.getAttribute('data-row-index'));
+        if (rowElement.closest('#list-personal')) {
           draggedRowArray = state.personal;
-        } else if (e.target.closest('#list-biz')) {
+        } else if (rowElement.closest('#list-biz')) {
           draggedRowArray = state.biz;
-        } else if (e.target.closest('#list-income')) {
-          draggedRowArray = state.income;
+        } else if (rowElement.closest('#list-income')) {
+          draggedRowArray = state.income[currentYear] || [];
         }
-        e.target.classList.add('dragging');
+        rowElement.classList.add('dragging');
         e.dataTransfer.effectAllowed = 'move';
         e.dataTransfer.setData('text/plain', ''); // Prevent default drag behavior
         
@@ -5965,8 +6119,9 @@ window.supabaseClient = supabase;
     });
 
     document.addEventListener('dragend', (e) => {
-      if (e.target.classList.contains('row-draggable')) {
-        e.target.classList.remove('dragging');
+      if (e.target.classList.contains('row-draggable') || e.target.closest('.row-draggable')) {
+        const rowElement = e.target.classList.contains('row-draggable') ? e.target : e.target.closest('.row-draggable');
+        rowElement.classList.remove('dragging');
         draggedRow = null;
         draggedRowIndex = null;
         draggedRowArray = null;
@@ -5977,30 +6132,33 @@ window.supabaseClient = supabase;
 
     document.addEventListener('dragover', (e) => {
       e.preventDefault();
-      if (e.target.classList.contains('row-drop-zone') && e.target !== draggedRow) {
-        e.target.classList.add('drag-over');
+      const dropZone = e.target.classList.contains('row-drop-zone') ? e.target : e.target.closest('.row-drop-zone');
+      if (dropZone && dropZone !== draggedRow) {
+        dropZone.classList.add('drag-over');
       }
     });
 
     document.addEventListener('dragleave', (e) => {
-      if (e.target.classList.contains('row-drop-zone')) {
-        e.target.classList.remove('drag-over');
+      const dropZone = e.target.classList.contains('row-drop-zone') ? e.target : e.target.closest('.row-drop-zone');
+      if (dropZone) {
+        dropZone.classList.remove('drag-over');
       }
     });
 
     document.addEventListener('drop', (e) => {
       e.preventDefault();
-      if (e.target.classList.contains('row-drop-zone') && e.target !== draggedRow) {
-        e.target.classList.remove('drag-over');
+      const dropZone = e.target.classList.contains('row-drop-zone') ? e.target : e.target.closest('.row-drop-zone');
+      if (dropZone && dropZone !== draggedRow) {
+        dropZone.classList.remove('drag-over');
         
-        const targetRowIndex = parseInt(e.target.getAttribute('data-row-index'));
+        const targetRowIndex = parseInt(dropZone.getAttribute('data-row-index'));
         let targetArray;
-        if (e.target.closest('#list-personal')) {
+        if (dropZone.closest('#list-personal')) {
           targetArray = state.personal;
-        } else if (e.target.closest('#list-biz')) {
+        } else if (dropZone.closest('#list-biz')) {
           targetArray = state.biz;
-        } else if (e.target.closest('#list-income')) {
-          targetArray = state.income;
+        } else if (dropZone.closest('#list-income')) {
+          targetArray = state.income[currentYear] || [];
         }
         
         // Only allow drops within the same table
@@ -6015,9 +6173,17 @@ window.supabaseClient = supabase;
           draggedRowArray.splice(adjustedTargetIndex, 0, draggedItem);
           
           // Save and re-render
-          save();
-          renderAll();
-          showNotification('Row reordered', 'success', 1500);
+          if (dropZone.closest('#list-income')) {
+            // Use specific save for income table
+            saveToLocal();
+            renderAll();
+            showNotification('Income row reordered', 'success', 1500);
+          } else {
+            // Use regular save for other tables
+            save();
+            renderAll();
+            showNotification('Row reordered', 'success', 1500);
+          }
         }
       }
     });
@@ -6322,6 +6488,9 @@ window.supabaseClient = supabase;
         });
         dropdown.appendChild(suggestion);
       });
+      
+      // Position dropdown based on available space
+      positionDropdown(input, dropdown);
       
       // Append dropdown to the wrapper (relative positioning)
       wrapper.appendChild(dropdown);
@@ -6718,7 +6887,7 @@ window.supabaseClient = supabase;
     });
   }
 
-  // Function to position dropdown based on available space
+  // Function to position dropdown based on available space and row position
   function positionDropdown(trigger, menu) {
     const triggerRect = trigger.getBoundingClientRect();
     const menuHeight = 200; // Approximate menu height
@@ -6726,12 +6895,16 @@ window.supabaseClient = supabase;
     const spaceBelow = viewportHeight - triggerRect.bottom;
     const spaceAbove = triggerRect.top;
     
+    // Check if this is in the last two rows of any table
+    const isLastTwoRows = isInLastTwoRows(trigger);
+    
     // Reset any previous positioning
     menu.style.top = '';
     menu.style.bottom = '';
     menu.style.transform = '';
     
-    if (spaceBelow < menuHeight && spaceAbove > spaceBelow) {
+    // Always position above for last two rows, or if there's not enough space below
+    if (isLastTwoRows || (spaceBelow < menuHeight && spaceAbove > spaceBelow)) {
       // Position above the trigger
       menu.style.bottom = '100%';
       menu.style.top = 'auto';
@@ -6742,6 +6915,27 @@ window.supabaseClient = supabase;
       menu.style.bottom = 'auto';
       menu.style.transform = 'translateY(4px)';
     }
+  }
+  
+  // Function to check if trigger is in the last two rows of any table
+  function isInLastTwoRows(trigger) {
+    // Find the table container
+    const table = trigger.closest('.table');
+    if (!table) return false;
+    
+    // Get all data rows (excluding header and sum rows)
+    const dataRows = Array.from(table.querySelectorAll('.row:not(.row-head):not(.row-sum)'));
+    if (dataRows.length < 2) return false;
+    
+    // Find the current row
+    const currentRow = trigger.closest('.row:not(.row-head):not(.row-sum)');
+    if (!currentRow) return false;
+    
+    // Get the index of current row
+    const currentIndex = dataRows.indexOf(currentRow);
+    
+    // Check if it's in the last two rows
+    return currentIndex >= dataRows.length - 2;
   }
 
   // Function to check if paid_egp field exists in database

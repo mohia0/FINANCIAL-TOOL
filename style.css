@@ -2082,7 +2082,7 @@
       grid-template-columns:20px 28px 1fr 1.2fr 100px 100px 100px 120px 1fr 28px; 
       gap:0.6rem; 
       align-items:center; 
-      padding:.5rem .75rem; 
+      padding:.5rem .75rem .5rem .75rem; 
       border-bottom:1px solid var(--stroke); 
       transition:background-color .2s ease;
       min-height: 44px;
@@ -2091,6 +2091,33 @@
     }
     .row-income:hover{ background:var(--glass); }
     .row-income:last-child{ border-bottom:none; }
+    
+    /* Delete button styling for income table - matches expenses table */
+    .row-income .delete-btn {
+      width: 32px;
+      height: 32px;
+      border: none;
+      border-radius: 0.5rem;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      margin-left: auto;
+      margin-right: 8px;
+    }
+    
+    .row-income .delete-btn:hover {
+      background: rgba(239, 68, 68, 0.1);
+      color: #ef4444;
+      transform: scale(1.05);
+    }
+    
+    .row-income .delete-btn:active {
+      transform: scale(0.95);
+    }
     
     /* Increase z-index when dropdown is open */
     .row-income:has(.tag-dropdown.show),
@@ -2156,7 +2183,7 @@
       .table-container .row,
       .table-container .row-biz,
       .table-container .row-income {
-        min-width: 900px;
+        min-width: 800px;
         font-size: 0.7rem;
       }
       
@@ -2170,7 +2197,22 @@
       }
       
       .table-container .row-head.row-income {
-        grid-template-columns: 18px 24px 1fr 1.2fr 100px 85px 85px 100px 1fr 24px;
+        grid-template-columns: 18px 24px 1fr 1.2fr 80px 70px 70px 80px 1fr 24px;
+      }
+      
+      /* Better mobile layout for income table */
+      .table-container .row-income {
+        grid-template-columns: 18px 24px 1fr 1.2fr 80px 70px 70px 80px 1fr 24px;
+        gap: 0.4rem;
+        padding: 0.4rem 0.5rem 0.4rem 0.5rem;
+        min-height: 40px;
+      }
+      
+      /* Adjust delete button for mobile */
+      .table-container .row-income .delete-btn {
+        width: 28px;
+        height: 28px;
+        margin-right: 6px;
       }
     }
     
@@ -2193,6 +2235,108 @@
       .table-container .row-biz,
       .table-container .row-income {
         padding: 0.4rem 0.3rem;
+      }
+      
+      /* Extra small screens - more compact income table */
+      .table-container .row-income {
+        grid-template-columns: 16px 20px 1fr 1.2fr 70px 60px 60px 70px 1fr 20px;
+        gap: 0.3rem;
+        padding: 0.35rem 0.25rem 0.35rem 0.25rem;
+        min-height: 36px;
+        font-size: 0.65rem;
+      }
+      
+      /* Adjust delete button for extra small screens */
+      .table-container .row-income .delete-btn {
+        width: 24px;
+        height: 24px;
+        margin-right: 4px;
+      }
+      
+      .table-container .row-income .delete-btn svg {
+        width: 14px;
+        height: 14px;
+      }
+    }
+    
+    /* Extra small screens - 320px and below */
+    @media (max-width: 320px) {
+      .table-container .row-income {
+        grid-template-columns: 14px 18px 1fr 1.2fr 50px 45px 45px 50px 1fr 18px;
+        gap: 0.25rem;
+        padding: 0.3rem 0.2rem 0.3rem 0.2rem;
+        min-height: 32px;
+        font-size: 0.6rem;
+      }
+      
+      .table-container .row-income .delete-btn {
+        width: 20px;
+        height: 20px;
+        margin-right: 3px;
+      }
+      
+      .table-container .row-income .delete-btn svg {
+        width: 12px;
+        height: 12px;
+      }
+      
+      .table-container .row-head.row-income {
+        grid-template-columns: 14px 18px 1fr 1.2fr 50px 45px 45px 50px 1fr 18px;
+        font-size: 0.5rem;
+      }
+    }
+    
+    /* Smart responsive design for very small screens */
+    @media (max-width: 360px) {
+      .table-container .row-income {
+        grid-template-columns: 12px 16px 1fr 1.2fr 45px 40px 40px 45px 1fr 16px;
+        gap: 0.2rem;
+        padding: 0.25rem 0.15rem 0.25rem 0.15rem;
+        min-height: 30px;
+        font-size: 0.55rem;
+      }
+      
+      .table-container .row-income .delete-btn {
+        width: 18px;
+        height: 18px;
+        margin-right: 2px;
+      }
+      
+      .table-container .row-income .delete-btn svg {
+        width: 10px;
+        height: 10px;
+      }
+      
+      .table-container .row-head.row-income {
+        grid-template-columns: 12px 16px 1fr 1.2fr 45px 40px 40px 45px 1fr 16px;
+        font-size: 0.45rem;
+      }
+    }
+    
+    /* Ultra-compact design for very small devices */
+    @media (max-width: 280px) {
+      .table-container .row-income {
+        grid-template-columns: 10px 14px 1fr 1.2fr 35px 30px 30px 35px 1fr 14px;
+        gap: 0.15rem;
+        padding: 0.2rem 0.1rem 0.2rem 0.1rem;
+        min-height: 28px;
+        font-size: 0.5rem;
+      }
+      
+      .table-container .row-income .delete-btn {
+        width: 16px;
+        height: 16px;
+        margin-right: 1px;
+      }
+      
+      .table-container .row-income .delete-btn svg {
+        width: 8px;
+        height: 8px;
+      }
+      
+      .table-container .row-head.row-income {
+        grid-template-columns: 10px 14px 1fr 1.2fr 35px 30px 30px 35px 1fr 14px;
+        font-size: 0.4rem;
       }
     }
     .row-head{ 
@@ -2429,10 +2573,10 @@
       .row{ gap:.2rem; padding:.3rem; }
       .row-biz{ gap:.2rem; padding:.3rem; }
       .row-income{ 
-        gap:.5rem; 
-        padding:.4rem .4rem; 
+        gap:.4rem; 
+        padding:.4rem .5rem .4rem .5rem; 
         min-height: 40px;
-        grid-template-columns: 18px 24px 1fr 1.2fr 100px 85px 85px 100px 1fr 24px;
+        grid-template-columns: 18px 24px 1fr 1.2fr 80px 70px 70px 80px 1fr 24px;
       }
       
       .nav-btn {
@@ -2451,10 +2595,11 @@
     
     @media (max-width: 480px) {
       .row-income{ 
-        gap:.4rem; 
-        padding:.35rem .3rem; 
+        gap:.3rem; 
+        padding:.35rem .25rem .35rem .25rem; 
         min-height: 36px;
-        grid-template-columns: 16px 20px 1fr 1.2fr 80px 70px 70px 80px 1fr 20px;
+        grid-template-columns: 16px 20px 1fr 1.2fr 60px 50px 50px 60px 1fr 20px;
+        font-size: 0.65rem;
       }
       
       .nav-btn {
@@ -2666,6 +2811,30 @@
     .notification-center.hide {
       opacity: 0;
       transform: translateY(-20px);
+    }
+    
+    /* Header logo styling */
+    header img {
+      height: 2.5rem;
+      width: auto;
+      transition: all 0.2s ease;
+    }
+    
+    header img:hover {
+      transform: scale(1.05);
+    }
+    
+    /* Responsive logo sizing */
+    @media (max-width: 768px) {
+      header img {
+        height: 1.75rem;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      header img {
+        height: 1.5rem;
+      }
     }
     
     /* Auto-save indicator in header */
