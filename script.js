@@ -2113,20 +2113,20 @@ window.supabaseClient = supabase;
             let updateError;
             try {
               const { error } = await window.supabaseClient
-                .from('income')
-                .update({
-                  name: incomeRow.name || '',
-                  tags: incomeRow.tags || '',
-                  date: incomeRow.date || new Date().toISOString().split('T')[0],
-                  all_payment: incomeRow.allPayment || 0,
-                  paid_usd: incomeRow.paidUsd || 0,
+              .from('income')
+              .update({
+                name: incomeRow.name || '',
+                tags: incomeRow.tags || '',
+                date: incomeRow.date || new Date().toISOString().split('T')[0],
+                all_payment: incomeRow.allPayment || 0,
+                paid_usd: incomeRow.paidUsd || 0,
                   paid_egp: incomeRow.paidEgp || null,
-                  method: incomeRow.method || 'Bank Transfer',
-                  icon: incomeRow.icon || 'fa:dollar-sign',
-                  year: parseInt(year),
-                  updated_at: new Date().toISOString()
-                })
-                .eq('id', incomeRow.id);
+                method: incomeRow.method || 'Bank Transfer',
+                icon: incomeRow.icon || 'fa:dollar-sign',
+                year: parseInt(year),
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', incomeRow.id);
               updateError = error;
             } catch (schemaError) {
               // If paid_egp field doesn't exist, fallback to without it
@@ -2643,7 +2643,7 @@ window.supabaseClient = supabase;
     }
 
     function setText(id,val){ const el=document.getElementById(id); if(el) el.textContent=val; }
-    
+
     // Custom method options management
     function getCustomMethodOptions() {
       const saved = localStorage.getItem('customMethodOptions');
@@ -2698,7 +2698,7 @@ window.supabaseClient = supabase;
 
 
   function renderKPIs(){
-    const p = totals(state.personal); const b = totals(state.biz);
+      const p = totals(state.personal); const b = totals(state.biz);
     const currentYearData = state.income[currentYear] || [];
     const i = incomeTotals(currentYearData);
       const all = { mUSD:p.mUSD + b.mUSD, yUSD:p.yUSD + b.yUSD };
@@ -4785,14 +4785,14 @@ window.supabaseClient = supabase;
         const options = getAllMethodOptions();
         const customOptions = getCustomMethodOptions();
         
-        options.forEach(option => {
-          const item = document.createElement('div');
-          item.className = 'method-item-minimal';
+      options.forEach(option => {
+        const item = document.createElement('div');
+        item.className = 'method-item-minimal';
           item.style.cssText = 'display: flex; align-items: center; justify-content: space-between; padding: 0.5rem; cursor: pointer; transition: all 0.2s ease;';
           
           if (option === (rowData.method || 'Bank Transfer')) {
-            item.classList.add('selected');
-          }
+          item.classList.add('selected');
+        }
           
           const itemText = document.createElement('span');
           itemText.textContent = option;
@@ -4829,21 +4829,21 @@ window.supabaseClient = supabase;
             item.appendChild(removeBtn);
           }
           
-          item.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            
+        item.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          
             rowData.method = option;
-            methodTrigger.querySelector('.method-text').textContent = option;
-            methodMenu.querySelectorAll('.method-item-minimal').forEach(i => i.classList.remove('selected'));
-            this.classList.add('selected');
-            methodDropdown.classList.remove('open');
-            methodMenu.classList.remove('show');
+          methodTrigger.querySelector('.method-text').textContent = option;
+          methodMenu.querySelectorAll('.method-item-minimal').forEach(i => i.classList.remove('selected'));
+          this.classList.add('selected');
+          methodDropdown.classList.remove('open');
+          methodMenu.classList.remove('show');
             instantSaveIncomeRow(rowData, currentYear);
-          });
+        });
           
           container.appendChild(item);
-        });
+      });
       };
       
       // Initial render
@@ -6180,9 +6180,9 @@ window.supabaseClient = supabase;
             showNotification('Income row reordered', 'success', 1500);
           } else {
             // Use regular save for other tables
-            save();
-            renderAll();
-            showNotification('Row reordered', 'success', 1500);
+          save();
+          renderAll();
+          showNotification('Row reordered', 'success', 1500);
           }
         }
       }

@@ -6,7 +6,14 @@
     ::-webkit-scrollbar-thumb{ background:#52525b; border-radius:999px; }
 
     .card{ border-radius:1rem; background:var(--card); border:none; box-shadow:0 10px 30px rgba(0,0,0,.20); backdrop-filter:blur(6px); }
+    
     .btn{ display:inline-flex; align-items:center; justify-content:center; gap:.5rem; border-radius:.75rem; padding:.5rem .75rem; font-size:.875rem; font-weight:500; border:1px solid var(--stroke); cursor:pointer; }
+    
+    /* ADD ROW buttons - force left alignment */
+    .btn[data-add-row] {
+      justify-content: flex-start !important;
+      text-align: left !important;
+    }
     .btn-primary{ background:#e4e4e7; color:#09090b; }
     .btn-ghost{ background:transparent; color:var(--fg); }
     .btn:hover{ border-color:#a1a1aa; }
@@ -2062,9 +2069,19 @@
       padding:.5rem .4rem;
       border-bottom:1px solid var(--stroke);
       transition:background-color .2s ease;
+      background: var(--card);
     }
     .row:hover{ background:var(--glass); }
     .row:last-child{ border-bottom:none; }
+    
+    /* Light mode table row backgrounds */
+    [data-theme="light"] .row {
+      background: rgba(248, 250, 252, 0.8);
+    }
+    
+    [data-theme="light"] .row:hover {
+      background: rgba(241, 245, 249, 0.9);
+    }
     .row-biz{ 
       display:grid; 
       grid-template-columns:24px 32px 1.4fr .8fr .8fr .8fr .8fr .9fr .9fr .9fr .9fr 32px; 
@@ -2073,9 +2090,19 @@
       padding:.5rem .4rem; 
       border-bottom:1px solid var(--stroke);
       transition:background-color .2s ease;
+      background: var(--card);
     }
     .row-biz:hover{ background:var(--glass); }
     .row-biz:last-child{ border-bottom:none; }
+    
+    /* Light mode business table row backgrounds */
+    [data-theme="light"] .row-biz {
+      background: rgba(248, 250, 252, 0.8);
+    }
+    
+    [data-theme="light"] .row-biz:hover {
+      background: rgba(241, 245, 249, 0.9);
+    }
     
     .row-income{ 
       display:grid; 
@@ -2088,9 +2115,19 @@
       min-height: 44px;
       position: relative;
       z-index: 1;
+      background: var(--card);
     }
     .row-income:hover{ background:var(--glass); }
     .row-income:last-child{ border-bottom:none; }
+    
+    /* Light mode income table row backgrounds */
+    [data-theme="light"] .row-income {
+      background: rgba(248, 250, 252, 0.8);
+    }
+    
+    [data-theme="light"] .row-income:hover {
+      background: rgba(241, 245, 249, 0.9);
+    }
     
     /* Delete button styling for income table - matches expenses table */
     .row-income .delete-btn {
@@ -2349,7 +2386,7 @@
       grid-template-columns:24px 32px 1.5fr .8fr .8fr .8fr 1fr 1fr 1fr 1fr 32px; 
       gap:.7rem; 
       align-items:center; 
-      background:rgba(24,24,27,0.98); 
+      background:var(--glass); 
       position:sticky; 
       top:0; 
       backdrop-filter:blur(25px); 
@@ -2361,14 +2398,14 @@
       box-shadow:0 4px 16px rgba(0,0,0,0.2);
     }
     [data-theme="light"] .row-head {
-      background:rgba(248,250,252,0.98);
+      background:rgba(241, 245, 249, 0.9);
     }
     .row-head:hover{ 
       background:rgba(24,24,27,0.98); 
       box-shadow:0 4px 12px rgba(0,0,0,0.15);
     }
     [data-theme="light"] .row-head:hover {
-      background:rgba(248,250,252,0.98);
+      background:rgba(241, 245, 249, 0.9);
     }
     
     .row-head.row-biz{ 
@@ -2444,6 +2481,11 @@
       border-top:1px solid var(--stroke); 
       color:var(--fg);
       border-bottom:none;
+    }
+    
+    /* Light mode sum row backgrounds */
+    [data-theme="light"] .row-sum {
+      background: rgba(241, 245, 249, 0.9);
     }
     
     /* Minimal drag and drop styles */
@@ -2818,10 +2860,21 @@
       height: 2.5rem;
       width: auto;
       transition: all 0.2s ease;
+      filter: invert(1); /* White by default (dark mode) */
     }
     
     header img:hover {
       transform: scale(1.05);
+    }
+    
+    /* Light mode - make logo black */
+    [data-theme="light"] header img {
+      filter: invert(1); /* Black in light mode */
+    }
+    
+    /* Dark mode - make logo white */
+    [data-theme="dark"] header img {
+      filter: invert(0); /* White in dark mode */
     }
     
     /* Responsive logo sizing */
