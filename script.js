@@ -1511,10 +1511,15 @@ window.supabaseClient = supabase;
           state.theme = settings.theme || 'dark';
           state.autosave = settings.autosave ? 'on' : 'off';
           state.includeAnnualInMonthly = settings.include_annual_in_monthly === true || settings.include_annual_in_monthly === 'true' || false;
+          state.inputsLocked = settings.inputs_locked === true || settings.inputs_locked === 'true' || false;
           columnOrder = settings.column_order || ['monthly', 'yearly', 'monthly-egp', 'yearly-egp'];
           
           // Update UI elements to reflect loaded settings
           updateSettingsUI();
+          
+          // Apply lock state after loading settings
+          updateLockIcon();
+          updateInputsLockState();
         }
         
         // Process personal expenses
@@ -1745,7 +1750,8 @@ window.supabaseClient = supabase;
             autosave: state.autosave === 'on',
             include_annual_in_monthly: state.includeAnnualInMonthly,
             column_order: columnOrder,
-            available_years: availableYears
+            available_years: availableYears,
+            inputs_locked: state.inputsLocked
           }, {
             onConflict: 'user_id'
           });
@@ -2104,6 +2110,11 @@ window.supabaseClient = supabase;
       updateLockIcon();
       updateInputsLockState();
       save('lock');
+      
+      // Save lock state to cloud if user is authenticated
+      if (currentUser) {
+        saveLockStateToCloud();
+      }
     }
     
     function updateLockIcon() {
@@ -2204,6 +2215,27 @@ window.supabaseClient = supabase;
         showNotification('All inputs locked', 'info', 2000);
       } else {
         showNotification('All inputs unlocked', 'success', 2000);
+      }
+    }
+    
+    // Function to save lock state to cloud
+    async function saveLockStateToCloud() {
+      if (!currentUser) return;
+      
+      try {
+        await window.supabaseClient
+          .from('user_settings')
+          .upsert({
+            user_id: currentUser.id,
+            inputs_locked: state.inputsLocked
+          }, {
+            onConflict: 'user_id'
+          });
+        
+        console.log('Lock state saved to cloud:', state.inputsLocked);
+      } catch (error) {
+        console.error('Error saving lock state to cloud:', error);
+        showNotification('Failed to sync lock state to cloud', 'error', 3000);
       }
     }
 
