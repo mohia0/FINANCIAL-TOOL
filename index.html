@@ -1,0 +1,843 @@
+﻿<!doctype html>
+<html lang="en" class="h-full" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MY FINANCIALS — USD · EGP</title>
+  <link rel="icon" type="image/svg+xml" href="Images/Favicon.svg">
+  <link rel="alternate icon" href="Images/Favicon.svg">
+  <link rel="apple-touch-icon" href="Images/Favicon.svg">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css">
+  
+  <!-- Supabase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <script src="script.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="h-full">
+
+
+
+  <div class="max-w-7xl mx-auto p-4 md:p-6 lg:p-10 space-y-6" id="mainContent">
+    <!-- Header -->
+    <header class="flex flex-wrap items-center gap-3 justify-between" style="position: relative;">
+      <div class="flex items-center gap-3">
+        <div>
+          <img src="Images/Logo.svg" alt="MY FINANCIALS" class="h-8 w-auto">
+          <p class="text-xs" style="color:var(--muted)">Track Personal & Biz — USD with mirrored EGP</p>
+          <div id="autosaveStatus" class="autosave-status enabled">● Auto-save enabled</div>
+        </div>
+      </div>
+      
+      <!-- Navigation Tabs in Header -->
+      <div class="flex items-center gap-2">
+        <button id="tabExpenses" class="nav-btn nav-btn-expenses active" data-page="expenses">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-3 h-3">
+            <path d="M12 19V5M5 12l7-7 7 7"/>
+          </svg>
+          Expenses
+        </button>
+        <button id="tabIncome" class="nav-btn nav-btn-income" data-page="income">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-3 h-3">
+            <path d="M12 5v14M19 12l-7 7-7-7"/>
+          </svg>
+          Income
+        </button>
+        
+      </div>
+      
+      <div class="flex items-center gap-2 relative">
+        <button id="btnRefresh" class="icon-btn size-8 rounded-xl border hover:bg-white/5 transition sync-button" title="Refresh from Cloud" style="border-color:var(--stroke)">
+          <svg id="iconRefresh" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-3 h-3">
+            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+            <path d="M21 3v5h-5"/>
+            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+            <path d="M3 21v-5h5"/>
+          </svg>
+          <span id="syncStatus" class="sync-status"></span>
+        </button>
+        <button id="btnTheme" class="icon-btn size-8 rounded-xl border hover:bg-white/5 transition" title="Toggle theme" style="border-color:var(--stroke)">
+          <svg id="iconTheme" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4">
+            <path d="M12 3v1m0 16v1m9-9h1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+          </svg>
+        </button>
+        <button id="btnSettings" class="icon-btn size-8 rounded-xl border hover:bg-white/5 transition" title="Settings" style="border-color:var(--stroke)">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+        </button>
+        
+        <!-- Sign In Button (visible when not authenticated) -->
+        <button id="btnSignIn" class="nav-btn" style="display: none;">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-3 h-3">
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+            <polyline points="10,17 15,12 10,7"/>
+            <line x1="15" y1="12" x2="3" y2="12"/>
+          </svg>
+          Sign In
+        </button>
+        
+        <!-- Account Dropdown -->
+        <div class="relative">
+          <button id="accountMenuBtn" class="icon-btn size-8 rounded-xl border hover:bg-white/5 transition" title="Account" style="border-color:var(--stroke); display: none;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4" style="display: block; margin: 0 auto;">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+          </button>
+          
+          <!-- Account Dropdown Menu -->
+          <div id="accountDropdown" class="absolute right-0 top-full mt-2 w-56 rounded-lg shadow-lg z-50" style="display: none; background:var(--bg); border: 1px solid var(--stroke);">
+            <div class="p-3">
+              <!-- Authentication Section -->
+              <div id="authSection">
+                <!-- Login Button (shown when not authenticated) -->
+                <button id="btnLogin" class="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-white/5 transition rounded text-sm" style="display: none;">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+                    <polyline points="10,17 15,12 10,7"/>
+                    <line x1="15" y1="12" x2="3" y2="12"/>
+                  </svg>
+                  <span>Sign In</span>
+                </button>
+                
+                <!-- User Info (shown when authenticated) -->
+                <div id="userInfo" style="display: none;">
+                  <div class="flex items-center gap-2 mb-3 pb-3 border-b" style="border-color:var(--stroke);">
+                    <img id="userPhoto" src="" alt="User" class="w-8 h-8 rounded-full" style="display: none;">
+                    <div class="min-w-0 flex-1">
+                      <div id="userName" class="font-medium text-sm truncate"></div>
+                      <div id="userEmail" class="text-xs truncate" style="color:var(--muted)"></div>
+                    </div>
+                  </div>
+                  
+                  <div class="space-y-1">
+                    <button id="changePasswordBtn" class="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-white/5 transition rounded text-sm">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                        <circle cx="12" cy="16" r="1"></circle>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                      </svg>
+                      <span>Change Password</span>
+                    </button>
+                    
+                    <button id="btnLogout" class="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-white/5 transition rounded text-sm text-red-400">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                        <polyline points="16,17 21,12 16,7"/>
+                        <line x1="21" y1="12" x2="9" y2="12"/>
+                      </svg>
+                      <span>Sign Out</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Modern Notification Center -->
+        <div id="notificationCenter" class="notification-center" style="opacity:0; transform:translate(-50%, -50%) translateX(20px);">
+          <div class="notification-content">
+            <div class="notification-text">Data saved successfully</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+
+    <!-- Expenses Page -->
+    <div id="pageExpenses" class="page-content">
+      <!-- KPIs -->
+      <section id="kpis" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-4">
+      <div class="kpi kpi-em sm:col-span-1" data-analytics="all">
+        <h3>All</h3>
+        <div class="grid grid-cols-2 gap-6 items-end">
+          <div>
+            <div class="text-[11px]" style="color:var(--muted)">Monthly</div>
+            <div class="value" id="kpiAllMonthlyUSD">$0.00</div>
+            <div class="sub" id="kpiAllMonthlyEGP">EGP 0</div>
+          </div>
+          <div class="text-right">
+            <div class="text-[11px]" style="color:var(--muted)">Yearly</div>
+            <div class="value" id="kpiAllYearlyUSD">$0.00</div>
+            <div class="sub" id="kpiAllYearlyEGP">EGP 0</div>
+          </div>
+        </div>
+        <!-- Skeleton Loading -->
+        <div class="card-skeleton hidden" id="kpiAllSkeleton">
+          <div class="skeleton-text-sm skeleton-w-20"></div>
+          <div class="grid grid-cols-2 gap-6 items-end">
+            <div>
+              <div class="skeleton-text-sm skeleton-w-24"></div>
+              <div class="skeleton-text-xl skeleton-w-32"></div>
+              <div class="skeleton-text-sm skeleton-w-20"></div>
+            </div>
+            <div class="text-right">
+              <div class="skeleton-text-sm skeleton-w-24"></div>
+              <div class="skeleton-text-xl skeleton-w-32"></div>
+              <div class="skeleton-text-sm skeleton-w-20"></div>
+            </div>
+          </div>
+        </div>
+        <div class="mt-2 flex items-center justify-between text-xs">
+          <span style="color:var(--muted)">FX (USD→EGP)</span>
+          <span class="font-semibold" id="kpiFxSmall">—</span>
+        </div>
+        <div class="mt-2 grid grid-cols-2 gap-4 text-xs">
+          <div><div class="flex items-center justify-between"><span style="color:var(--muted)">Personal share</span><span id="sharePersonalVal">0%</span></div><div class="bar mt-1 h-2"><span id="sharePersonalBar" style="width:0%"></span></div></div>
+          <div><div class="flex items-center justify-between"><span style="color:var(--muted)">Biz share</span><span id="shareBizVal">0%</span></div><div class="bar mt-1 h-2"><span id="shareBizBar" style="width:0%"></span></div></div>
+        </div>
+        
+        <!-- Analytics Panel -->
+        <div class="kpi-expanded">
+          <div class="analytics-header">
+            <h4 class="analytics-title">Complete Financial Overview</h4>
+            <button class="analytics-close" data-close-analytics>×</button>
+      </div>
+          <div class="analytics-content" id="analyticsAll"></div>
+        </div>
+      </div>
+      
+      <div class="kpi" data-analytics="personal">
+        <h3>Personal</h3>
+        <div class="grid grid-cols-2 gap-4">
+          <div><div class="text-[11px]" style="color:var(--muted)">Monthly</div><div class="value" id="kpiPersonalMonthly">$0.00</div><div class="sub" id="kpiPersonalMonthlyEGP">EGP 0</div></div>
+          <div><div class="text-[11px]" style="color:var(--muted)">Yearly</div><div class="value" id="kpiPersonalYearly">$0.00</div><div class="sub" id="kpiPersonalYearlyEGP">EGP 0</div></div>
+        </div>
+        <!-- Skeleton Loading -->
+        <div class="card-skeleton hidden" id="kpiPersonalSkeleton">
+          <div class="skeleton-text-sm skeleton-w-24"></div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <div class="skeleton-text-sm skeleton-w-20"></div>
+              <div class="skeleton-text-lg skeleton-w-24"></div>
+              <div class="skeleton-text-sm skeleton-w-20"></div>
+            </div>
+            <div>
+              <div class="skeleton-text-sm skeleton-w-20"></div>
+              <div class="skeleton-text-lg skeleton-w-24"></div>
+              <div class="skeleton-text-sm skeleton-w-20"></div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Analytics Panel -->
+        <div class="kpi-expanded">
+          <div class="analytics-header">
+            <h4 class="analytics-title">Personal Expenses Analytics</h4>
+            <button class="analytics-close" data-close-analytics>×</button>
+      </div>
+          <div class="analytics-content" id="analyticsPersonal"></div>
+        </div>
+      </div>
+      
+      <div class="kpi" data-analytics="biz">
+        <h3>Biz</h3>
+        <div class="grid grid-cols-2 gap-4">
+          <div><div class="text-[11px]" style="color:var(--muted)">Monthly</div><div class="value" id="kpiBizMonthly">$0.00</div><div class="sub" id="kpiBizMonthlyEGP">EGP 0</div></div>
+          <div><div class="text-[11px]" style="color:var(--muted)">Yearly</div><div class="value" id="kpiBizYearly">$0.00</div><div class="sub" id="kpiBizYearlyEGP">EGP 0</div></div>
+        </div>
+        <!-- Skeleton Loading -->
+        <div class="card-skeleton hidden" id="kpiBizSkeleton">
+          <div class="skeleton-text-sm skeleton-w-20"></div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <div class="skeleton-text-sm skeleton-w-20"></div>
+              <div class="skeleton-text-lg skeleton-w-24"></div>
+              <div class="skeleton-text-sm skeleton-w-20"></div>
+            </div>
+            <div>
+              <div class="skeleton-text-sm skeleton-w-20"></div>
+              <div class="skeleton-text-lg skeleton-w-24"></div>
+              <div class="skeleton-text-sm skeleton-w-20"></div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Analytics Panel -->
+        <div class="kpi-expanded">
+          <div class="analytics-header">
+            <h4 class="analytics-title">Business Expenses Analytics</h4>
+            <button class="analytics-close" data-close-analytics>×</button>
+      </div>
+          <div class="analytics-content" id="analyticsBiz"></div>
+      </div>
+      </div>
+    </section>
+
+
+    <!-- Personal table -->
+    <section class="p-0 space-y-2">
+      <h2 class="text-sm font-medium mb-4 px-1 sticky-header" style="color:var(--fg)">Personal Expenses</h2>
+      <div class="table-container">
+        <div class="table">
+          <div class="row row-head">
+            <div></div><div></div><div>Name</div><div>Cost USD</div><div>Status</div><div>Billing</div><div class="draggable-header financial-column" data-column="monthly" draggable="true">Monthly USD</div><div class="draggable-header financial-column" data-column="yearly" draggable="true">Yearly USD</div><div class="draggable-header financial-column" data-column="monthly-egp" draggable="true">Monthly EGP</div><div class="draggable-header financial-column" data-column="yearly-egp" draggable="true">Yearly EGP</div><div></div>
+          </div>
+          <!-- Loading Skeleton -->
+          <div id="loading-skeleton" class="loading-skeleton">
+            <div class="skeleton-rows">
+              <div class="skeleton-row">
+                <div class="skeleton-cell skeleton-drag"></div>
+                <div class="skeleton-cell skeleton-icon"></div>
+                <div class="skeleton-cell skeleton-name"></div>
+                <div class="skeleton-cell skeleton-cost"></div>
+                <div class="skeleton-cell skeleton-status"></div>
+                <div class="skeleton-cell skeleton-billing"></div>
+                <div class="skeleton-cell skeleton-monthly"></div>
+                <div class="skeleton-cell skeleton-yearly"></div>
+                <div class="skeleton-cell skeleton-monthly-egp"></div>
+                <div class="skeleton-cell skeleton-yearly-egp"></div>
+                <div class="skeleton-cell skeleton-delete"></div>
+              </div>
+              <div class="skeleton-row">
+                <div class="skeleton-cell skeleton-drag"></div>
+                <div class="skeleton-cell skeleton-icon"></div>
+                <div class="skeleton-cell skeleton-name"></div>
+                <div class="skeleton-cell skeleton-cost"></div>
+                <div class="skeleton-cell skeleton-status"></div>
+                <div class="skeleton-cell skeleton-billing"></div>
+                <div class="skeleton-cell skeleton-monthly"></div>
+                <div class="skeleton-cell skeleton-yearly"></div>
+                <div class="skeleton-cell skeleton-monthly-egp"></div>
+                <div class="skeleton-cell skeleton-yearly-egp"></div>
+                <div class="skeleton-cell skeleton-delete"></div>
+              </div>
+              <div class="skeleton-row">
+                <div class="skeleton-cell skeleton-drag"></div>
+                <div class="skeleton-cell skeleton-icon"></div>
+                <div class="skeleton-cell skeleton-name"></div>
+                <div class="skeleton-cell skeleton-cost"></div>
+                <div class="skeleton-cell skeleton-status"></div>
+                <div class="skeleton-cell skeleton-billing"></div>
+                <div class="skeleton-cell skeleton-monthly"></div>
+                <div class="skeleton-cell skeleton-yearly"></div>
+                <div class="skeleton-cell skeleton-monthly-egp"></div>
+                <div class="skeleton-cell skeleton-yearly-egp"></div>
+                <div class="skeleton-cell skeleton-delete"></div>
+              </div>
+            </div>
+          </div>
+          <div id="list-personal"></div>
+          <button class="btn w-full justify-start text-xs py-3 mx-0 my-3" data-add-row="personal" style="font-size:.65rem; border:1px dashed var(--stroke); background:var(--glass); color:var(--muted); transition:all .2s ease; border-radius:8px; margin-top:8px;">+ Add a row</button>
+          <div id="sum-personal" class="row row-sum"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Biz table -->
+    <section class="p-0 space-y-2 mt-8">
+      <h2 class="text-sm font-medium mb-4 px-1 sticky-header" style="color:var(--fg)">Biz Expenses</h2>
+      <div class="table-container">
+        <div class="table">
+          <div class="row row-head row-biz">
+            <div></div><div></div><div>Name</div><div>Cost USD</div><div>Status</div><div>Billing</div><div>Next</div><div class="draggable-header financial-column" data-column="monthly" draggable="true">Monthly USD</div><div class="draggable-header financial-column" data-column="yearly" draggable="true">Yearly USD</div><div class="draggable-header financial-column" data-column="monthly-egp" draggable="true">Monthly EGP</div><div class="draggable-header financial-column" data-column="yearly-egp" draggable="true">Yearly EGP</div><div></div>
+          </div>
+          <!-- Loading Skeleton for Business -->
+          <div id="loading-skeleton-biz" class="loading-skeleton">
+            <div class="skeleton-rows">
+              <div class="skeleton-row skeleton-row-biz">
+                <div class="skeleton-cell skeleton-drag"></div>
+                <div class="skeleton-cell skeleton-icon"></div>
+                <div class="skeleton-cell skeleton-name"></div>
+                <div class="skeleton-cell skeleton-cost"></div>
+                <div class="skeleton-cell skeleton-status"></div>
+                <div class="skeleton-cell skeleton-billing"></div>
+                <div class="skeleton-cell skeleton-next"></div>
+                <div class="skeleton-cell skeleton-monthly"></div>
+                <div class="skeleton-cell skeleton-yearly"></div>
+                <div class="skeleton-cell skeleton-monthly-egp"></div>
+                <div class="skeleton-cell skeleton-yearly-egp"></div>
+                <div class="skeleton-cell skeleton-delete"></div>
+              </div>
+              <div class="skeleton-row skeleton-row-biz">
+                <div class="skeleton-cell skeleton-drag"></div>
+                <div class="skeleton-cell skeleton-icon"></div>
+                <div class="skeleton-cell skeleton-name"></div>
+                <div class="skeleton-cell skeleton-cost"></div>
+                <div class="skeleton-cell skeleton-status"></div>
+                <div class="skeleton-cell skeleton-billing"></div>
+                <div class="skeleton-cell skeleton-next"></div>
+                <div class="skeleton-cell skeleton-monthly"></div>
+                <div class="skeleton-cell skeleton-yearly"></div>
+                <div class="skeleton-cell skeleton-monthly-egp"></div>
+                <div class="skeleton-cell skeleton-yearly-egp"></div>
+                <div class="skeleton-cell skeleton-delete"></div>
+              </div>
+              <div class="skeleton-row skeleton-row-biz">
+                <div class="skeleton-cell skeleton-drag"></div>
+                <div class="skeleton-cell skeleton-icon"></div>
+                <div class="skeleton-cell skeleton-name"></div>
+                <div class="skeleton-cell skeleton-cost"></div>
+                <div class="skeleton-cell skeleton-status"></div>
+                <div class="skeleton-cell skeleton-billing"></div>
+                <div class="skeleton-cell skeleton-next"></div>
+                <div class="skeleton-cell skeleton-monthly"></div>
+                <div class="skeleton-cell skeleton-yearly"></div>
+                <div class="skeleton-cell skeleton-monthly-egp"></div>
+                <div class="skeleton-cell skeleton-yearly-egp"></div>
+                <div class="skeleton-cell skeleton-delete"></div>
+              </div>
+            </div>
+          </div>
+          <div id="list-biz"></div>
+          <button class="btn w-full justify-start text-xs py-3 mx-0 my-3" data-add-row="biz" style="font-size:.65rem; border:1px dashed var(--stroke); background:var(--glass); color:var(--muted); transition:all .2s ease; border-radius:8px; margin-top:8px;">+ Add a row</button>
+          <div id="sum-biz" class="row row-sum row-biz"></div>
+        </div>
+      </div>
+    </section>
+    </div>
+
+    <!-- Income Page -->
+    <div id="pageIncome" class="page-content" style="display: none;">
+      <!-- Income KPIs -->
+      <section id="incomeKpis" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-4">
+        <div class="kpi kpi-em sm:col-span-1" data-analytics="income-all">
+          <h3>Lifetime Income</h3>
+          <div class="grid grid-cols-2 gap-6 items-end">
+            <div>
+              <div class="text-[11px]" style="color:var(--muted)">Per Month</div>
+              <div class="value" id="kpiIncomeAllMonthlyUSD">$0.00</div>
+              <div class="sub" id="kpiIncomeAllMonthlyEGP">EGP 0</div>
+            </div>
+            <div class="text-right">
+              <div class="text-[11px]" style="color:var(--muted)">Per Year</div>
+              <div class="value" id="kpiIncomeAllYearlyUSD">$0.00</div>
+              <div class="sub" id="kpiIncomeAllYearlyEGP">EGP 0</div>
+            </div>
+          </div>
+          <!-- Skeleton Loading -->
+          <div class="card-skeleton hidden" id="kpiIncomeAllSkeleton">
+            <div class="skeleton-text-sm skeleton-w-32"></div>
+            <div class="grid grid-cols-2 gap-6 items-end">
+              <div>
+                <div class="skeleton-text-sm skeleton-w-24"></div>
+                <div class="skeleton-text-xl skeleton-w-32"></div>
+                <div class="skeleton-text-sm skeleton-w-20"></div>
+              </div>
+              <div class="text-right">
+                <div class="skeleton-text-sm skeleton-w-24"></div>
+                <div class="skeleton-text-xl skeleton-w-32"></div>
+                <div class="skeleton-text-sm skeleton-w-20"></div>
+              </div>
+            </div>
+          </div>
+          <div class="mt-2 flex items-center justify-between text-xs">
+            <span style="color:var(--muted)">FX (USD→EGP)</span>
+            <span class="font-semibold" id="kpiIncomeFxSmall">â€”</span>
+          </div>
+          <div class="mt-2 grid grid-cols-2 gap-4 text-xs">
+            <div><div class="flex items-center justify-between"><span style="color:var(--muted)">Lifetime Total</span><span id="shareIncomeCompletedVal">$0.00</span></div></div>
+            <div><div class="flex items-center justify-between"><span style="color:var(--muted)">Total Entries</span><span id="shareIncomePendingVal">0</span></div></div>
+          </div>
+          
+          <!-- Analytics Panel -->
+          <div class="kpi-expanded">
+            <div class="analytics-header">
+              <h4 class="analytics-title">Lifetime Income Analytics</h4>
+              <button class="analytics-close" data-close-analytics>×</button>
+            </div>
+            <div class="analytics-content" id="analyticsIncomeAll"></div>
+          </div>
+        </div>
+        
+        <div class="kpi" data-analytics="income-monthly">
+          <h3>Monthly Income</h3>
+          <div class="grid grid-cols-2 gap-6 items-end">
+            <div>
+              <div class="text-[11px]" style="color:var(--muted)">This Month</div>
+              <div class="value" id="kpiIncomeMonthlyCurrent">$0.00</div>
+              <div class="sub" id="kpiIncomeMonthlyCurrentEGP">EGP 0</div>
+            </div>
+            <div class="text-right">
+              <div class="text-[11px]" style="color:var(--muted)">Average</div>
+              <div class="value" id="kpiIncomeMonthlyAvg">$0.00</div>
+              <div class="sub" id="kpiIncomeMonthlyAvgEGP">EGP 0</div>
+            </div>
+          </div>
+          <!-- Skeleton Loading -->
+          <div class="card-skeleton hidden" id="kpiIncomeMonthlySkeleton">
+            <div class="skeleton-text-sm skeleton-w-32"></div>
+            <div class="grid grid-cols-2 gap-6 items-end">
+              <div>
+                <div class="skeleton-text-sm skeleton-w-24"></div>
+                <div class="skeleton-text-lg skeleton-w-24"></div>
+                <div class="skeleton-text-sm skeleton-w-20"></div>
+              </div>
+              <div class="text-right">
+                <div class="skeleton-text-sm skeleton-w-20"></div>
+                <div class="skeleton-text-lg skeleton-w-24"></div>
+                <div class="skeleton-text-sm skeleton-w-20"></div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Analytics Panel -->
+          <div class="kpi-expanded">
+            <div class="analytics-header">
+              <h4 class="analytics-title">Monthly Income Analytics</h4>
+              <button class="analytics-close" data-close-analytics>×</button>
+            </div>
+            <div class="analytics-content" id="analyticsIncomeMonthly"></div>
+          </div>
+        </div>
+        
+        <div class="kpi" data-analytics="income-yearly">
+          <h3>Yearly Income</h3>
+          <div class="grid grid-cols-2 gap-6 items-end">
+            <div>
+              <div class="text-[11px]" style="color:var(--muted)">This Year</div>
+              <div class="value" id="kpiIncomeYearlyCurrent">$0.00</div>
+              <div class="sub" id="kpiIncomeYearlyCurrentEGP">EGP 0</div>
+            </div>
+            <div class="text-right">
+              <div class="text-[11px]" style="color:var(--muted)">Target</div>
+              <div class="value" id="kpiIncomeYearlyTarget">$0.00</div>
+              <div class="sub" id="kpiIncomeYearlyTargetEGP">EGP 0</div>
+            </div>
+          </div>
+          <!-- Skeleton Loading -->
+          <div class="card-skeleton hidden" id="kpiIncomeYearlySkeleton">
+            <div class="skeleton-text-sm skeleton-w-28"></div>
+            <div class="grid grid-cols-2 gap-6 items-end">
+              <div>
+                <div class="skeleton-text-sm skeleton-w-24"></div>
+                <div class="skeleton-text-lg skeleton-w-24"></div>
+                <div class="skeleton-text-sm skeleton-w-20"></div>
+              </div>
+              <div class="text-right">
+                <div class="skeleton-text-sm skeleton-w-20"></div>
+                <div class="skeleton-text-lg skeleton-w-24"></div>
+                <div class="skeleton-text-sm skeleton-w-20"></div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Analytics Panel -->
+          <div class="kpi-expanded">
+            <div class="analytics-header">
+              <h4 class="analytics-title">Yearly Income Analytics</h4>
+              <button class="analytics-close" data-close-analytics>×</button>
+            </div>
+            <div class="analytics-content" id="analyticsIncomeYearly"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Income Table -->
+      <section class="p-0 space-y-2">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-sm font-medium px-1 sticky-header" style="color:var(--fg)">Income</h2>
+          <!-- Year Tabs (only visible on Income page) -->
+          <div id="yearTabsContainer" class="flex items-center gap-1">
+            <button class="year-tab" data-year="2022">2022</button>
+            <button class="year-tab" data-year="2023">2023</button>
+            <button class="year-tab" data-year="2024">2024</button>
+            <button class="year-tab" data-year="2025">2025</button>
+            <button id="manageYearsBtn" class="year-tab-manage" title="Manage Years">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-3 h-3">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="table-container">
+          <div class="table">
+            <div class="row row-head row-income">
+              <div></div><div></div><div>Project Name</div><div>Tags</div><div>Date</div><div>All Payment</div><div>Paid USD</div><div>Paid EGP</div><div>Method</div><div></div>
+            </div>
+            <div id="list-income"></div>
+            <button class="btn w-full justify-start text-xs py-3 mx-0 my-3" data-add-row="income" style="font-size:.65rem; border:1px dashed var(--stroke); background:var(--glass); color:var(--muted); transition:all .2s ease; border-radius:8px; margin-top:8px;">+ Add a row</button>
+            <div id="sum-income" class="row row-sum row-income"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+  <!-- Settings Modal -->
+  <dialog id="settings" class="backdrop:bg-black/60 rounded-2xl w-full max-w-xl p-0">
+    <form method="dialog" class="card p-5 space-y-4">
+      <header class="flex items-start justify-between">
+        <div>
+          <h3 class="text-lg font-semibold">Settings</h3>
+          <p class="text-xs" style="color:var(--muted)">FX override. Saved locally.</p>
+        </div>
+        <button class="btn btn-ghost" value="cancel">Close</button>
+      </header>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="text-xs" style="color:var(--muted)">USD â†’ EGP Rate</label>
+          <div class="flex gap-2 items-center">
+            <div class="settings-input-wrapper flex-1">
+              <span class="settings-symbol">$</span>
+              <input id="inputFx" type="number" step="0.0001" placeholder="48.17" />
+            </div>
+            <button id="btnRefreshFx" class="btn btn-ghost" style="padding:.35rem .5rem; font-size:.7rem;" title="Refresh from live rate">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-3 h-3">
+                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                <path d="M21 3v5h-5"/>
+                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                <path d="M3 21v-5h5"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div>
+          <label class="text-xs" style="color:var(--muted)">Live Save</label>
+          <div class="flex items-center gap-2">
+            <div class="text-sm" style="color:var(--muted); padding: 0.5rem;">
+              Automatically saves changes instantly as you type
+            </div>
+          </div>
+        </div>
+        <div>
+          <label class="text-xs" style="color:var(--muted)">Include Annual in Monthly</label>
+          <select id="inputIncludeAnnual" class="select">
+            <option value="true">Yes</option>
+            <option value="false">No</option>
+          </select>
+        </div>
+      </div>
+      
+      <!-- Data Management Section -->
+      <div class="border-t pt-4" style="border-color:var(--stroke)">
+        <h4 class="text-sm font-medium mb-3" style="color:var(--fg)">Data Management</h4>
+        <div class="space-y-3">
+          <div class="flex gap-2">
+            <button id="btnExportData" class="btn btn-ghost" style="padding:.35rem .5rem; font-size:.7rem;">Export Data</button>
+            <button id="btnImportData" class="btn btn-ghost" style="padding:.35rem .5rem; font-size:.7rem;">Import Data</button>
+          </div>
+          <input id="fileInput" type="file" accept=".json" style="display:none;" />
+        </div>
+      </div>
+      
+      <!-- Delete All Data Section -->
+      <div class="border-t pt-4" style="border-color:var(--stroke)">
+        <h4 class="text-sm font-medium mb-3" style="color:var(--fg)">Danger Zone</h4>
+        <div class="space-y-3">
+          <div>
+            <label class="text-xs" style="color:var(--muted)">Delete All Data</label>
+            <p class="text-xs mb-2" style="color:var(--muted)">This will permanently delete all expenses and settings. Type "DELETE" to confirm.</p>
+            <div class="flex gap-2 items-center">
+              <input id="inputDeleteConfirm" type="text" class="input flex-1" placeholder="Type DELETE to confirm" />
+              <button id="btnDeleteAll" class="btn" style="background:#ef4444; color:white; border-color:#ef4444; padding:.35rem .5rem; font-size:.7rem;" disabled>Delete All</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+        <div class="flex gap-2 justify-end">
+          <button id="btnSaveSettings" class="btn btn-primary">Save</button>
+        </div>
+    </form>
+  </dialog>
+
+
+  <!-- Icon Picker Modal -->
+  <dialog id="iconPicker" class="backdrop:bg-black/60 rounded-2xl w-full max-w-3xl p-0">
+    <form method="dialog" class="card p-6 space-y-4" style="background:var(--card); border:1px solid var(--stroke);">
+      <header class="flex items-center justify-between">
+        <h3 class="text-xl font-semibold">Choose Icon</h3>
+        <button class="btn btn-ghost" value="cancel">×</button>
+      </header>
+      
+      <div class="space-y-3">
+        <input id="iconSearch" class="input w-full" type="text" placeholder="Search Font Awesome icons..." />
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <!-- Glyph Input -->
+        <div class="flex gap-2 items-center">
+            <input id="glyphInput" class="input flex-1" type="text" placeholder="Unicode (e.g. e65c)" />
+            <div id="glyphPreview" class="size-8 rounded grid place-items-center border" style="background:var(--card); color:var(--fg); border-color:var(--stroke);"></div>
+          <button type="button" class="btn btn-primary" id="applyGlyph" style="padding:.4rem .6rem; font-size:.75rem;">Apply</button>
+          </div>
+          
+          <!-- Custom Image Upload -->
+          <div class="flex gap-2 items-center">
+            <input id="customImageInput" type="file" accept=".svg,.png,.jpg,.jpeg" style="display:none;" />
+            <button type="button" class="btn btn-ghost" id="uploadCustomImage" style="padding:.4rem .6rem; font-size:.75rem;">Upload Image</button>
+            <div id="imagePreview" class="size-8 rounded grid place-items-center border" style="background:var(--card); color:var(--fg); border-color:var(--stroke);"></div>
+            <button type="button" class="btn btn-primary" id="applyCustomImage" style="padding:.4rem .6rem; font-size:.75rem;" disabled>Apply</button>
+          </div>
+        </div>
+      </div>
+      
+      <div id="iconTabs" class="flex gap-2 border-b pb-2" style="border-color:var(--stroke)">
+        <button type="button" class="tab-btn active" data-tab="personal">Personal</button>
+        <button type="button" class="tab-btn" data-tab="business">Business</button>
+        <button type="button" class="tab-btn" data-tab="brands">Brands</button>
+        <button type="button" class="tab-btn" data-tab="custom">Custom</button>
+        <button type="button" class="tab-btn" data-tab="all">All</button>
+      </div>
+      
+      <div id="iconPickerGrid" class="grid grid-cols-12 gap-3 max-h-[300px] overflow-auto p-4" style="background:var(--glass); border-radius:.75rem; border:1px solid var(--stroke); scrollbar-width: thin; scrollbar-color: var(--muted) var(--glass);"></div>
+      
+      <div class="text-xs text-center space-y-2" style="color:var(--muted)">
+        <span id="iconCount">Loading icons...</span>
+        <div class="flex items-center justify-center gap-2 pt-2 border-t" style="border-color:var(--stroke)">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-3 h-3">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.72"/>
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.72-1.72"/>
+          </svg>
+          <a href="https://fontawesome.com/icons" target="_blank" class="text-xs hover:text-blue-400 transition-colors" style="color:var(--muted)">
+            Browse more icons at FontAwesome
+          </a>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Authentication Modal -->
+  <div id="authModal" class="auth-modal" style="display: none;">
+    <div class="auth-modal-overlay"></div>
+    <div class="auth-modal-content">
+      <div class="auth-modal-header">
+        <h2 class="auth-modal-title">Welcome to Financial Tool</h2>
+        <p class="auth-modal-subtitle">Sign in to sync your data across devices</p>
+        <button class="auth-modal-close" onclick="closeAuthModal()">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      
+      <div class="auth-modal-body">
+        <!-- Email/Password Form -->
+        <div id="emailAuthForm" class="auth-form">
+          <div class="auth-form-group">
+            <label for="authEmail" class="auth-label">Email</label>
+            <input type="email" id="authEmail" class="auth-input" placeholder="Enter your email" required>
+          </div>
+          
+          <div class="auth-form-group">
+            <label for="authPassword" class="auth-label">Password</label>
+            <input type="password" id="authPassword" class="auth-input" placeholder="Enter your password" required>
+          </div>
+          
+          <div class="auth-form-actions">
+            <button id="emailSignInBtn" class="auth-btn auth-btn-primary">Sign In</button>
+            <button id="emailSignUpBtn" class="auth-btn auth-btn-secondary">Create Account</button>
+          </div>
+          
+          <!-- Forgot Password Link -->
+          <div class="auth-forgot-password">
+            <button id="forgotPasswordBtn" class="auth-forgot-link">Forgot your password?</button>
+          </div>
+        </div>
+        
+        <!-- Forgot Password Form (Hidden by default) -->
+        <div id="forgotPasswordForm" class="auth-form" style="display: none;">
+          <div class="auth-form-group">
+            <label for="forgotEmail" class="auth-label">Email</label>
+            <input type="email" id="forgotEmail" class="auth-input" placeholder="Enter your email address" required>
+          </div>
+          
+          <div class="auth-form-actions">
+            <button id="sendResetBtn" class="auth-btn auth-btn-primary">Send Reset Link</button>
+            <button id="backToSignInBtn" class="auth-btn auth-btn-secondary">Back to Sign In</button>
+          </div>
+        </div>
+        
+        <!-- Password Reset Form (Hidden by default) -->
+        <div id="passwordResetForm" class="auth-form" style="display: none;">
+          <div class="auth-form-group">
+            <label for="newPassword" class="auth-label">New Password</label>
+            <input type="password" id="newPassword" class="auth-input" placeholder="Enter your new password" required minlength="6">
+          </div>
+          
+          <div class="auth-form-group">
+            <label for="confirmPassword" class="auth-label">Confirm New Password</label>
+            <input type="password" id="confirmPassword" class="auth-input" placeholder="Confirm your new password" required minlength="6">
+          </div>
+          
+          <div class="auth-form-actions">
+            <button id="updatePasswordBtn" class="auth-btn auth-btn-primary">Update Password</button>
+            <button id="cancelResetBtn" class="auth-btn auth-btn-secondary">Cancel</button>
+          </div>
+        </div>
+        
+        <!-- Change Password Form (Hidden by default) -->
+        <div id="changePasswordForm" class="auth-form" style="display: none;">
+          <div class="auth-form-group">
+            <label for="currentPassword" class="auth-label">Current Password</label>
+            <input type="password" id="currentPassword" class="auth-input" placeholder="Enter your current password" required>
+          </div>
+          
+          <div class="auth-form-group">
+            <label for="changeNewPassword" class="auth-label">New Password</label>
+            <input type="password" id="changeNewPassword" class="auth-input" placeholder="Enter your new password" required minlength="6">
+          </div>
+          
+          <div class="auth-form-group">
+            <label for="changeConfirmPassword" class="auth-label">Confirm New Password</label>
+            <input type="password" id="changeConfirmPassword" class="auth-input" placeholder="Confirm your new password" required minlength="6">
+          </div>
+          
+          <div class="auth-form-actions">
+            <button id="savePasswordBtn" class="auth-btn auth-btn-primary">Change Password</button>
+            <button id="cancelChangeBtn" class="auth-btn auth-btn-secondary">Cancel</button>
+          </div>
+        </div>
+        
+        <!-- Auth Status Messages -->
+        <div id="authStatus" class="auth-status" style="display: none;"></div>
+        
+        <!-- Loading State -->
+        <div id="authLoading" class="auth-loading" style="display: none;">
+          <div class="auth-spinner"></div>
+          <span>Signing in...</span>
+        </div>
+      </div>
+      
+      <div class="auth-modal-footer">
+        <p class="auth-footer-text">
+          By signing in, you agree to sync your financial data securely across devices.
+        </p>
+      </div>
+    </div>
+    
+  </div>
+  
+  <!-- Custom Date Picker Modal -->
+  <div id="customDatePicker" class="custom-date-picker-modal" style="display: none;">
+    <div class="custom-date-picker">
+      <div class="date-picker-header">
+        <button class="date-picker-nav" id="prevMonth">‹</button>
+        <div class="date-picker-month-year">
+          <select id="monthSelect"></select>
+          <select id="yearSelect"></select>
+        </div>
+        <button class="date-picker-nav" id="nextMonth">›</button>
+      </div>
+      <div class="date-picker-weekdays">
+        <div class="weekday">Sun</div>
+        <div class="weekday">Mon</div>
+        <div class="weekday">Tue</div>
+        <div class="weekday">Wed</div>
+        <div class="weekday">Thu</div>
+        <div class="weekday">Fri</div>
+        <div class="weekday">Sat</div>
+      </div>
+      <div class="date-picker-days" id="datePickerDays"></div>
+      <div class="date-picker-footer">
+        <button class="date-picker-btn" id="clearDate">Clear</button>
+        <button class="date-picker-btn primary" id="todayDate">Today</button>
+      </div>
+    </div>
+  </div>
+
+</body>
+
+
+</html>
