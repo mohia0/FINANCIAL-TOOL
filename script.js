@@ -495,6 +495,12 @@ window.supabaseClient = supabase;
     function addRow(group){
       console.log('addRow called for group:', group);
       
+      // Check if inputs are locked
+      if (state.inputsLocked) {
+        showNotification('Cannot add rows while inputs are locked', 'warning', 3000);
+        return;
+      }
+      
       if(group==='biz') {
         const newRow = {name:'', cost:0, status:'Active', billing:'Monthly', next:''};
         // Initialize financial values
@@ -1468,11 +1474,11 @@ window.supabaseClient = supabase;
         
         // Start all requests in parallel for maximum speed
         const [settingsResult, personalResult, businessResult, incomeResult] = await Promise.allSettled([
-          // Load user settings
+        // Load user settings
           window.supabaseClient
-            .from('user_settings')
-            .select('*')
-            .eq('user_id', currentUser.id)
+          .from('user_settings')
+          .select('*')
+          .eq('user_id', currentUser.id)
             .single(),
             
           // Load personal expenses
@@ -1516,16 +1522,16 @@ window.supabaseClient = supabase;
           const personalExpenses = personalResult.value.data;
           state.personal = personalExpenses.map(expense => {
             const row = {
-              name: expense.name,
-              cost: expense.cost,
-              status: expense.status,
-              billing: expense.billing,
+            name: expense.name,
+            cost: expense.cost,
+            status: expense.status,
+            billing: expense.billing,
               monthlyUSD: expense.monthly_usd || 0,
               yearlyUSD: expense.yearly_usd || 0,
               monthlyEGP: expense.monthly_egp || 0,
               yearlyEGP: expense.yearly_egp || 0,
-              icon: expense.icon,
-              id: expense.id
+            icon: expense.icon,
+            id: expense.id
             };
             // Ensure financial values are calculated if missing
             if (!row.monthlyUSD) row.monthlyUSD = rowMonthlyUSD(row);
@@ -1541,17 +1547,17 @@ window.supabaseClient = supabase;
           const businessExpenses = businessResult.value.data;
           state.biz = businessExpenses.map(expense => {
             const row = {
-              name: expense.name,
-              cost: expense.cost,
-              status: expense.status,
-              billing: expense.billing,
-              next: expense.next_payment ? new Date(expense.next_payment).toISOString().split('T')[0] : '',
+            name: expense.name,
+            cost: expense.cost,
+            status: expense.status,
+            billing: expense.billing,
+            next: expense.next_payment ? new Date(expense.next_payment).toISOString().split('T')[0] : '',
               monthlyUSD: expense.monthly_usd || 0,
               yearlyUSD: expense.yearly_usd || 0,
               monthlyEGP: expense.monthly_egp || 0,
               yearlyEGP: expense.yearly_egp || 0,
-              icon: expense.icon,
-              id: expense.id
+            icon: expense.icon,
+            id: expense.id
             };
             // Ensure financial values are calculated if missing
             if (!row.monthlyUSD) row.monthlyUSD = rowMonthlyUSD(row);
@@ -1933,6 +1939,7 @@ window.supabaseClient = supabase;
       autosaveInterval: 15,
       theme: 'dark',
         includeAnnualInMonthly: false,
+      inputsLocked: false,
       personal: [],
       biz: [],
       income: {
@@ -2089,6 +2096,117 @@ window.supabaseClient = supabase;
     applyTheme();
     $('#btnTheme').addEventListener('click', ()=>{ state.theme = state.theme==='light'?'dark':'light'; save(); applyTheme(); });
 
+    // Lock/Unlock functionality
+    $('#btnLock').addEventListener('click', toggleInputsLock);
+    
+    function toggleInputsLock() {
+      state.inputsLocked = !state.inputsLocked;
+      updateLockIcon();
+      updateInputsLockState();
+      save('lock');
+    }
+    
+    function updateLockIcon() {
+      const lockIcon = $('#iconLock');
+      const lockBtn = $('#btnLock');
+      
+      if (state.inputsLocked) {
+        // Show open lock icon when inputs are locked (unlock state)
+        lockIcon.innerHTML = '<path d="M8 11V7a4 4 0 0 1 8 0v4"/><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M12 15v2"/>';
+        lockBtn.title = 'Unlock all inputs';
+        lockBtn.style.borderColor = 'var(--primary)';
+        lockBtn.style.background = 'rgba(var(--primary-rgb), 0.1)';
+      } else {
+        // Show closed lock icon when inputs are unlocked (lock state)
+        lockIcon.innerHTML = '<path d="M12 15v2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>';
+        lockBtn.title = 'Lock all inputs';
+        lockBtn.style.borderColor = 'var(--stroke)';
+        lockBtn.style.background = 'transparent';
+      }
+    }
+    
+    function updateInputsLockState() {
+      // Get all interactive elements
+      const allInputs = document.querySelectorAll('input, select, textarea');
+      const allButtons = document.querySelectorAll('.delete-btn, .icon-cell button');
+      const allToggles = document.querySelectorAll('.status-toggle, .billing-toggle');
+      const allFinancialInputs = document.querySelectorAll('.financial-input-wrapper, .calculated-div, .cost-input, [data-row-index]');
+      const allDateInputs = document.querySelectorAll('.date-input-minimal, input[type="date"]');
+      const allClickableElements = document.querySelectorAll('[onclick], [data-clickable]');
+      const addRowButtons = document.querySelectorAll('button[data-add-row]');
+      
+      // Combine all elements (excluding add row buttons for now)
+      const allElements = [
+        ...allInputs, 
+        ...allButtons, 
+        ...allToggles, 
+        ...allFinancialInputs, 
+        ...allDateInputs,
+        ...allClickableElements
+      ];
+      
+      allElements.forEach(element => {
+        if (state.inputsLocked) {
+          // Disable the element but keep its appearance
+          element.disabled = true;
+          element.style.pointerEvents = 'none';
+          element.style.userSelect = 'none';
+          
+          // Add a subtle overlay to indicate it's locked without changing the original style
+          if (!element.querySelector('.lock-indicator')) {
+            const lockIndicator = document.createElement('div');
+            lockIndicator.className = 'lock-indicator';
+            lockIndicator.style.cssText = `
+              position: absolute;
+              top: 0;
+              left: 0;
+              right: 0;
+              bottom: 0;
+              background: rgba(0, 0, 0, 0.1);
+              border-radius: inherit;
+              pointer-events: none;
+              z-index: 1;
+            `;
+            
+            // Make parent relative if not already
+            const computedStyle = getComputedStyle(element);
+            if (computedStyle.position === 'static') {
+              element.style.position = 'relative';
+            }
+            
+            element.appendChild(lockIndicator);
+          }
+        } else {
+          // Re-enable the element
+          element.disabled = false;
+          element.style.pointerEvents = 'auto';
+          element.style.userSelect = 'auto';
+          
+          // Remove lock indicator
+          const lockIndicator = element.querySelector('.lock-indicator');
+          if (lockIndicator) {
+            lockIndicator.remove();
+          }
+        }
+      });
+      
+      // Handle "Add row" buttons - hide them when locked
+      addRowButtons.forEach(button => {
+        if (state.inputsLocked) {
+          button.style.display = 'none';
+        } else {
+          button.style.display = '';
+        }
+      });
+      
+      // Show notification
+      if (state.inputsLocked) {
+        showNotification('All inputs locked', 'info', 2000);
+      } else {
+        showNotification('All inputs unlocked', 'success', 2000);
+      }
+    }
+
     // Enhanced live saving functionality
     let saveTimeout = null;
     let isSaving = false;
@@ -2110,32 +2228,32 @@ window.supabaseClient = supabase;
       }
       
       // Save immediately - 0ms delay for instant cloud sync
-      isSaving = true;
-      updateSyncStatus('syncing');
+          isSaving = true;
+          updateSyncStatus('syncing');
       console.log('Executing live save instantly for sources:', Array.from(saveQueue));
-      
-      const savePromise = currentUser && supabaseReady ? saveToSupabase() : saveToLocal();
-      
-      savePromise.then(() => {
+          
+          const savePromise = currentUser && supabaseReady ? saveToSupabase() : saveToLocal();
+          
+          savePromise.then(() => {
         lastSaveTime = Date.now();
-        updateSyncStatus('success');
+            updateSyncStatus('success');
         showNotification('Data saved instantly', 'success', 800);
-        setTimeout(() => {
-          updateSyncStatus('');
-          isSaving = false;
+            setTimeout(() => {
+              updateSyncStatus('');
+              isSaving = false;
           saveQueue.clear();
         }, 800);
-      }).catch((error) => {
-        console.error('Save error:', error);
-        updateSyncStatus('error');
-        showNotification('Save failed', 'error', 2000);
-        setTimeout(() => {
-          updateSyncStatus('');
-          isSaving = false;
+          }).catch((error) => {
+            console.error('Save error:', error);
+            updateSyncStatus('error');
+            showNotification('Save failed', 'error', 2000);
+            setTimeout(() => {
+              updateSyncStatus('');
+              isSaving = false;
           saveQueue.clear();
-        }, 2000);
-      });
-    }
+            }, 2000);
+          });
+        }
     
     // Instant save function for all inputs - 0ms delay
     let instantSaveInProgress = new Set();
@@ -2291,7 +2409,7 @@ window.supabaseClient = supabase;
       incomeSaveInProgress.add(rowKey);
       
       // Save immediately - 0ms delay
-      try {
+        try {
           
           if (incomeRow.id) {
             // Update existing income record
@@ -5234,6 +5352,9 @@ window.supabaseClient = supabase;
     renderKPIs();
     updateGridTemplate();
     
+    // Apply lock state to all inputs after rendering
+    updateInputsLockState();
+    
     // Re-add event listeners after rendering
     addRowButtonListeners();
     
@@ -7139,20 +7260,20 @@ window.supabaseClient = supabase;
     
     // Add small delay to prevent rapid clicks
     datePickerTimeout = setTimeout(() => {
-      currentDatePickerInput = inputElement;
-      const currentValue = inputElement.value;
-      
-      if (currentValue) {
-        const date = new Date(currentValue);
-        if (!isNaN(date.getTime())) {
-          currentDatePickerDate = date;
-        }
-      } else {
-        currentDatePickerDate = new Date();
+    currentDatePickerInput = inputElement;
+    const currentValue = inputElement.value;
+    
+    if (currentValue) {
+      const date = new Date(currentValue);
+      if (!isNaN(date.getTime())) {
+        currentDatePickerDate = date;
       }
+    } else {
+      currentDatePickerDate = new Date();
+    }
 
-      updateDatePickerHeader();
-      renderDatePickerDays();
+    updateDatePickerHeader();
+    renderDatePickerDays();
       
       // Simple positioning - just show it
       const datePickerModal = customDatePicker;
@@ -7410,7 +7531,7 @@ window.supabaseClient = supabase;
         e.preventDefault();
         e.stopPropagation();
         if (!isDatePickerOpen) {
-          showCustomDatePicker(input);
+        showCustomDatePicker(input);
         }
         return false;
       };
@@ -7424,11 +7545,11 @@ window.supabaseClient = supabase;
       const container = input.closest('.date-input-wrapper') || input.parentElement;
       if (container) {
         container.addEventListener('click', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          showCustomDatePicker(input);
-          return false;
-        });
+        e.preventDefault();
+        e.stopPropagation();
+        showCustomDatePicker(input);
+        return false;
+      });
       }
     });
   }
@@ -7514,11 +7635,42 @@ window.supabaseClient = supabase;
     overrideDateInputs();
     applyDatePickerToNewInputs();
     
+    // Fix mobile logo display
+    fixMobileLogo();
+    
+    // Initialize lock state
+    updateLockIcon();
+    updateInputsLockState();
+    
     // Check database schema on load
     if (currentUser && supabaseReady) {
       checkDatabaseSchema();
     }
   });
+  
+  // Fix mobile logo display
+  function fixMobileLogo() {
+    const logoImg = document.querySelector('header img');
+    const mobileLogo = document.querySelector('.mobile-logo');
+    
+    if (logoImg && mobileLogo) {
+      // Check if image loads successfully
+      logoImg.addEventListener('load', () => {
+        mobileLogo.style.display = 'none';
+      });
+      
+      logoImg.addEventListener('error', () => {
+        mobileLogo.style.display = 'block';
+        logoImg.style.display = 'none';
+      });
+      
+      // For mobile devices, show text logo by default
+      if (window.innerWidth <= 768) {
+        mobileLogo.style.display = 'block';
+        logoImg.style.display = 'none';
+      }
+    }
+  }
   
   // Test function to manually open date picker
   window.testDatePicker = function() {
