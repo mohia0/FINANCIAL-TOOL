@@ -50,6 +50,21 @@
           </svg>
           Income
         </button>
+        <button id="tabDailyExpenses" class="nav-btn nav-btn-daily" data-page="daily-expenses">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-3 h-3">
+            <path d="M19 7V4a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v3"/>
+            <path d="M3 7h18v13a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7z"/>
+            <path d="M8 11h8"/>
+          </svg>
+          Wallet
+        </button>
+        <button id="tabAnalytics" class="nav-btn nav-btn-analytics" data-page="analytics">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-3 h-3">
+            <path d="M3 3v18h18"/>
+            <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/>
+          </svg>
+          Analytics
+        </button>
         
       </div>
       
@@ -569,6 +584,498 @@
           </div>
         </div>
       </section>
+    </div>
+
+        <!-- Daily Expenses Page -->
+        <div id="pageDailyExpenses" class="page-content" style="display: none;">
+          <!-- Header with Controls -->
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-sm font-medium px-1 sticky-header" style="color:var(--fg)">Expense Records</h2>
+            <div class="flex items-center gap-3">
+              <!-- Modern Button-Based Date Filter -->
+              <div class="flex items-center gap-2">
+                <!-- Date Range Buttons -->
+                <div class="date-filter-buttons">
+                  <button class="date-filter-btn" data-range="today">Today</button>
+                  <button class="date-filter-btn active" data-range="thisMonth">This Month</button>
+                  <button class="date-filter-btn" data-range="lastMonth">Last Month</button>
+                  <button class="date-filter-btn" data-range="thisYear">This Year</button>
+                  <button class="date-filter-btn" data-range="lastYear">Last Year</button>
+                  <button class="date-filter-btn" data-range="custom">Custom</button>
+                </div>
+                
+                <!-- Custom Date Range Inputs (hidden by default) -->
+                <div id="customDateRange" class="custom-date-range" style="display: none;">
+                  <div class="flex items-center gap-2">
+                    <input type="date" id="startDate" class="input" placeholder="Start Date">
+                    <span class="text-xs" style="color: var(--muted);">to</span>
+                    <input type="date" id="endDate" class="input" placeholder="End Date">
+                    <button id="applyCustomRange" class="modern-apply-btn">Apply</button>
+                  </div>
+                </div>
+                <button id="refreshDataBtn" class="icon-btn size-8 rounded-xl border hover:bg-white/5 transition" title="Refresh Data" style="border-color:var(--stroke)">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-3 h-3">
+                    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8M3 21v-4h4m13-4a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Compact Progress Bar -->
+          <div id="dailyExpensesProgress" class="compact-progress" style="display: none;">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <div class="w-1.5 h-1.5 rounded-full animate-pulse" style="background:var(--accent)"></div>
+                <span id="progressText" class="text-xs font-medium" style="color:var(--fg)">Syncing...</span>
+              </div>
+              <div class="flex items-center gap-3">
+                <span id="progressCount" class="text-xs" style="color:var(--muted)">0 rows</span>
+                <div class="w-16 h-1 rounded-full" style="background:var(--bg2)">
+                  <div id="progressBar" class="h-1 rounded-full transition-all duration-300 ease-out" style="width: 0%; background:var(--accent)"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Expense Records Table -->
+          <div class="table-container">
+            <div class="table">
+              <div class="row row-head row-daily-expenses">
+                <div></div><div>Date</div><div>Type</div><div>Amount</div><div>Account</div><div>Category</div><div>Payee</div><div>Note</div><div></div>
+              </div>
+              
+              <!-- Wallet Skeleton Loading -->
+              <div id="wallet-skeleton" class="wallet-skeleton" style="display: none;">
+                <div class="skeleton-rows">
+                  <div class="skeleton-row skeleton-row-daily-expenses">
+                    <div class="skeleton-cell skeleton-drag"></div>
+                    <div class="skeleton-cell skeleton-date"></div>
+                    <div class="skeleton-cell skeleton-type"></div>
+                    <div class="skeleton-cell skeleton-amount"></div>
+                    <div class="skeleton-cell skeleton-account"></div>
+                    <div class="skeleton-cell skeleton-category"></div>
+                    <div class="skeleton-cell skeleton-payee"></div>
+                    <div class="skeleton-cell skeleton-note"></div>
+                    <div class="skeleton-cell skeleton-delete"></div>
+                  </div>
+                  <div class="skeleton-row skeleton-row-daily-expenses">
+                    <div class="skeleton-cell skeleton-drag"></div>
+                    <div class="skeleton-cell skeleton-date"></div>
+                    <div class="skeleton-cell skeleton-type"></div>
+                    <div class="skeleton-cell skeleton-amount"></div>
+                    <div class="skeleton-cell skeleton-account"></div>
+                    <div class="skeleton-cell skeleton-category"></div>
+                    <div class="skeleton-cell skeleton-payee"></div>
+                    <div class="skeleton-cell skeleton-note"></div>
+                    <div class="skeleton-cell skeleton-delete"></div>
+                  </div>
+                  <div class="skeleton-row skeleton-row-daily-expenses">
+                    <div class="skeleton-cell skeleton-drag"></div>
+                    <div class="skeleton-cell skeleton-date"></div>
+                    <div class="skeleton-cell skeleton-type"></div>
+                    <div class="skeleton-cell skeleton-amount"></div>
+                    <div class="skeleton-cell skeleton-account"></div>
+                    <div class="skeleton-cell skeleton-category"></div>
+                    <div class="skeleton-cell skeleton-payee"></div>
+                    <div class="skeleton-cell skeleton-note"></div>
+                    <div class="skeleton-cell skeleton-delete"></div>
+                  </div>
+                  <div class="skeleton-row skeleton-row-daily-expenses">
+                    <div class="skeleton-cell skeleton-drag"></div>
+                    <div class="skeleton-cell skeleton-date"></div>
+                    <div class="skeleton-cell skeleton-type"></div>
+                    <div class="skeleton-cell skeleton-amount"></div>
+                    <div class="skeleton-cell skeleton-account"></div>
+                    <div class="skeleton-cell skeleton-category"></div>
+                    <div class="skeleton-cell skeleton-payee"></div>
+                    <div class="skeleton-cell skeleton-note"></div>
+                    <div class="skeleton-cell skeleton-delete"></div>
+                  </div>
+                  <div class="skeleton-row skeleton-row-daily-expenses">
+                    <div class="skeleton-cell skeleton-drag"></div>
+                    <div class="skeleton-cell skeleton-date"></div>
+                    <div class="skeleton-cell skeleton-type"></div>
+                    <div class="skeleton-cell skeleton-amount"></div>
+                    <div class="skeleton-cell skeleton-account"></div>
+                    <div class="skeleton-cell skeleton-category"></div>
+                    <div class="skeleton-cell skeleton-payee"></div>
+                    <div class="skeleton-cell skeleton-note"></div>
+                    <div class="skeleton-cell skeleton-delete"></div>
+                  </div>
+                </div>
+              </div>
+              
+              <div id="list-daily-expenses"></div>
+            </div>
+            
+            <!-- Pagination Controls -->
+            <div id="paginationControls" class="pagination-container" style="display: none;">
+              <div class="pagination-info">
+                <span id="paginationInfo" class="text-xs" style="color: var(--muted);">Showing 0-0 of 0 entries</span>
+              </div>
+              <div class="pagination-buttons">
+                <button id="prevPage" class="pagination-btn" disabled>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-3 h-3">
+                    <path d="M15 18l-6-6 6-6"/>
+                  </svg>
+                </button>
+                <div id="pageNumbers" class="page-numbers"></div>
+                <button id="nextPage" class="pagination-btn" disabled>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-3 h-3">
+                    <path d="M9 18l6-6-6-6"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+    <!-- Analytics Page -->
+    <div id="pageAnalytics" class="page-content" style="display: none;">
+      <!-- Analytics Header -->
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-sm font-medium px-1 sticky-header" style="color:var(--fg)">Financial Analytics</h2>
+        <div class="flex items-center gap-3">
+          <!-- Year Filter for Analytics -->
+          <div class="flex items-center gap-2">
+            <select id="analyticsYearFilter" class="select" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">
+              <option value="all">All Time</option>
+              <option value="2024">2024</option>
+              <option value="2023">2023</option>
+              <option value="2022">2022</option>
+            </select>
+            <button id="refreshAnalytics" class="icon-btn size-8 rounded-xl border hover:bg-white/5 transition" title="Refresh Analytics" style="border-color:var(--stroke)">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-3 h-3">
+                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                <path d="M21 3v5h-5"/>
+                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                <path d="M3 21v-5h5"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+          <!-- Heatmap Calendar Card -->
+          <div class="card p-6 mb-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg font-semibold" style="color:var(--fg)">Financial Activity Heatmap</h3>
+              <div class="flex items-center gap-4">
+                <!-- Heatmap Year Filter -->
+                <div class="flex items-center gap-2">
+                  <label class="text-xs" style="color:var(--muted)">Year:</label>
+                  <select id="heatmapYearFilter" class="select" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">
+                    <option value="all">All Years</option>
+                    <option value="2024">2024</option>
+                    <option value="2023">2023</option>
+                    <option value="2022">2022</option>
+                    <option value="2021">2021</option>
+                    <option value="2020">2020</option>
+                  </select>
+                </div>
+                <div class="flex items-center gap-4 text-xs" style="color:var(--muted)">
+                  <div class="flex items-center gap-2">
+                    <div class="w-3 h-3 rounded" style="background: #10b981;"></div>
+                    <span>High Activity</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <div class="w-3 h-3 rounded" style="background: #f59e0b;"></div>
+                    <span>Medium Activity</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <div class="w-3 h-3 rounded" style="background: #ef4444;"></div>
+                    <span>Low Activity</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <div class="w-3 h-3 rounded" style="background: var(--stroke);"></div>
+                    <span>No Activity</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div id="heatmapContainer" class="heatmap-container">
+              <!-- Heatmap will be generated here -->
+            </div>
+            <div class="mt-2 text-xs" style="color:var(--muted); opacity: 0.6;">Data: Income Page + Wallet + Expenses</div>
+          </div>
+
+      <!-- Analytics Cards Grid -->
+      <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 mb-6">
+        <!-- Financial Overview Card -->
+        <div class="card p-6 analytics-card" draggable="true" data-card="financial-overview">
+          <h3 class="text-lg font-semibold mb-4" style="color:var(--fg)">Financial Overview</h3>
+          <div class="space-y-4">
+            <div class="flex justify-between items-center">
+              <span class="text-sm" style="color:var(--muted)">Net Worth</span>
+              <div class="text-right">
+                <div class="text-xl font-bold" id="netWorthUSD">$0</div>
+                <div class="text-xs" style="color:var(--muted)" id="netWorthEGP">EGP 0</div>
+              </div>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-sm" style="color:var(--muted)">Monthly Cash Flow</span>
+              <div class="text-right">
+                <div class="text-xl font-bold" id="cashFlowUSD">$0</div>
+                <div class="text-xs" style="color:var(--muted)" id="cashFlowEGP">EGP 0</div>
+              </div>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-sm" style="color:var(--muted)">Savings Rate</span>
+              <div class="text-right">
+                <div class="text-xl font-bold" id="savingsRate">0%</div>
+              </div>
+            </div>
+            <div class="mt-4 pt-3 border-t" style="border-color:var(--stroke)">
+              <div class="text-xs" style="color:var(--muted)" id="financialInsight">Loading insights...</div>
+              <div class="text-xs mt-1" style="color:var(--muted); opacity: 0.6;">Data: Income Page + Expenses + Wallet</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Income Analysis Card -->
+        <div class="card p-6 analytics-card" draggable="true" data-card="income-analysis">
+          <h3 class="text-lg font-semibold mb-4" style="color:var(--fg)">Income Analysis</h3>
+          <div class="space-y-4">
+            <div class="flex justify-between items-center">
+              <span class="text-sm" style="color:var(--muted)">Total Income</span>
+              <div class="text-right">
+                <div class="text-xl font-bold" id="totalIncomeUSD">$0</div>
+                <div class="text-xs" style="color:var(--muted)" id="totalIncomeEGP">EGP 0</div>
+              </div>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-sm" style="color:var(--muted)">Avg Monthly</span>
+              <div class="text-right">
+                <div class="text-xl font-bold" id="avgMonthlyIncomeUSD">$0</div>
+                <div class="text-xs" style="color:var(--muted)" id="avgMonthlyIncomeEGP">EGP 0</div>
+              </div>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-sm" style="color:var(--muted)">Growth Rate</span>
+              <div class="text-right">
+                <div class="text-xl font-bold" id="incomeGrowthRate">0%</div>
+              </div>
+            </div>
+            <div class="mt-4 pt-3 border-t" style="border-color:var(--stroke)">
+              <div class="text-xs" style="color:var(--muted)" id="incomeInsight">Loading insights...</div>
+              <div class="text-xs mt-1" style="color:var(--muted); opacity: 0.6;">Data: Income Page Only</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Expense Analysis Card -->
+        <div class="card p-6 analytics-card" draggable="true" data-card="expense-analysis">
+          <h3 class="text-lg font-semibold mb-4" style="color:var(--fg)">Expense Analysis</h3>
+          <div class="space-y-4">
+            <div class="flex justify-between items-center">
+              <span class="text-sm" style="color:var(--muted)">Total Expenses</span>
+              <div class="text-right">
+                <div class="text-xl font-bold" id="totalExpensesUSD">$0</div>
+                <div class="text-xs" style="color:var(--muted)" id="totalExpensesEGP">EGP 0</div>
+              </div>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-sm" style="color:var(--muted)">Avg Monthly</span>
+              <div class="text-right">
+                <div class="text-xl font-bold" id="avgMonthlyExpensesUSD">$0</div>
+                <div class="text-xs" style="color:var(--muted)" id="avgMonthlyExpensesEGP">EGP 0</div>
+              </div>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-sm" style="color:var(--muted)">Top Category</span>
+              <div class="text-right">
+                <div class="text-sm font-semibold" id="topExpenseCategory">-</div>
+              </div>
+            </div>
+            <div class="mt-4 pt-3 border-t" style="border-color:var(--stroke)">
+              <div class="text-xs" style="color:var(--muted)" id="expenseInsight">Loading insights...</div>
+              <div class="text-xs mt-1" style="color:var(--muted); opacity: 0.6;">Data: Personal + Business Expenses</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Wallet Analysis Card -->
+        <div class="card p-6 analytics-card" draggable="true" data-card="wallet-analysis">
+          <h3 class="text-lg font-semibold mb-4" style="color:var(--fg)">Wallet Analysis</h3>
+          <div class="space-y-4">
+            <div class="flex justify-between items-center">
+              <span class="text-sm" style="color:var(--muted)">Total Transactions</span>
+              <div class="text-right">
+                <div class="text-xl font-bold" id="walletTransactions">0</div>
+              </div>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-sm" style="color:var(--muted)">Wallet Income</span>
+              <div class="text-right">
+                <div class="text-xl font-bold" id="walletIncomeUSD">$0</div>
+                <div class="text-xs" style="color:var(--muted)" id="walletIncomeEGP">EGP 0</div>
+              </div>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-sm" style="color:var(--muted)">Wallet Expenses</span>
+              <div class="text-right">
+                <div class="text-xl font-bold" id="walletExpensesUSD">$0</div>
+                <div class="text-xs" style="color:var(--muted)" id="walletExpensesEGP">EGP 0</div>
+              </div>
+            </div>
+            <div class="mt-4 pt-3 border-t" style="border-color:var(--stroke)">
+              <div class="text-xs" style="color:var(--muted)" id="walletInsight">Loading insights...</div>
+              <div class="text-xs mt-1" style="color:var(--muted); opacity: 0.6;">Data: Wallet App Only</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Income Trends Card -->
+        <div class="card p-6 analytics-card" draggable="true" data-card="income-trends">
+          <h3 class="text-lg font-semibold mb-4" style="color:var(--fg)">Income Trends</h3>
+          <div class="space-y-4">
+            <div class="flex justify-between items-center">
+              <span class="text-sm" style="color:var(--muted)">Best Month</span>
+              <div class="text-right">
+                <div class="text-xl font-bold" id="bestMonthIncome">$0</div>
+                <div class="text-xs" style="color:var(--muted)" id="bestMonthName">-</div>
+              </div>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-sm" style="color:var(--muted)">Worst Month</span>
+              <div class="text-right">
+                <div class="text-xl font-bold" id="worstMonthIncome">$0</div>
+                <div class="text-xs" style="color:var(--muted)" id="worstMonthName">-</div>
+              </div>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-sm" style="color:var(--muted)">Income Stability</span>
+              <div class="text-right">
+                <div class="text-xl font-bold" id="incomeStability">0%</div>
+              </div>
+            </div>
+            <div class="mt-4 pt-3 border-t" style="border-color:var(--stroke)">
+              <div class="text-xs" style="color:var(--muted)" id="incomeTrendInsight">Loading insights...</div>
+              <div class="text-xs mt-1" style="color:var(--muted); opacity: 0.6;">Data: Income Page Only</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Project Performance Card -->
+        <div class="card p-6 analytics-card" draggable="true" data-card="project-performance">
+          <h3 class="text-lg font-semibold mb-4" style="color:var(--fg)">Project Performance</h3>
+          <div class="space-y-4">
+            <div class="flex justify-between items-center">
+              <span class="text-sm" style="color:var(--muted)">Total Projects</span>
+              <div class="text-right">
+                <div class="text-xl font-bold" id="totalProjects">0</div>
+              </div>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-sm" style="color:var(--muted)">Avg Project Value</span>
+              <div class="text-right">
+                <div class="text-xl font-bold" id="avgProjectValue">$0</div>
+                <div class="text-xs" style="color:var(--muted)" id="avgProjectValueEGP">EGP 0</div>
+              </div>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-sm" style="color:var(--muted)">Top Project Type</span>
+              <div class="text-right">
+                <div class="text-sm font-semibold" id="topProjectType">-</div>
+              </div>
+            </div>
+            <div class="mt-4 pt-3 border-t" style="border-color:var(--stroke)">
+              <div class="text-xs" style="color:var(--muted)" id="projectPerformanceInsight">Loading insights...</div>
+              <div class="text-xs mt-1" style="color:var(--muted); opacity: 0.6;">Data: Income Page Only</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Client Analysis Card -->
+        <div class="card p-6 analytics-card" draggable="true" data-card="client-analysis">
+          <h3 class="text-lg font-semibold mb-4" style="color:var(--fg)">Client Analysis</h3>
+          <div class="space-y-4">
+            <div class="flex justify-between items-center">
+              <span class="text-sm" style="color:var(--muted)">Unique Clients</span>
+              <div class="text-right">
+                <div class="text-xl font-bold" id="uniqueClients">0</div>
+              </div>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-sm" style="color:var(--muted)">Avg Client Value</span>
+              <div class="text-right">
+                <div class="text-xl font-bold" id="avgClientValue">$0</div>
+                <div class="text-xs" style="color:var(--muted)" id="avgClientValueEGP">EGP 0</div>
+              </div>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-sm" style="color:var(--muted)">Top Client</span>
+              <div class="text-right">
+                <div class="text-sm font-semibold" id="topClient">-</div>
+              </div>
+            </div>
+            <div class="mt-4 pt-3 border-t" style="border-color:var(--stroke)">
+              <div class="text-xs" style="color:var(--muted)" id="clientAnalysisInsight">Loading insights...</div>
+              <div class="text-xs mt-1" style="color:var(--muted); opacity: 0.6;">Data: Income Page Only</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Revenue Streams Card -->
+        <div class="card p-6 analytics-card" draggable="true" data-card="revenue-streams">
+          <h3 class="text-lg font-semibold mb-4" style="color:var(--fg)">Revenue Streams</h3>
+          <div class="space-y-4">
+            <div class="flex justify-between items-center">
+              <span class="text-sm" style="color:var(--muted)">Revenue Sources</span>
+              <div class="text-right">
+                <div class="text-xl font-bold" id="revenueSources">0</div>
+              </div>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-sm" style="color:var(--muted)">Diversification Score</span>
+              <div class="text-right">
+                <div class="text-xl font-bold" id="diversificationScore">0%</div>
+              </div>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-sm" style="color:var(--muted)">Top Revenue Source</span>
+              <div class="text-right">
+                <div class="text-sm font-semibold" id="topRevenueSource">-</div>
+              </div>
+            </div>
+            <div class="mt-4 pt-3 border-t" style="border-color:var(--stroke)">
+              <div class="text-xs" style="color:var(--muted)" id="revenueStreamsInsight">Loading insights...</div>
+              <div class="text-xs mt-1" style="color:var(--muted); opacity: 0.6;">Data: Income Page Only</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Productivity Metrics Card -->
+        <div class="card p-6 analytics-card" draggable="true" data-card="productivity-metrics">
+          <h3 class="text-lg font-semibold mb-4" style="color:var(--fg)">Productivity Metrics</h3>
+          <div class="space-y-4">
+            <div class="flex justify-between items-center">
+              <span class="text-sm" style="color:var(--muted)">Projects per Month</span>
+              <div class="text-right">
+                <div class="text-xl font-bold" id="projectsPerMonth">0</div>
+              </div>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-sm" style="color:var(--muted)">Revenue per Project</span>
+              <div class="text-right">
+                <div class="text-xl font-bold" id="revenuePerProject">$0</div>
+                <div class="text-xs" style="color:var(--muted)" id="revenuePerProjectEGP">EGP 0</div>
+              </div>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-sm" style="color:var(--muted)">Efficiency Rating</span>
+              <div class="text-right">
+                <div class="text-xl font-bold" id="efficiencyRating">0%</div>
+              </div>
+            </div>
+            <div class="mt-4 pt-3 border-t" style="border-color:var(--stroke)">
+              <div class="text-xs" style="color:var(--muted)" id="productivityInsight">Loading insights...</div>
+              <div class="text-xs mt-1" style="color:var(--muted); opacity: 0.6;">Data: Income Page Only</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
   <!-- Settings Modal -->

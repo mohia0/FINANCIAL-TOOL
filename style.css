@@ -198,7 +198,174 @@
     .year-btn:disabled {
       opacity: 0.5;
       cursor: not-allowed;
-      transform: none;
+    }
+
+    /* Analytics Page Styles */
+    .nav-btn-analytics {
+      background: transparent;
+      color: var(--muted);
+    }
+    
+    .nav-btn-analytics:hover {
+      background: var(--glass);
+      color: var(--fg);
+    }
+    
+    .nav-btn-analytics.active {
+      background: var(--fg);
+      color: var(--bg);
+    }
+
+    /* Heatmap Calendar Styles */
+    .heatmap-container {
+      width: 100%;
+      overflow-x: auto;
+      padding: 1rem 0;
+    }
+
+    .heatmap-calendar {
+      display: grid;
+      grid-template-columns: repeat(53, 1fr);
+      gap: 2px;
+      min-width: 800px;
+    }
+
+    .heatmap-month {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .heatmap-day {
+      width: 12px;
+      height: 12px;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .heatmap-day:hover {
+      transform: scale(1.2);
+      z-index: 10;
+    }
+
+    .heatmap-day[data-activity="0"] {
+      background: var(--stroke);
+    }
+
+    .heatmap-day[data-activity="1"] {
+      background: #ef4444;
+    }
+
+    .heatmap-day[data-activity="2"] {
+      background: #f59e0b;
+    }
+
+    .heatmap-day[data-activity="3"] {
+      background: #10b981;
+    }
+
+    .heatmap-day[data-activity="4"] {
+      background: #059669;
+    }
+
+    .heatmap-tooltip {
+      position: absolute;
+      background: var(--card);
+      border: 1px solid var(--stroke);
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 0.75rem;
+      color: var(--fg);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      backdrop-filter: blur(10px);
+      z-index: 1000;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    .heatmap-tooltip .tooltip-date {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .heatmap-tooltip .tooltip-income {
+      color: #10b981;
+      margin-bottom: 2px;
+    }
+
+    .heatmap-tooltip .tooltip-expense {
+      color: #ef4444;
+      margin-bottom: 2px;
+    }
+
+    .heatmap-tooltip .tooltip-net {
+      font-weight: 600;
+      margin-top: 4px;
+      padding-top: 4px;
+      border-top: 1px solid var(--stroke);
+    }
+
+    /* Analytics Cards */
+    .analytics-card {
+      background: var(--card);
+      border: 1px solid var(--stroke);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      transition: all 0.2s ease;
+    }
+
+    .analytics-card:hover {
+      border-color: var(--muted);
+      transform: translateY(-2px);
+    }
+
+    .analytics-metric {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .analytics-metric:last-child {
+      margin-bottom: 0;
+    }
+
+    .analytics-metric-label {
+      font-size: 0.875rem;
+      color: var(--muted);
+    }
+
+    .analytics-metric-value {
+      text-align: right;
+    }
+
+    .analytics-metric-value .main-value {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--fg);
+    }
+
+    .analytics-metric-value .sub-value {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .heatmap-calendar {
+        grid-template-columns: repeat(26, 1fr);
+        min-width: 400px;
+      }
+      
+      .heatmap-day {
+        width: 10px;
+        height: 10px;
+      }
     }
     
     .year-separator {
@@ -1092,6 +1259,8 @@
       padding: 0.25rem 0.35rem;
       backdrop-filter: blur(10px);
       transition: all 0.2s ease;
+      z-index: 9999;
+      cursor: pointer;
     }
     .select-wrap:hover {
       background: var(--card);
@@ -1132,6 +1301,9 @@
       transition: all 0.2s ease !important;
       width: 100% !important;
       line-height: 1.2rem !important;
+      z-index: 10000 !important;
+      position: relative !important;
+      pointer-events: auto !important;
     }
     .select:focus {
       background: transparent !important;
@@ -2103,7 +2275,7 @@
     /* super minimal modern table design */
     .row{
       display:grid;
-      grid-template-columns:24px 32px 1.5fr .8fr .8fr .8fr 1fr 1fr 1fr 1fr 32px;
+      grid-template-columns:24px 1.5fr 1.5fr .8fr .8fr .8fr 1fr 1fr 1fr 1fr 32px;
       gap:.7rem;
       align-items:center;
       padding:.5rem .4rem;
@@ -2169,6 +2341,191 @@
       background: rgba(241, 245, 249, 0.9);
     }
     
+    /* Daily Expenses Table */
+    .row-daily-expenses{ 
+      display:grid; 
+      grid-template-columns:24px 1.2fr 1.3fr 1fr 1.2fr 1.2fr 1.2fr 1.2fr 1fr 1fr 32px; 
+      gap:0.2rem; 
+      align-items:center; 
+      padding:0.4rem 0.5rem; 
+      border-bottom:1px solid var(--stroke); 
+      transition:background-color .2s ease;
+      min-height: 45px;
+      position: relative;
+      background: var(--card);
+      font-family: inherit;
+    }
+    .row-daily-expenses:hover{ background:var(--glass); }
+    .row-daily-expenses:last-child{ border-bottom:none; }
+    
+    /* Light mode daily expenses table row backgrounds */
+    [data-theme="light"] .row-daily-expenses {
+      background: rgba(248, 250, 252, 0.8);
+    }
+    
+    [data-theme="light"] .row-daily-expenses:hover {
+      background: rgba(241, 245, 249, 0.9);
+    }
+    
+    /* Daily Expenses Header Alignment */
+    .row-head.row-daily-expenses {
+      display: grid;
+      grid-template-columns: 24px 1.2fr 1.3fr 1fr 1.2fr 1.2fr 1.2fr 1.2fr 1fr 1fr 32px !important;
+      gap: 0.2rem;
+      align-items: center;
+      padding: 0.4rem 0.5rem;
+      min-height: 45px;
+      position: relative;
+      background: var(--glass);
+      border-bottom: 3px solid var(--stroke);
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: var(--fg);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      font-family: inherit;
+    }
+    
+    /* Header cells base styling to match data cells */
+    .row-head.row-daily-expenses > div {
+      font-size: 0.9rem;
+      line-height: 1.4;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      hyphens: auto;
+      padding: 0.2rem 0.3rem;
+      overflow: visible;
+      text-overflow: unset;
+      white-space: normal;
+      display: flex;
+      align-items: center;
+    }
+    
+    /* Header cell alignments to match data cells exactly */
+    .row-head.row-daily-expenses > div:nth-child(2) {
+      text-align: left;
+      font-weight: 700;
+      font-size: 0.9rem;
+      line-height: 1.4;
+      justify-content: flex-start;
+      align-items: center;
+    }
+    
+    .row-head.row-daily-expenses > div:nth-child(3) {
+      text-align: center;
+      font-weight: 700;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+    
+    .row-head.row-daily-expenses > div:nth-child(4) {
+      text-align: right;
+      font-weight: 700;
+      font-size: 0.9rem;
+      line-height: 1.4;
+      justify-content: flex-end;
+      align-items: center;
+    }
+    
+    .row-head.row-daily-expenses > div:nth-child(5),
+    .row-head.row-daily-expenses > div:nth-child(6),
+    .row-head.row-daily-expenses > div:nth-child(7),
+    .row-head.row-daily-expenses > div:nth-child(8) {
+      text-align: left;
+      font-weight: 700;
+      font-size: 0.9rem;
+      line-height: 1.4;
+      justify-content: flex-start;
+      align-items: center;
+    }
+    
+    /* Daily Expenses Cell Styling */
+    .row-daily-expenses > div {
+      font-size: 0.9rem;
+      line-height: 1.4;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      hyphens: auto;
+      padding: 0.2rem 0.3rem;
+      overflow: visible;
+      text-overflow: unset;
+      white-space: normal;
+      min-width: 0;
+      max-width: none;
+      display: flex;
+      align-items: center;
+    }
+    
+    /* Date column - compact formatting */
+    .row-daily-expenses > div:nth-child(2) {
+      font-weight: 600;
+      color: var(--fg);
+      text-align: left;
+      font-size: 0.9rem;
+      justify-content: flex-start;
+      align-items: center;
+    }
+    
+    /* Type column - centered badge with more space */
+    .row-daily-expenses > div:nth-child(3) {
+      text-align: center;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: visible;
+      white-space: nowrap;
+      min-width: 0;
+      max-width: none;
+    }
+    
+    /* Ensure badges are fully visible */
+    .row-daily-expenses .badge {
+      white-space: nowrap;
+      overflow: visible;
+      text-overflow: unset;
+      display: inline-block;
+      max-width: none;
+      min-width: fit-content;
+      width: auto;
+      flex-shrink: 0;
+    }
+    
+    /* Amount column - right aligned with proper number formatting */
+    .row-daily-expenses > div:nth-child(4) {
+      text-align: right;
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: var(--fg);
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      min-width: 0;
+      max-width: none;
+    }
+    
+    /* Account, Category, Payee, Note columns - left aligned with more space */
+    .row-daily-expenses > div:nth-child(5),
+    .row-daily-expenses > div:nth-child(6),
+    .row-daily-expenses > div:nth-child(7),
+    .row-daily-expenses > div:nth-child(8) {
+      text-align: left;
+      color: var(--muted);
+      white-space: normal;
+      overflow: visible;
+      text-overflow: unset;
+      font-size: 0.9rem;
+      line-height: 1.4;
+      min-width: 0;
+      max-width: none;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      justify-content: flex-start;
+      align-items: center;
+    }
+    
     /* Delete button styling for income table - matches expenses table */
     .row-income .delete-btn {
       width: 32px;
@@ -2211,9 +2568,10 @@
     .table-container {
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
-      border-radius: 8px;
-      border: none;
+      border-radius: 12px;
+      border: 1px solid var(--stroke);
       background: var(--card);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
     
     .table-container::-webkit-scrollbar {
@@ -2254,6 +2612,11 @@
       min-width: 800px;
     }
     
+    /* Daily Expenses Table Specific */
+    .table-container .row-daily-expenses {
+      min-width: 1200px;
+    }
+    
     /* Mobile optimizations */
     @media (max-width: 768px) {
       .table-container .row-head,
@@ -2262,6 +2625,10 @@
       .table-container .row-income {
         min-width: 800px;
         font-size: 0.7rem;
+      }
+      
+      .table-container .row-daily-expenses {
+        min-width: 1100px;
       }
       
       /* Ensure project name inputs are visible on mobile */
@@ -2289,12 +2656,28 @@
         grid-template-columns: 18px 24px 1fr 1.2fr 80px 70px 70px 80px 1fr 24px;
       }
       
+      .table-container .row-head.row-daily-expenses {
+        grid-template-columns: 24px 1.2fr 1.3fr 1fr 1.2fr 1.2fr 1.2fr 1.2fr 1fr 1fr 32px;
+        gap: 0.2rem;
+        font-size: 0.8rem;
+        padding: 0.4rem 0.5rem;
+      }
+      
       /* Better mobile layout for income table */
       .table-container .row-income {
         grid-template-columns: 18px 24px 1fr 1.2fr 80px 70px 70px 80px 1fr 24px;
         gap: 0.4rem;
         padding: 0.4rem 0.5rem 0.4rem 0.5rem;
         min-height: 40px;
+      }
+      
+      /* Mobile layout for daily expenses table */
+      .table-container .row-daily-expenses {
+        grid-template-columns: 24px 1.2fr 1.3fr 1fr 1.2fr 1.2fr 1.2fr 1.2fr 1fr 1fr 32px;
+        gap: 0.2rem;
+        padding: 0.4rem 0.5rem;
+        min-height: 45px;
+        font-size: 0.85rem;
       }
       
       /* Adjust delete button for mobile */
@@ -2314,6 +2697,13 @@
       
       .table-container .row-head.row-biz {
         grid-template-columns: 16px 24px 1fr 0.6fr 0.6fr 0.6fr 0.6fr 0.7fr 0.7fr 0.7fr 0.7fr 24px;
+      }
+      
+      .table-container .row-head.row-daily-expenses {
+        grid-template-columns: 24px 1.2fr 1.3fr 1fr 1.2fr 1.2fr 1.2fr 1.2fr 1fr 1fr 32px;
+        gap: 0.2rem;
+        font-size: 0.75rem;
+        padding: 0.4rem 0.5rem;
       }
       
       .table-container .row-head.row-income {
@@ -2356,6 +2746,14 @@
         padding: 0.3rem 0.2rem 0.3rem 0.2rem;
         min-height: 32px;
         font-size: 0.6rem;
+      }
+      
+      .table-container .row-daily-expenses {
+        grid-template-columns: 24px 1.2fr 1.3fr 1fr 1.2fr 1.2fr 1.2fr 1.2fr 1fr 1fr 32px;
+        gap: 0.2rem;
+        padding: 0.4rem 0.5rem;
+        min-height: 45px;
+        font-size: 0.8rem;
       }
       
       /* Fix project name inputs on very small screens */
@@ -2459,7 +2857,7 @@
       font-weight:600; 
       color:var(--muted); 
       display:grid; 
-      grid-template-columns:24px 32px 1.5fr .8fr .8fr .8fr 1fr 1fr 1fr 1fr 32px; 
+      grid-template-columns:24px 1.5fr 1.5fr .8fr .8fr .8fr 1fr 1fr 1fr 1fr 32px; 
       gap:.7rem; 
       align-items:center; 
       background:var(--glass); 
@@ -2535,7 +2933,7 @@
 
      /* Personal expenses sticky header */
      .table-header-sticky.personal-header {
-       grid-template-columns: 24px 32px 1.5fr .8fr .8fr .8fr 1fr 1fr 1fr 1fr 32px;
+       grid-template-columns: 24px 1.5fr 1.5fr .8fr .8fr .8fr 1fr 1fr 1fr 1fr 32px;
      }
 
      /* Business expenses sticky header */
@@ -3799,3 +4197,1068 @@
         padding: 12px 20px 20px;
       }
     }
+
+/* Daily Expenses Page Styles */
+.nav-btn-daily {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(16, 185, 129, 0.05));
+  border-color: rgba(34, 197, 94, 0.2);
+}
+
+.nav-btn-daily:hover {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(16, 185, 129, 0.1));
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+.nav-btn-daily.active {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(16, 185, 129, 0.15));
+  border-color: rgba(34, 197, 94, 0.4);
+  color: var(--fg);
+}
+
+/* Transaction Type Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  text-transform: capitalize;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.badge-success {
+  background: rgba(34, 197, 94, 0.1);
+  color: rgb(34, 197, 94);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.badge-error {
+  background: rgba(239, 68, 68, 0.1);
+  color: rgb(239, 68, 68);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.badge-info {
+  background: rgba(59, 130, 246, 0.1);
+  color: rgb(59, 130, 246);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.badge-warning {
+  background: rgba(245, 158, 11, 0.1);
+  color: rgb(245, 158, 11);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+/* Daily Expenses Table - Ultra Compact Design */
+#pageDailyExpenses .table .row {
+  display: grid;
+  grid-template-columns: 0.2fr 1fr 0.8fr 1fr 1.2fr 1.2fr 0.8fr 0.8fr 0.2fr;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.375rem 0.5rem;
+  min-height: 2rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.75rem;
+  transition: background-color 0.2s ease;
+}
+
+#pageDailyExpenses .table .row:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+#pageDailyExpenses .table .row > div {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0.125rem 0;
+  display: flex;
+  align-items: center;
+  font-size: 0.75rem;
+  line-height: 1.1;
+}
+
+/* Ultra Compact Header styling */
+#pageDailyExpenses .table .row-head {
+  background: linear-gradient(135deg, var(--bg2), rgba(255, 255, 255, 0.02));
+  border-bottom: 2px solid var(--border);
+  font-weight: 700;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  padding: 0.375rem 0.5rem;
+  min-height: 1.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  grid-template-columns: 24px 1.2fr 0.7fr 1fr 1.2fr 1.2fr 1.2fr 1.2fr 1fr 1fr 32px !important;
+}
+
+#pageDailyExpenses .table .row-head > div {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--muted);
+  padding: 0;
+}
+
+/* Ultra Compact Column widths and alignment */
+#pageDailyExpenses .table .row > div:nth-child(1),
+#pageDailyExpenses .table .row > div:nth-child(9) {
+  width: 0.2rem;
+  min-width: 0.2rem;
+  max-width: 0.2rem;
+}
+
+#pageDailyExpenses .table .row > div:nth-child(2) {
+  min-width: 4.5rem;
+  max-width: 4.5rem;
+  font-weight: 600;
+  color: var(--fg);
+  font-size: 0.7rem;
+}
+
+#pageDailyExpenses .table .row > div:nth-child(3) {
+  min-width: 3.5rem;
+  max-width: 3.5rem;
+  justify-content: flex-start;
+}
+
+#pageDailyExpenses .table .row > div:nth-child(4) {
+  text-align: right;
+  font-weight: 700;
+  min-width: 4.5rem;
+  max-width: 4.5rem;
+  justify-content: flex-end;
+  color: var(--fg);
+  font-size: 0.7rem;
+}
+
+#pageDailyExpenses .table .row > div:nth-child(5),
+#pageDailyExpenses .table .row > div:nth-child(6) {
+  min-width: 5rem;
+  max-width: 5rem;
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+
+#pageDailyExpenses .table .row > div:nth-child(7),
+#pageDailyExpenses .table .row > div:nth-child(8) {
+  min-width: 3.5rem;
+  max-width: 3.5rem;
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+
+/* Ultra Compact badge styling */
+#pageDailyExpenses .badge {
+  font-size: 0.65rem;
+  padding: 0.15rem 0.3rem;
+  border-radius: 0.2rem;
+  font-weight: 600;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Compact pagination */
+#pageDailyExpenses .pagination-container {
+  padding: 0.75rem 1rem;
+  margin-top: 0.5rem;
+}
+
+#pageDailyExpenses .pagination-btn {
+  min-width: 1.75rem;
+  height: 1.75rem;
+  padding: 0.25rem;
+}
+
+#pageDailyExpenses .page-number {
+  min-width: 1.75rem;
+  height: 1.75rem;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.375rem;
+}
+
+/* Modern Select Styling */
+.modern-select {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  color: var(--fg);
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  appearance: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.modern-select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.1);
+}
+
+
+/* Compact Progress Bar */
+.compact-progress {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 1rem;
+}
+
+#dailyExpensesProgress .animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+
+/* Custom Date Range */
+.custom-date-range {
+  background: var(--card);
+  border: 1px solid var(--stroke);
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  animation: slideIn 0.3s ease;
+  margin-left: 0.5rem;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+
+.modern-apply-btn {
+  background: var(--accent);
+  border: none;
+  border-radius: 6px;
+  padding: 0.3rem 0.75rem;
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  height: auto;
+  min-width: auto;
+}
+
+.modern-apply-btn:hover {
+  background: var(--accent-light);
+  transform: translateY(-1px);
+}
+
+.modern-apply-btn:active {
+  transform: translateY(0);
+}
+
+/* Pagination */
+.pagination-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  margin-top: 1rem;
+}
+
+.pagination-buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pagination-btn {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.375rem;
+  padding: 0.5rem;
+  color: var(--fg);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  height: 2rem;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.08));
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.page-numbers {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.page-number {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.375rem;
+  padding: 0.375rem 0.5rem;
+  color: var(--fg);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.page-number:hover {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.08));
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.page-number.active {
+  background: linear-gradient(135deg, var(--accent), var(--accent-light));
+  color: white;
+  border-color: var(--accent);
+  box-shadow: 0 2px 8px rgba(var(--accent-rgb), 0.3);
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: .5;
+  }
+}
+
+/* Date Filter Buttons */
+.date-filter-buttons {
+  display: flex;
+  gap: 0.125rem;
+  background: var(--glass);
+  border: 1px solid var(--stroke);
+  border-radius: 0.5rem;
+  padding: 0.125rem;
+  position: relative;
+}
+
+.date-filter-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.375rem 0.5rem;
+  border: none;
+  border-radius: 0.375rem;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  min-height: 28px;
+  position: relative;
+}
+
+.date-filter-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--fg);
+}
+
+.date-filter-btn.active {
+  background: var(--fg);
+  color: var(--bg);
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.date-filter-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Custom Date Range */
+.custom-date-range {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: var(--card);
+  border: 1px solid var(--stroke);
+  border-radius: 0.75rem;
+  margin-left: 0.5rem;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .date-filter-buttons {
+    flex-wrap: wrap;
+    gap: 0.125rem;
+  }
+  
+  .date-filter-btn {
+    padding: 0.375rem 0.5rem;
+    font-size: 0.7rem;
+    min-height: 28px;
+  }
+  
+  .custom-date-range {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.375rem;
+  }
+}
+
+/* ===== ANALYTICS PAGE STYLES ===== */
+
+/* ===== CALENDAR-STYLE HEATMAP - FIXED LAYOUT ===== */
+
+.heatmap-container {
+  background: var(--card);
+  border: 1px solid var(--stroke);
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin: 0.5rem 0;
+  overflow: visible;
+}
+
+.heatmap-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+  max-width: 100%;
+}
+
+.heatmap-month {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.heatmap-month-header {
+  font-size: 0.6rem;
+  font-weight: 500;
+  color: var(--fg);
+  text-align: center;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.heatmap-month-grid {
+  display: none; /* Hide day headers for clean look */
+}
+
+.heatmap-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  width: 100%;
+  max-width: 100px;
+}
+
+.heatmap-day {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.3rem;
+  color: transparent;
+  font-weight: 500;
+  margin: 0 auto;
+}
+
+.heatmap-day:hover {
+  transform: scale(1.3);
+  z-index: 10;
+  color: white;
+}
+
+.heatmap-day-empty {
+  background: #f8fafc;
+  opacity: 0.3;
+}
+
+.heatmap-day-inactive {
+  background: transparent;
+  color: transparent;
+  cursor: default;
+}
+
+.heatmap-day-inactive:hover {
+  transform: none;
+}
+
+/* Activity level colors - matching the legend */
+.heatmap-day-activity-1 {
+  background: #6b7280; /* Gray for low activity */
+}
+
+.heatmap-day-activity-2 {
+  background: #ef4444; /* Red for low-medium activity */
+}
+
+.heatmap-day-activity-3 {
+  background: #f59e0b; /* Orange for medium activity */
+}
+
+.heatmap-day-activity-4 {
+  background: #10b981; /* Green for high activity */
+}
+
+/* Modern Tooltip */
+.heatmap-tooltip {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--card);
+  border: 1px solid var(--stroke);
+  border-radius: 8px;
+  padding: 0.75rem;
+  font-size: 0.8rem;
+  color: var(--fg);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  z-index: 20;
+  min-width: 180px;
+  pointer-events: none;
+  display: none;
+  backdrop-filter: blur(12px);
+  animation: tooltipFadeIn 0.2s ease;
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.heatmap-day:hover .heatmap-tooltip {
+  display: block;
+}
+
+.tooltip-date {
+  font-weight: 600;
+  color: var(--fg);
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  border-bottom: 1px solid var(--stroke);
+  padding-bottom: 0.25rem;
+  text-align: center;
+}
+
+.tooltip-income {
+  color: #10b981;
+  margin-bottom: 0.25rem;
+  font-size: 0.8rem;
+  display: flex;
+  justify-content: space-between;
+}
+
+.tooltip-expenses {
+  color: #ef4444;
+  margin-bottom: 0.25rem;
+  font-size: 0.8rem;
+  display: flex;
+  justify-content: space-between;
+}
+
+.tooltip-net {
+  color: var(--fg);
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  font-size: 0.8rem;
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid var(--stroke);
+  padding-top: 0.25rem;
+}
+
+.tooltip-count {
+  color: var(--muted);
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+/* Analytics Cards Enhancements */
+.analytics-card {
+  transition: all 0.2s ease;
+  cursor: move;
+  user-select: none;
+}
+
+.analytics-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.analytics-card.dragging {
+  opacity: 0.5;
+  transform: rotate(5deg);
+  z-index: 1000;
+}
+
+.analytics-card.drag-over {
+  border: 2px dashed var(--primary);
+  background: rgba(var(--primary-rgb), 0.1);
+}
+
+/* Drag and Drop Visual Feedback */
+.analytics-card::before {
+  content: '⋮⋮';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.analytics-card:hover::before {
+  opacity: 1;
+}
+
+/* Ultra Compact Responsive Design */
+@media (max-width: 1200px) {
+  .heatmap-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+  }
+  
+  .heatmap-container {
+    padding: 0.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .heatmap-container {
+    padding: 0.375rem;
+    margin: 0.25rem 0;
+  }
+  
+  .heatmap-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.375rem;
+  }
+  
+  .heatmap-month {
+    min-height: 60px;
+  }
+  
+  .heatmap-month-header {
+    font-size: 0.5rem;
+    margin-bottom: 0.25rem;
+  }
+  
+  .heatmap-day {
+    width: 8px;
+    height: 8px;
+  }
+  
+  .heatmap-tooltip {
+    min-width: 120px;
+    font-size: 0.65rem;
+    padding: 0.4rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .heatmap-container {
+    padding: 0.25rem;
+    margin: 0.125rem 0;
+  }
+  
+  .heatmap-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.25rem;
+  }
+  
+  .heatmap-month {
+    min-height: 50px;
+  }
+  
+  .heatmap-month-header {
+    font-size: 0.45rem;
+    margin-bottom: 0.125rem;
+  }
+  
+  .heatmap-day {
+    width: 6px;
+    height: 6px;
+  }
+  
+  .heatmap-tooltip {
+    min-width: 100px;
+    font-size: 0.6rem;
+    padding: 0.3rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .heatmap-grid {
+    grid-template-columns: 1fr;
+    gap: 0.125rem;
+  }
+  
+  .heatmap-day {
+    width: 5px;
+    height: 5px;
+  }
+}
+
+/* Analytics Page Specific Styles */
+.nav-btn-analytics {
+  position: relative;
+}
+
+.nav-btn-analytics.active {
+  background: var(--fg);
+  color: var(--bg);
+  border-color: var(--fg);
+  font-weight: 600;
+}
+
+/* Financial Overview Card Enhancements */
+#netWorthUSD, #cashFlowUSD {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--fg);
+}
+
+#netWorthEGP, #cashFlowEGP {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+/* Income/Expense Analysis Cards */
+#totalIncomeUSD, #totalExpensesUSD, #avgMonthlyIncomeUSD, #avgMonthlyExpensesUSD {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+#totalIncomeEGP, #totalExpensesEGP, #avgMonthlyIncomeEGP, #avgMonthlyExpensesEGP {
+  font-size: 0.7rem;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+/* Wallet Analysis Card */
+#walletTransactions {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--fg);
+}
+
+#walletIncomeUSD, #walletExpensesUSD {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+#walletIncomeEGP, #walletExpensesEGP {
+  font-size: 0.7rem;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+/* Analytics Year Filter */
+#analyticsYearFilter {
+  background: var(--card);
+  border: 1px solid var(--stroke);
+  color: var(--fg);
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+#analyticsYearFilter:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+}
+
+/* Refresh Analytics Button */
+#refreshAnalytics {
+  transition: all 0.2s ease;
+}
+
+#refreshAnalytics:hover {
+  background: var(--glass);
+  transform: rotate(180deg);
+}
+
+#refreshAnalytics svg {
+  transition: transform 0.2s ease;
+}
+
+/* ===== WALLET SKELETON LOADING ===== */
+
+.wallet-skeleton {
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.wallet-skeleton.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.skeleton-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.skeleton-row-daily-expenses {
+  display: grid;
+  grid-template-columns: 24px 1.2fr 0.7fr 1fr 1.2fr 1.2fr 1.2fr 1.2fr 1fr 1fr 32px;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: var(--card);
+  border: 1px solid var(--stroke);
+  margin-bottom: 2px;
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+.skeleton-cell {
+  height: 20px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--stroke) 25%, var(--glass) 50%, var(--stroke) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s infinite;
+}
+
+.skeleton-drag {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  margin: 2px auto;
+}
+
+.skeleton-date {
+  width: 80%;
+  height: 16px;
+}
+
+.skeleton-type {
+  width: 60%;
+  height: 16px;
+}
+
+.skeleton-amount {
+  width: 70%;
+  height: 16px;
+}
+
+.skeleton-account {
+  width: 85%;
+  height: 16px;
+}
+
+.skeleton-category {
+  width: 75%;
+  height: 16px;
+}
+
+.skeleton-payee {
+  width: 80%;
+  height: 16px;
+}
+
+.skeleton-note {
+  width: 90%;
+  height: 16px;
+}
+
+.skeleton-delete {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  margin: 0 auto;
+}
+
+@keyframes skeleton-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Enhanced Progress Bar for Wallet */
+.compact-progress {
+  background: var(--card);
+  border: 1px solid var(--stroke);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  backdrop-filter: blur(8px);
+}
+
+.compact-progress .progress-text {
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.compact-progress .progress-count {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+/* Modern Loading States */
+.wallet-loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+  background: var(--card);
+  border: 1px solid var(--stroke);
+  border-radius: 12px;
+  margin: 16px 0;
+}
+
+.wallet-loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--stroke);
+  border-top: 3px solid var(--accent);
+  border-radius: 50%;
+  animation: wallet-spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+.wallet-loading-text {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--fg);
+  margin-bottom: 8px;
+}
+
+.wallet-loading-subtext {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+@keyframes wallet-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Empty State Enhancement */
+.wallet-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+  background: var(--card);
+  border: 1px solid var(--stroke);
+  border-radius: 12px;
+  margin: 16px 0;
+}
+
+.wallet-empty-icon {
+  width: 48px;
+  height: 48px;
+  background: var(--glass);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  color: var(--muted);
+}
+
+.wallet-empty-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--fg);
+  margin-bottom: 8px;
+}
+
+.wallet-empty-subtitle {
+  font-size: 0.875rem;
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+
+.wallet-empty-action {
+  padding: 8px 16px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.wallet-empty-action:hover {
+  background: var(--accent);
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
