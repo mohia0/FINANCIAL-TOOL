@@ -61,6 +61,9 @@ window.supabaseClient = supabase;
         
         // Ensure current year is selected when switching to income page
         ensureCurrentYearSelected();
+        
+        // Apply lock state to income page elements
+        updateInputsLockState();
       }
     }
     
@@ -2146,6 +2149,14 @@ window.supabaseClient = supabase;
       const allClickableElements = document.querySelectorAll('[onclick], [data-clickable]');
       const addRowButtons = document.querySelectorAll('button[data-add-row]');
       
+      // Get income-specific elements
+      const allIncomeInputs = document.querySelectorAll('.row-income input, .row-income select, .row-income textarea, .tag-input, .method-custom-input');
+      const allIncomeClickable = document.querySelectorAll('.row-income .editable-value, .row-income .method-trigger-minimal, .row-income .tag-input-wrapper');
+      
+      // Get all X buttons and remove buttons from rows
+      const allXButtons = document.querySelectorAll('.method-remove-btn, .tag-chip-remove, .year-btn-remove, .year-btn, .year-add-between, .year-add-btn');
+      const allDeleteButtons = document.querySelectorAll('.delete-btn');
+      
       // Combine all elements (excluding add row buttons for now)
       const allElements = [
         ...allInputs, 
@@ -2153,7 +2164,9 @@ window.supabaseClient = supabase;
         ...allToggles, 
         ...allFinancialInputs, 
         ...allDateInputs,
-        ...allClickableElements
+        ...allClickableElements,
+        ...allIncomeInputs,
+        ...allIncomeClickable
       ];
       
       allElements.forEach(element => {
@@ -2203,6 +2216,15 @@ window.supabaseClient = supabase;
       
       // Handle "Add row" buttons - hide them when locked
       addRowButtons.forEach(button => {
+        if (state.inputsLocked) {
+          button.style.display = 'none';
+        } else {
+          button.style.display = '';
+        }
+      });
+      
+      // Handle X buttons and remove buttons - hide them when locked
+      [...allXButtons, ...allDeleteButtons].forEach(button => {
         if (state.inputsLocked) {
           button.style.display = 'none';
         } else {
@@ -5366,6 +5388,9 @@ window.supabaseClient = supabase;
       sumHTML += '<div></div>'; // delete
       sumEl.innerHTML = sumHTML;
     }
+    
+    // Apply lock state to newly rendered income rows
+    updateInputsLockState();
   }
   
   function updateIncomeRowCalculations(rowEl, row) {
