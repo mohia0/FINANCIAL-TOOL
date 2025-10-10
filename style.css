@@ -75,6 +75,8 @@
       font-weight: 500;
       cursor: pointer;
       transition: all 0.2s ease;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
     
     .year-tab:hover {
@@ -482,6 +484,22 @@
       cursor:text;
     }
     
+    /* Ensure income table inputs use the same styling as default inputs */
+    .row-income input {
+      width: 100% !important;
+      border: none !important;
+      background: transparent !important;
+      color: var(--fg) !important;
+      font-size: inherit !important;
+      line-height: inherit !important;
+      padding: 0.25rem 0.5rem !important;
+      border-radius: 0 !important;
+      outline: none !important;
+      min-width: 0 !important;
+      text-align: left !important;
+      box-sizing: border-box !important;
+    }
+    
     .input-enhanced {
       background: transparent !important;
       border: none !important;
@@ -654,7 +672,7 @@
       position:relative; 
       display:flex; 
       align-items:center; 
-      gap: 3px;
+      gap: 1px;
       background: transparent;
       border: none;
       border-radius: 6px;
@@ -695,7 +713,7 @@
       font-weight: 600;
       min-width: 16px;
       text-align: left;
-      margin-right: 2px;
+      margin-right: 0px;
     }
     
     /* Loading Skeleton */
@@ -885,6 +903,18 @@
       min-width: 60px;
       flex-basis: 100%;
       order: 999;
+    }
+    
+    /* When tag input is hidden (locked state) - left align tags */
+    .tag-input-wrapper:has(.tag-input[style*="display: none"]) {
+      justify-content: flex-start;
+      align-items: flex-start;
+    }
+    
+    /* Alternative approach for locked state - when input is hidden */
+    .tag-input-wrapper.locked {
+      justify-content: flex-start;
+      align-items: flex-start;
     }
     
     .tag-input::placeholder {
@@ -2156,6 +2186,7 @@
       position: relative;
       z-index: 1;
       background: var(--card);
+      font-size: 0.7rem;
     }
     .row-income:hover{ background:var(--glass); }
     .row-income:last-child{ border-bottom:none; }
@@ -2264,16 +2295,20 @@
         font-size: 0.7rem;
       }
       
-      /* Ensure project name inputs are visible on mobile */
-      .table-container .row-income input[type="text"] {
+      /* Ensure all income inputs are visible on mobile */
+      .table-container .row-income input {
         font-size: 0.75rem !important;
-        min-height: 30px !important;
-        padding: 0.4rem 0.6rem !important;
-        line-height: 1.2 !important;
+        min-height: 32px !important;
+        padding: 0.5rem 0.75rem !important;
+        line-height: 1.3 !important;
         color: var(--fg) !important;
-        background: var(--card) !important;
-        border: 1px solid var(--stroke) !important;
-        border-radius: 6px !important;
+        background: transparent !important;
+        border: none !important;
+        border-radius: 0 !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        text-align: left !important;
+        box-sizing: border-box !important;
       }
       
       .table-container .row-head {
@@ -2286,12 +2321,12 @@
       }
       
       .table-container .row-head.row-income {
-        grid-template-columns: 18px 24px 1fr 1.2fr 80px 70px 70px 80px 1fr 24px;
+        grid-template-columns: 18px 24px 2.5fr 2.2fr 100px 90px 90px 100px 1.8fr 24px;
       }
       
       /* Better mobile layout for income table */
       .table-container .row-income {
-        grid-template-columns: 18px 24px 1fr 1.2fr 80px 70px 70px 80px 1fr 24px;
+        grid-template-columns: 18px 24px 2.5fr 2.2fr 100px 90px 90px 100px 1.8fr 24px;
         gap: 0.4rem;
         padding: 0.4rem 0.5rem 0.4rem 0.5rem;
         min-height: 40px;
@@ -2317,7 +2352,7 @@
       }
       
       .table-container .row-head.row-income {
-        grid-template-columns: 16px 20px 1fr 1.2fr 80px 70px 70px 80px 1fr 20px;
+        grid-template-columns: 16px 20px 2.5fr 2.2fr 100px 90px 90px 100px 1.8fr 20px;
       }
       
       .table-container .row,
@@ -2328,7 +2363,7 @@
       
       /* Extra small screens - more compact income table */
       .table-container .row-income {
-        grid-template-columns: 16px 20px 1fr 1.2fr 70px 60px 60px 70px 1fr 20px;
+        grid-template-columns: 16px 20px 2.5fr 2.2fr 100px 90px 90px 100px 1.8fr 20px;
         gap: 0.3rem;
         padding: 0.35rem 0.25rem 0.35rem 0.25rem;
         min-height: 36px;
@@ -2351,23 +2386,27 @@
     /* Extra small screens - 320px and below */
     @media (max-width: 320px) {
       .table-container .row-income {
-        grid-template-columns: 14px 18px 1fr 1.2fr 50px 45px 45px 50px 1fr 18px;
+        grid-template-columns: 14px 18px 2.5fr 2.2fr 70px 65px 65px 70px 1.8fr 18px;
         gap: 0.25rem;
         padding: 0.3rem 0.2rem 0.3rem 0.2rem;
         min-height: 32px;
         font-size: 0.6rem;
       }
       
-      /* Fix project name inputs on very small screens */
-      .table-container .row-income input[type="text"] {
-        font-size: 0.65rem !important;
-        min-height: 24px !important;
-        padding: 0.25rem 0.4rem !important;
-        line-height: 1.1 !important;
+      /* Fix all income inputs on very small screens */
+      .table-container .row-income input {
+        font-size: 0.7rem !important;
+        min-height: 28px !important;
+        padding: 0.4rem 0.6rem !important;
+        line-height: 1.2 !important;
         color: var(--fg) !important;
-        background: var(--card) !important;
-        border: 1px solid var(--stroke) !important;
-        border-radius: 4px !important;
+        background: transparent !important;
+        border: none !important;
+        border-radius: 0 !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        text-align: left !important;
+        box-sizing: border-box !important;
       }
       
       .table-container .row-income .delete-btn {
@@ -2382,7 +2421,7 @@
       }
       
       .table-container .row-head.row-income {
-        grid-template-columns: 14px 18px 1fr 1.2fr 50px 45px 45px 50px 1fr 18px;
+        grid-template-columns: 14px 18px 2.5fr 2.2fr 70px 65px 65px 70px 1.8fr 18px;
         font-size: 0.5rem;
       }
     }
@@ -2390,23 +2429,27 @@
     /* Smart responsive design for very small screens */
     @media (max-width: 360px) {
       .table-container .row-income {
-        grid-template-columns: 12px 16px 1fr 1.2fr 45px 40px 40px 45px 1fr 16px;
+        grid-template-columns: 12px 16px 2.5fr 2.2fr 65px 60px 60px 65px 1.8fr 16px;
         gap: 0.2rem;
         padding: 0.25rem 0.15rem 0.25rem 0.15rem;
         min-height: 30px;
         font-size: 0.55rem;
       }
       
-      /* Fix project name inputs on 360px screens */
-      .table-container .row-income input[type="text"] {
-        font-size: 0.6rem !important;
-        min-height: 22px !important;
-        padding: 0.2rem 0.35rem !important;
-        line-height: 1.1 !important;
+      /* Fix all income inputs on 360px screens */
+      .table-container .row-income input {
+        font-size: 0.65rem !important;
+        min-height: 26px !important;
+        padding: 0.3rem 0.5rem !important;
+        line-height: 1.2 !important;
         color: var(--fg) !important;
-        background: var(--card) !important;
-        border: 1px solid var(--stroke) !important;
-        border-radius: 4px !important;
+        background: transparent !important;
+        border: none !important;
+        border-radius: 0 !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        text-align: left !important;
+        box-sizing: border-box !important;
       }
       
       .table-container .row-income .delete-btn {
@@ -2421,7 +2464,7 @@
       }
       
       .table-container .row-head.row-income {
-        grid-template-columns: 12px 16px 1fr 1.2fr 45px 40px 40px 45px 1fr 16px;
+        grid-template-columns: 12px 16px 2.5fr 2.2fr 65px 60px 60px 65px 1.8fr 16px;
         font-size: 0.45rem;
       }
     }
@@ -2429,7 +2472,7 @@
     /* Ultra-compact design for very small devices */
     @media (max-width: 280px) {
       .table-container .row-income {
-        grid-template-columns: 10px 14px 1fr 1.2fr 35px 30px 30px 35px 1fr 14px;
+        grid-template-columns: 10px 14px 2.5fr 2.2fr 55px 50px 50px 55px 1.8fr 14px;
         gap: 0.15rem;
         padding: 0.2rem 0.1rem 0.2rem 0.1rem;
         min-height: 28px;
@@ -2448,7 +2491,7 @@
       }
       
       .table-container .row-head.row-income {
-        grid-template-columns: 10px 14px 1fr 1.2fr 35px 30px 30px 35px 1fr 14px;
+        grid-template-columns: 10px 14px 2.5fr 2.2fr 55px 50px 50px 55px 1.8fr 14px;
         font-size: 0.4rem;
       }
     }
@@ -2691,7 +2734,7 @@
         gap:.4rem; 
         padding:.4rem .5rem .4rem .5rem; 
         min-height: 40px;
-        grid-template-columns: 18px 24px 1fr 1.2fr 80px 70px 70px 80px 1fr 24px;
+        grid-template-columns: 18px 24px 2fr 2.2fr 100px 90px 90px 100px 1.8fr 24px;
       }
       
       .nav-btn {
@@ -2713,25 +2756,28 @@
         gap:.3rem; 
         padding:.35rem .25rem .35rem .25rem; 
         min-height: 36px;
-        grid-template-columns: 16px 20px 1fr 1.2fr 60px 50px 50px 60px 1fr 20px;
+        grid-template-columns: 16px 20px 2fr 2.2fr 100px 90px 90px 100px 1.8fr 20px;
         font-size: 0.65rem;
       }
       
       /* Fix project name inputs on mobile */
       .row-income input[type="text"] {
-        font-size: 0.7rem !important;
-        min-height: 28px !important;
-        padding: 0.3rem 0.5rem !important;
-        line-height: 1.2 !important;
+        font-size: 0.75rem !important;
+        min-height: 32px !important;
+        padding: 0.5rem 0.75rem !important;
+        line-height: 1.3 !important;
         color: var(--fg) !important;
-        background: var(--card) !important;
-        border: 1px solid var(--stroke) !important;
-        border-radius: 6px !important;
+        background: transparent !important;
+        border: none !important;
+        border-radius: 0 !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        text-align: left !important;
+        box-sizing: border-box !important;
       }
       
       .row-income input[type="text"]:focus {
-        background: var(--glass) !important;
-        border-color: var(--primary) !important;
+        background: transparent !important;
         outline: none !important;
       }
       
@@ -3253,7 +3299,7 @@
       color: var(--muted);
       font-size: 0.75rem;
       font-weight: 500;
-      margin-right: 0.1rem;
+      margin-right: 0px;
       pointer-events: none;
       flex-shrink: 0;
     }
@@ -3285,6 +3331,22 @@
       font-size: 0.65rem !important;
       line-height: 1.1rem !important;
       font-weight: 500 !important;
+    }
+    
+    /* Hide Paid EGP background when locked */
+    .paid-egp-cell.editable-value.locked {
+      background: transparent !important;
+      border: none !important;
+      padding: 0.25rem 0.5rem !important;
+      margin: 0.1rem !important;
+    }
+    
+    /* Hide date calendar icon when locked */
+    .row-income input[type="date"]:disabled::-webkit-calendar-picker-indicator,
+    .row-income input[type="date"].locked::-webkit-calendar-picker-indicator {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
     }
     
     .section-title {
@@ -3797,5 +3859,47 @@
       
       .auth-modal-footer {
         padding: 12px 20px 20px;
+      }
+    }
+    
+    /* Mobile Year Selection Improvements */
+    @media (max-width: 768px) {
+      .year-tab {
+        padding: 0.2rem 0.5rem;
+        font-size: 0.7rem;
+        min-width: 44px;
+        text-align: center;
+      }
+      
+      /* Year selection container */
+      .year-selection-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+      
+      .year-selection-container::-webkit-scrollbar {
+        display: none;
+      }
+      
+      .year-tabs-container {
+        display: flex;
+        gap: 0.25rem;
+        padding: 0.5rem 0;
+        min-width: max-content;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .year-tab {
+        padding: 0.15rem 0.4rem;
+        font-size: 0.65rem;
+        min-width: 40px;
+      }
+      
+      .year-tabs-container {
+        gap: 0.2rem;
+        padding: 0.4rem 0;
       }
     }

@@ -1965,6 +1965,13 @@ window.supabaseClient = supabase;
     }
     
     function save(source = 'general'){ 
+      // Check if lock is active - if so, only save locally, not to cloud
+      if (state.inputsLocked && currentUser && supabaseReady) {
+        console.log('Lock is active - saving locally only, not to cloud');
+        saveToLocal();
+        return;
+      }
+      
       // If user is signed in, use instant save for 0ms cloud sync
       if (currentUser && supabaseReady) {
         instantSaveAll(source);
@@ -2157,6 +2164,9 @@ window.supabaseClient = supabase;
       const allXButtons = document.querySelectorAll('.method-remove-btn, .tag-chip-remove, .year-btn-remove, .year-btn, .year-add-between, .year-add-btn');
       const allDeleteButtons = document.querySelectorAll('.delete-btn');
       
+      // Get tag input fields specifically for hiding when locked
+      const allTagInputs = document.querySelectorAll('.tag-input');
+      
       // Combine all elements (excluding add row buttons for now)
       const allElements = [
         ...allInputs, 
@@ -2232,6 +2242,32 @@ window.supabaseClient = supabase;
         }
       });
       
+      // Handle tag input fields - hide them when locked but keep tag badges visible
+      allTagInputs.forEach(tagInput => {
+        const wrapper = tagInput.closest('.tag-input-wrapper');
+        if (state.inputsLocked) {
+          tagInput.style.display = 'none';
+          if (wrapper) {
+            wrapper.classList.add('locked');
+          }
+        } else {
+          tagInput.style.display = '';
+          if (wrapper) {
+            wrapper.classList.remove('locked');
+          }
+        }
+      });
+      
+      // Handle Paid EGP cells - add locked class to hide background
+      const allPaidEgpCells = document.querySelectorAll('.paid-egp-cell.editable-value');
+      allPaidEgpCells.forEach(cell => {
+        if (state.inputsLocked) {
+          cell.classList.add('locked');
+        } else {
+          cell.classList.remove('locked');
+        }
+      });
+      
       // Show notification
       if (state.inputsLocked) {
         showNotification('All inputs locked', 'info', 2000);
@@ -2286,7 +2322,9 @@ window.supabaseClient = supabase;
           updateSyncStatus('syncing');
       console.log('Executing live save instantly for sources:', Array.from(saveQueue));
           
-          const savePromise = currentUser && supabaseReady ? saveToSupabase() : saveToLocal();
+          // Check if lock is active - if so, only save locally, not to cloud
+          const shouldSaveToCloud = currentUser && supabaseReady && !state.inputsLocked;
+          const savePromise = shouldSaveToCloud ? saveToSupabase() : saveToLocal();
           
           savePromise.then(() => {
         lastSaveTime = Date.now();
@@ -2313,6 +2351,13 @@ window.supabaseClient = supabase;
     let instantSaveInProgress = new Set();
     
     async function instantSaveAll(source = 'general') {
+      // Check if lock is active - if so, only save locally, not to cloud
+      if (state.inputsLocked) {
+        console.log('Lock is active - saving locally only, not to cloud');
+        saveToLocal();
+        return;
+      }
+      
       if (!currentUser || !supabaseReady) {
         console.log('Supabase not ready, falling back to local save');
         saveToLocal();
@@ -2364,6 +2409,13 @@ window.supabaseClient = supabase;
     let expenseSaveInProgress = new Set();
     
     async function instantSaveExpenseRow(expenseRow, isBiz) {
+      // Check if lock is active - if so, only save locally, not to cloud
+      if (state.inputsLocked) {
+        console.log('Lock is active - saving expense row locally only, not to cloud');
+        saveToLocal();
+        return;
+      }
+      
       if (!currentUser || !supabaseReady) {
         console.log('Supabase not ready, falling back to local save');
         saveToLocal();
@@ -2441,6 +2493,13 @@ window.supabaseClient = supabase;
     }
     
     async function instantSaveIncomeRow(incomeRow, year) {
+      // Check if lock is active - if so, only save locally, not to cloud
+      if (state.inputsLocked) {
+        console.log('Lock is active - saving income row locally only, not to cloud');
+        saveToLocal();
+        return;
+      }
+      
       if (!currentUser || !supabaseReady) {
         console.log('Supabase not ready, falling back to local save');
         saveToLocal();
@@ -2584,6 +2643,13 @@ window.supabaseClient = supabase;
 
     // Direct save function for tag removal (no debouncing)
     async function saveIncomeRowDirectly(incomeRow, year) {
+      // Check if lock is active - if so, only save locally, not to cloud
+      if (state.inputsLocked) {
+        console.log('Lock is active - saving income row locally only, not to cloud');
+        saveToLocal();
+        return;
+      }
+      
       if (!currentUser || !supabaseReady) {
         saveToLocal();
         return;
