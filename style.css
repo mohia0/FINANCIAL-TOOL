@@ -672,7 +672,7 @@
       position:relative; 
       display:flex; 
       align-items:center; 
-      gap: 1px;
+      gap: 0px;
       background: transparent;
       border: none;
       border-radius: 6px;
@@ -697,6 +697,8 @@
       font-size: 0.75rem !important;
       padding: 0 !important;
       margin: 0 !important;
+      margin-left: 0px !important;
+      padding-left: 0px !important;
       border: none !important;
       background: transparent !important;
       flex: 1;
@@ -714,6 +716,7 @@
       min-width: 16px;
       text-align: left;
       margin-right: 0px;
+      padding-right: 0px;
     }
     
     /* Loading Skeleton */
@@ -2291,7 +2294,7 @@
       .table-container .row,
       .table-container .row-biz,
       .table-container .row-income {
-        min-width: 800px;
+        min-width: 1000px;
         font-size: 0.7rem;
       }
       
@@ -2309,6 +2312,78 @@
         min-width: 0 !important;
         text-align: left !important;
         box-sizing: border-box !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+      }
+      
+      /* Ensure all income table cells show text properly */
+      .table-container .row-income > * {
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        min-width: 0 !important;
+      }
+      
+      /* Fix specific columns for better mobile display */
+      .table-container .row-income input[type="date"] {
+        font-size: 0.7rem !important;
+        min-height: 32px !important;
+        padding: 0.4rem 0.6rem !important;
+        line-height: 1.2 !important;
+        color: var(--fg) !important;
+        background: transparent !important;
+        border: none !important;
+        border-radius: 0 !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        text-align: left !important;
+        box-sizing: border-box !important;
+        white-space: nowrap !important;
+        overflow: visible !important;
+        text-overflow: unset !important;
+      }
+      
+      /* Fix All Payment and Paid USD columns */
+      .table-container .row-income .cost-input-wrapper,
+      .table-container .row-income .financial-input-wrapper {
+        white-space: nowrap !important;
+        overflow: visible !important;
+        text-overflow: unset !important;
+        min-width: 0 !important;
+        width: 100% !important;
+      }
+      
+      .table-container .row-income .cost-input,
+      .table-container .row-income .financial-value {
+        white-space: nowrap !important;
+        overflow: visible !important;
+        text-overflow: unset !important;
+        min-width: 0 !important;
+        width: 100% !important;
+      }
+      
+      /* Fix cost and financial input elements specifically */
+      .table-container .row-income .cost-input-wrapper input,
+      .table-container .row-income .financial-input-wrapper input {
+        white-space: nowrap !important;
+        overflow: visible !important;
+        text-overflow: unset !important;
+        min-width: 0 !important;
+        width: 100% !important;
+        font-size: 0.7rem !important;
+        padding: 0.4rem 0.6rem !important;
+      }
+      
+      .table-container .row-income .cost-dollar-display,
+      .table-container .row-income .financial-symbol {
+        white-space: nowrap !important;
+        overflow: visible !important;
+        text-overflow: unset !important;
+        min-width: 0 !important;
+        flex-shrink: 0 !important;
+        margin-right: 0px !important;
+        padding-right: 0px !important;
       }
       
       .table-container .row-head {
@@ -2321,15 +2396,16 @@
       }
       
       .table-container .row-head.row-income {
-        grid-template-columns: 18px 24px 2.5fr 2.2fr 100px 90px 90px 100px 1.8fr 24px;
+        grid-template-columns: 20px 30px 200px 150px 120px 120px 120px 140px 180px 30px;
       }
       
       /* Better mobile layout for income table */
       .table-container .row-income {
-        grid-template-columns: 18px 24px 2.5fr 2.2fr 100px 90px 90px 100px 1.8fr 24px;
-        gap: 0.4rem;
+        grid-template-columns: 20px 30px 200px 150px 120px 120px 120px 140px 180px 30px;
+        gap: 0.5rem;
         padding: 0.4rem 0.5rem 0.4rem 0.5rem;
         min-height: 40px;
+        white-space: nowrap;
       }
       
       /* Adjust delete button for mobile */
@@ -2352,7 +2428,7 @@
       }
       
       .table-container .row-head.row-income {
-        grid-template-columns: 16px 20px 2.5fr 2.2fr 100px 90px 90px 100px 1.8fr 20px;
+        grid-template-columns: 18px 28px 180px 130px 110px 110px 110px 130px 160px 28px;
       }
       
       .table-container .row,
@@ -2363,11 +2439,12 @@
       
       /* Extra small screens - more compact income table */
       .table-container .row-income {
-        grid-template-columns: 16px 20px 2.5fr 2.2fr 100px 90px 90px 100px 1.8fr 20px;
-        gap: 0.3rem;
+        grid-template-columns: 18px 28px 180px 130px 110px 110px 110px 130px 160px 28px;
+        gap: 0.4rem;
         padding: 0.35rem 0.25rem 0.35rem 0.25rem;
         min-height: 36px;
         font-size: 0.65rem;
+        white-space: nowrap;
       }
       
       /* Adjust delete button for extra small screens */
@@ -2386,11 +2463,12 @@
     /* Extra small screens - 320px and below */
     @media (max-width: 320px) {
       .table-container .row-income {
-        grid-template-columns: 14px 18px 2.5fr 2.2fr 70px 65px 65px 70px 1.8fr 18px;
-        gap: 0.25rem;
+        grid-template-columns: 16px 24px 160px 120px 100px 100px 100px 120px 140px 24px;
+        gap: 0.3rem;
         padding: 0.3rem 0.2rem 0.3rem 0.2rem;
         min-height: 32px;
         font-size: 0.6rem;
+        white-space: nowrap;
       }
       
       /* Fix all income inputs on very small screens */
@@ -2409,6 +2487,45 @@
         box-sizing: border-box !important;
       }
       
+      /* Fix specific columns for very small screens */
+      .table-container .row-income input[type="date"] {
+        font-size: 0.65rem !important;
+        min-height: 28px !important;
+        padding: 0.3rem 0.5rem !important;
+        white-space: nowrap !important;
+        overflow: visible !important;
+        text-overflow: unset !important;
+      }
+      
+      .table-container .row-income .cost-input-wrapper,
+      .table-container .row-income .financial-input-wrapper {
+        white-space: nowrap !important;
+        overflow: visible !important;
+        text-overflow: unset !important;
+        min-width: 0 !important;
+        width: 100% !important;
+      }
+      
+      .table-container .row-income .cost-input-wrapper input,
+      .table-container .row-income .financial-input-wrapper input {
+        white-space: nowrap !important;
+        overflow: visible !important;
+        text-overflow: unset !important;
+        min-width: 0 !important;
+        width: 100% !important;
+        font-size: 0.65rem !important;
+        padding: 0.3rem 0.5rem !important;
+      }
+      
+      .table-container .row-income .cost-dollar-display,
+      .table-container .row-income .financial-symbol {
+        white-space: nowrap !important;
+        overflow: visible !important;
+        text-overflow: unset !important;
+        min-width: 0 !important;
+        flex-shrink: 0 !important;
+      }
+      
       .table-container .row-income .delete-btn {
         width: 20px;
         height: 20px;
@@ -2421,7 +2538,7 @@
       }
       
       .table-container .row-head.row-income {
-        grid-template-columns: 14px 18px 2.5fr 2.2fr 70px 65px 65px 70px 1.8fr 18px;
+        grid-template-columns: 16px 24px 160px 120px 100px 100px 100px 120px 140px 24px;
         font-size: 0.5rem;
       }
     }
@@ -2429,11 +2546,12 @@
     /* Smart responsive design for very small screens */
     @media (max-width: 360px) {
       .table-container .row-income {
-        grid-template-columns: 12px 16px 2.5fr 2.2fr 65px 60px 60px 65px 1.8fr 16px;
-        gap: 0.2rem;
+        grid-template-columns: 14px 22px 150px 110px 90px 90px 90px 110px 130px 22px;
+        gap: 0.25rem;
         padding: 0.25rem 0.15rem 0.25rem 0.15rem;
         min-height: 30px;
         font-size: 0.55rem;
+        white-space: nowrap;
       }
       
       /* Fix all income inputs on 360px screens */
@@ -2452,6 +2570,45 @@
         box-sizing: border-box !important;
       }
       
+      /* Fix specific columns for 360px screens */
+      .table-container .row-income input[type="date"] {
+        font-size: 0.6rem !important;
+        min-height: 26px !important;
+        padding: 0.25rem 0.4rem !important;
+        white-space: nowrap !important;
+        overflow: visible !important;
+        text-overflow: unset !important;
+      }
+      
+      .table-container .row-income .cost-input-wrapper,
+      .table-container .row-income .financial-input-wrapper {
+        white-space: nowrap !important;
+        overflow: visible !important;
+        text-overflow: unset !important;
+        min-width: 0 !important;
+        width: 100% !important;
+      }
+      
+      .table-container .row-income .cost-input-wrapper input,
+      .table-container .row-income .financial-input-wrapper input {
+        white-space: nowrap !important;
+        overflow: visible !important;
+        text-overflow: unset !important;
+        min-width: 0 !important;
+        width: 100% !important;
+        font-size: 0.6rem !important;
+        padding: 0.25rem 0.4rem !important;
+      }
+      
+      .table-container .row-income .cost-dollar-display,
+      .table-container .row-income .financial-symbol {
+        white-space: nowrap !important;
+        overflow: visible !important;
+        text-overflow: unset !important;
+        min-width: 0 !important;
+        flex-shrink: 0 !important;
+      }
+      
       .table-container .row-income .delete-btn {
         width: 18px;
         height: 18px;
@@ -2464,7 +2621,7 @@
       }
       
       .table-container .row-head.row-income {
-        grid-template-columns: 12px 16px 2.5fr 2.2fr 65px 60px 60px 65px 1.8fr 16px;
+        grid-template-columns: 14px 22px 150px 110px 90px 90px 90px 110px 130px 22px;
         font-size: 0.45rem;
       }
     }
@@ -2472,11 +2629,12 @@
     /* Ultra-compact design for very small devices */
     @media (max-width: 280px) {
       .table-container .row-income {
-        grid-template-columns: 10px 14px 2.5fr 2.2fr 55px 50px 50px 55px 1.8fr 14px;
-        gap: 0.15rem;
+        grid-template-columns: 12px 20px 140px 100px 80px 80px 80px 100px 120px 20px;
+        gap: 0.2rem;
         padding: 0.2rem 0.1rem 0.2rem 0.1rem;
         min-height: 28px;
         font-size: 0.5rem;
+        white-space: nowrap;
       }
       
       .table-container .row-income .delete-btn {
@@ -2491,7 +2649,7 @@
       }
       
       .table-container .row-head.row-income {
-        grid-template-columns: 10px 14px 2.5fr 2.2fr 55px 50px 50px 55px 1.8fr 14px;
+        grid-template-columns: 12px 20px 140px 100px 80px 80px 80px 100px 120px 20px;
         font-size: 0.4rem;
       }
     }
@@ -2731,10 +2889,11 @@
       .row{ gap:.2rem; padding:.3rem; }
       .row-biz{ gap:.2rem; padding:.3rem; }
       .row-income{ 
-        gap:.4rem; 
+        gap:.5rem; 
         padding:.4rem .5rem .4rem .5rem; 
         min-height: 40px;
-        grid-template-columns: 18px 24px 2fr 2.2fr 100px 90px 90px 100px 1.8fr 24px;
+        grid-template-columns: 20px 30px 200px 150px 120px 120px 120px 140px 180px 30px;
+        white-space: nowrap;
       }
       
       .nav-btn {
@@ -2753,11 +2912,12 @@
     
     @media (max-width: 480px) {
       .row-income{ 
-        gap:.3rem; 
+        gap:.4rem; 
         padding:.35rem .25rem .35rem .25rem; 
         min-height: 36px;
-        grid-template-columns: 16px 20px 2fr 2.2fr 100px 90px 90px 100px 1.8fr 20px;
+        grid-template-columns: 18px 28px 180px 130px 110px 110px 110px 130px 160px 28px;
         font-size: 0.65rem;
+        white-space: nowrap;
       }
       
       /* Fix project name inputs on mobile */
@@ -3300,8 +3460,21 @@
       font-size: 0.75rem;
       font-weight: 500;
       margin-right: 0px;
+      padding-right: 0px;
       pointer-events: none;
       flex-shrink: 0;
+    }
+    
+    /* Ensure minimal spacing between currency symbols and values */
+    .cost-input-wrapper,
+    .financial-input-wrapper {
+      gap: 0px !important;
+    }
+    
+    .cost-input-wrapper .cost-input,
+    .financial-input-wrapper .financial-value {
+      margin-left: 0px !important;
+      padding-left: 0px !important;
     }
     
     .financial-value {
