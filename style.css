@@ -2397,7 +2397,18 @@
       
       .table-container .row-head.row-income {
         grid-template-columns: 20px 30px 200px 150px 120px 120px 120px 140px 180px 30px;
+        text-align: center;
+        align-items: center;
       }
+      
+      /* Align specific header columns with their content */
+      .table-container .row-head.row-income > div:nth-child(3) { text-align: left; } /* Project Name */
+      .table-container .row-head.row-income > div:nth-child(4) { text-align: left; } /* Tags */
+      .table-container .row-head.row-income > div:nth-child(5) { text-align: center; } /* Date */
+      .table-container .row-head.row-income > div:nth-child(6) { text-align: center; } /* All Payment */
+      .table-container .row-head.row-income > div:nth-child(7) { text-align: center; } /* Paid USD */
+      .table-container .row-head.row-income > div:nth-child(8) { text-align: center; } /* Paid EGP */
+      .table-container .row-head.row-income > div:nth-child(9) { text-align: left; } /* Method */
       
       /* Better mobile layout for income table */
       .table-container .row-income {
@@ -2429,7 +2440,18 @@
       
       .table-container .row-head.row-income {
         grid-template-columns: 18px 28px 180px 130px 110px 110px 110px 130px 160px 28px;
+        text-align: center;
+        align-items: center;
       }
+      
+      /* Align specific header columns with their content - 480px */
+      .table-container .row-head.row-income > div:nth-child(3) { text-align: left; } /* Project Name */
+      .table-container .row-head.row-income > div:nth-child(4) { text-align: left; } /* Tags */
+      .table-container .row-head.row-income > div:nth-child(5) { text-align: center; } /* Date */
+      .table-container .row-head.row-income > div:nth-child(6) { text-align: center; } /* All Payment */
+      .table-container .row-head.row-income > div:nth-child(7) { text-align: center; } /* Paid USD */
+      .table-container .row-head.row-income > div:nth-child(8) { text-align: center; } /* Paid EGP */
+      .table-container .row-head.row-income > div:nth-child(9) { text-align: left; } /* Method */
       
       .table-container .row,
       .table-container .row-biz,
@@ -2540,7 +2562,18 @@
       .table-container .row-head.row-income {
         grid-template-columns: 16px 24px 160px 120px 100px 100px 100px 120px 140px 24px;
         font-size: 0.5rem;
+        text-align: center;
+        align-items: center;
       }
+      
+      /* Align specific header columns with their content - 320px */
+      .table-container .row-head.row-income > div:nth-child(3) { text-align: left; } /* Project Name */
+      .table-container .row-head.row-income > div:nth-child(4) { text-align: left; } /* Tags */
+      .table-container .row-head.row-income > div:nth-child(5) { text-align: center; } /* Date */
+      .table-container .row-head.row-income > div:nth-child(6) { text-align: center; } /* All Payment */
+      .table-container .row-head.row-income > div:nth-child(7) { text-align: center; } /* Paid USD */
+      .table-container .row-head.row-income > div:nth-child(8) { text-align: center; } /* Paid EGP */
+      .table-container .row-head.row-income > div:nth-child(9) { text-align: left; } /* Method */
     }
     
     /* Smart responsive design for very small screens */
@@ -2623,7 +2656,18 @@
       .table-container .row-head.row-income {
         grid-template-columns: 14px 22px 150px 110px 90px 90px 90px 110px 130px 22px;
         font-size: 0.45rem;
+        text-align: center;
+        align-items: center;
       }
+      
+      /* Align specific header columns with their content - 360px */
+      .table-container .row-head.row-income > div:nth-child(3) { text-align: left; } /* Project Name */
+      .table-container .row-head.row-income > div:nth-child(4) { text-align: left; } /* Tags */
+      .table-container .row-head.row-income > div:nth-child(5) { text-align: center; } /* Date */
+      .table-container .row-head.row-income > div:nth-child(6) { text-align: center; } /* All Payment */
+      .table-container .row-head.row-income > div:nth-child(7) { text-align: center; } /* Paid USD */
+      .table-container .row-head.row-income > div:nth-child(8) { text-align: center; } /* Paid EGP */
+      .table-container .row-head.row-income > div:nth-child(9) { text-align: left; } /* Method */
     }
     
     /* Ultra-compact design for very small devices */
@@ -2651,7 +2695,18 @@
       .table-container .row-head.row-income {
         grid-template-columns: 12px 20px 140px 100px 80px 80px 80px 100px 120px 20px;
         font-size: 0.4rem;
+        text-align: center;
+        align-items: center;
       }
+      
+      /* Align specific header columns with their content - 280px */
+      .table-container .row-head.row-income > div:nth-child(3) { text-align: left; } /* Project Name */
+      .table-container .row-head.row-income > div:nth-child(4) { text-align: left; } /* Tags */
+      .table-container .row-head.row-income > div:nth-child(5) { text-align: center; } /* Date */
+      .table-container .row-head.row-income > div:nth-child(6) { text-align: center; } /* All Payment */
+      .table-container .row-head.row-income > div:nth-child(7) { text-align: center; } /* Paid USD */
+      .table-container .row-head.row-income > div:nth-child(8) { text-align: center; } /* Paid EGP */
+      .table-container .row-head.row-income > div:nth-child(9) { text-align: left; } /* Method */
     }
     .row-head{ 
       font-size:.6rem; 
